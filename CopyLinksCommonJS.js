@@ -325,6 +325,22 @@ function getFlag(Text) {
 }
 
 
+// ingnore childNodes innerText
+function getDirectInnerText(element) {
+    var childNodes = element.childNodes;
+    var result = ''
+
+    for (var i = 0; i < childNodes.length; i++) {
+        console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
+        if(childNodes[i]. tagName === 'A' || childNodes[i].nodeType == 3) {
+            result += childNodes[i].data ? childNodes[i].data : childNodes[i].textContent;
+        }
+    }
+
+    return result;
+}
+
+
 function getNodeText(nodeWithText) {
     var textNode = $(nodeWithText).contents().filter(function () {
         return this.nodeType == Node.TEXT_NODE;
