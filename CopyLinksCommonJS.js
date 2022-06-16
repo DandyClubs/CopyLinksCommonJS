@@ -217,6 +217,8 @@ function byteLengthOf(TitleText, maxByte){
 
 
 function byteLengthOfCheck(TitleText){
+    if(!TitleText)
+        {return 0}
     //assuming the String is UCS-2(aka UTF-16) encoded
     let LineByte = 0
     for(var i=0,l=TitleText.length; i<l; i++){
