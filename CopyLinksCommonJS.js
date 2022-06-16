@@ -52,11 +52,7 @@ function getAllElementsFromPoint(el) {
 }
 
 function getElementOffset(el) {
-    var rect = el.getBoundingClientRect()
-    var body = document.body;
-    var docEl = document.documentElement;
-    var scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
-    var scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
+    var rect = el.getBoundingClientRect()    
     return {
         top: rect.top,
         bottom: rect.bottom,
@@ -347,11 +343,14 @@ function getNodeText(nodeWithText) {
     })[0];
     var range = document.createRange();
     range.selectNode(textNode);
+    var rect = range.getBoundingClientRect() 
     return {
-        top: range.getBoundingClientRect().top,
-        width: range.getBoundingClientRect().width,
-        left: range.getBoundingClientRect().left,
-        height: range.getBoundingClientRect().height
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
     }
 }
 
