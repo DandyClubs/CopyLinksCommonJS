@@ -331,7 +331,7 @@ function getDirectInnerText(element) {
     var result = ''
 
     for (var i = 0; i < childNodes.length; i++) {
-        console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
+        //console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
         if(childNodes[i]. tagName === 'A' || childNodes[i].nodeType == 3) {
             result += childNodes[i].data ? childNodes[i].data : childNodes[i].textContent;
         }
