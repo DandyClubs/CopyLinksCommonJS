@@ -375,6 +375,21 @@ function FilenameConvert(text) {
     return result
 }
 
+function getNumericMonth(monthAbbr) {
+    monthAbbr = capitalize(monthAbbr)
+    return (String(['January',
+                    'February',
+                    'March',
+                    'April',
+                    'May',
+                    'June',
+                    'July',
+                    'August',
+                    'September',
+                    'October',
+                    'November',
+                    'December'].indexOf(monthAbbr) + 1).padStart(2, '0'))
+}
 
 /**
  * 해당 함수는
