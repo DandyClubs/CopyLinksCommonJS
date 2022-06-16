@@ -58,10 +58,10 @@ function getElementOffset(el) {
     var scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
     var scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
     return {
-        top: rect.top + scrollTop,
-        bottom: rect.bottom + scrollTop,
-        left: rect.left + scrollLeft,
-        right: rect.right + scrollLeft,
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
         width: rect.width,
         height: rect.height,
     };
