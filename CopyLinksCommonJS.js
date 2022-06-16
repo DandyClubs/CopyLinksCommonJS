@@ -1,0 +1,484 @@
+function MaxZIndexFromPoint(selector) {
+    //console.log(selector, getAllElementsFromPoint(document.querySelector(selector)) + 1)
+    return getAllElementsFromPoint(document.querySelector(selector))
+}
+
+function getMaxZIndex() {
+    return Math.max(
+        ...Array.from(document.querySelectorAll('body *'), el =>
+                      parseFloat(window.getComputedStyle(el).zIndex),
+                     ).filter(zIndex => !Number.isNaN(zIndex)),
+        1,
+    );
+}
+
+function getZIndex(el) {
+    if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
+        var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
+        if (isNaN(z)) return getZIndex(el.parentNode);
+    }
+    return z;
+};
+
+
+function getPosition(element) {
+    var rect = element.getBoundingClientRect();
+    return {
+        x: rect.left,
+        y: rect.top
+    };
+}
+
+function getAllElementsFromPoint(el) {
+    var elements = [];
+    var display = [];
+    var zIndex= []
+    var item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
+        elements.push(item);
+        display.push(item.style.display)
+        if(!isNaN(getZIndex(item))){
+            let zI = getZIndex(item)
+            zIndex.push(zI)
+        }
+        item.style.display = "none";
+        item = document.elementFromPoint(getPosition(el).x, getPosition(el).y);
+    }
+    // restore display property
+    for (var i = 0; i < elements.length; i++) {
+        elements[i].style.display = display[i];
+    }
+    return Math.max(...zIndex, 1);
+}
+
+function getElementOffset(el) {
+    var rect = el.getBoundingClientRect()
+    var body = document.body;
+    var docEl = document.documentElement;
+    var scrollTop = window.pageYOffset || docEl.scrollTop || body.scrollTop;
+    var scrollLeft = window.pageXOffset || docEl.scrollLeft || body.scrollLeft;
+    return {
+        top: rect.top + scrollTop,
+        bottom: rect.bottom + scrollTop,
+        left: rect.left + scrollLeft,
+        right: rect.right + scrollLeft,
+        width: rect.width,
+        height: rect.height,
+    };
+}
+
+function getDefaultFontSize() {
+    const element = document.createElement('div');
+    element.style.width = '1rem';
+    element.style.display = 'none';
+    document.body.append(element);
+
+    const widthMatch = window
+    .getComputedStyle(element)
+    .getPropertyValue('width')
+    .match(/\d+/);
+
+    element.remove();
+
+    if (!widthMatch || widthMatch.length < 1) {
+        return null;
+    }
+
+    const result = Number(widthMatch[0]);
+    return !isNaN(result) ? result : null;
+}
+
+
+//Match
+function MatchRegex(Area, regex, attributeToSearch) {
+    //console.log(Area, regex, attributeToSearch)
+    const output = [];
+    if (attributeToSearch) {
+        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
+            //console.log(regex.test(element.getAttribute(attributeToSearch)), element)
+            if (regex.test(element.getAttribute(attributeToSearch))) {
+                //console.log(element)
+                output.push(element);
+            }
+        }
+    } else {
+        for (let element of Area.querySelectorAll('*')) {
+            for (let attribute of element.attributes) {
+                if (regex.test(attribute.value)) {
+                    //console.log(element)
+                    output.push(element);
+                }
+            }
+        }
+    }
+    return output;
+}
+
+// Not Match
+function NotMatchRegex(Area, regex, attributeToSearch) {
+    const output = [];
+    if (attributeToSearch) {
+        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
+            if (!regex.test(element.getAttribute(attributeToSearch))) {
+                //console.log(element)
+                output.push(element);
+            }
+        }
+    } else {
+        for (let element of Area.querySelectorAll('*')) {
+            for (let attribute of element.attributes) {
+                if (!regex.test(attribute.value)) {
+                    //console.log(element)
+                    output.push(element);
+                }
+            }
+        }
+    }
+    return output;
+}
+
+function querySelectorAllRegex(Area, regex, attributeToSearch) {
+    const output = [];
+    if (attributeToSearch === 'href') {
+        for (let element of Area.querySelectorAll('A')) {
+            if (element.href && !regex.test(element.href)) {
+                //console.log(element, regex)
+                output.push(element);
+            }
+        }
+    } else if (attributeToSearch) {
+        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
+            if (!regex.test(element.getAttribute(attributeToSearch))) {
+                console.log(element, regex)
+                output.push(element);
+            }
+        }
+    } else {
+        for (let element of Area.querySelectorAll('*')) {
+            for (let attribute of element.attributes) {
+                if (!regex.test(attribute.value)) {
+                    console.log(element)
+                    output.push(element);
+                }
+            }
+        }
+    }
+    return output;
+}
+
+
+function byteLengthOf(TitleText, maxByte){
+    //assuming the String is UCS-2(aka UTF-16) encoded
+    let Result
+    let CharByte = 0
+    let LineByte = 0
+    for(var i=0,l=TitleText.length; i<l; i++){
+        var Code=TitleText.charCodeAt(i);
+        if(Code < 0x0080){ //[0x0000, 0x007F]
+            CharByte = 1
+            LineByte+=1;
+        }else if(Code < 0x0800){ //[0x0080, 0x07FF]
+            CharByte =2
+            LineByte+=2;
+        }else if(Code < 0xD800){ //[0x0800, 0xD7FF]
+            CharByte = 3
+            LineByte+=3;
+        }else if(Code < 0xDC00){ //[0xD800, 0xDBFF]
+            var lo=TitleText.charCodeAt(++i);
+            if(i<l&&lo>=0xDC00&&lo<=0xDFFF){ //followed by [0xDC00, 0xDFFF]
+                CharByte = 4
+                LineByte+=4;
+            }else{
+                CharByte = 0
+                throw new Error("UCS-2 String malformed");
+            }
+        }else if(Code < 0xE000){ //[0xDC00, 0xDFFF]
+            CharByte = 0
+            throw new Error("UCS-2 String malformed");
+        }else{ //[0xE000, 0xFFFF]
+            CharByte = 3
+            LineByte+=3;
+        }
+        //console.log(TitleText[i], CharByte, LineByte)
+        if (LineByte >= maxByte) {
+            TitleText = TitleText.substr(0, i).replace(/(、|,)$/, '').trim()
+            Result = TitleText + '…'
+            break;
+        }
+    }
+    return Result ? Result.trim() : TitleText
+}
+
+
+function byteLengthOfCheck(TitleText){
+    //assuming the String is UCS-2(aka UTF-16) encoded
+    let LineByte = 0
+    for(var i=0,l=TitleText.length; i<l; i++){
+        var Code=TitleText.charCodeAt(i);
+        if(Code < 0x0080){ //[0x0000, 0x007F]
+            LineByte+=1;
+        }else if(Code < 0x0800){ //[0x0080, 0x07FF]
+            LineByte+=2;
+        }else if(Code < 0xD800){ //[0x0800, 0xD7FF]
+            LineByte+=3;
+        }else if(Code < 0xDC00){ //[0xD800, 0xDBFF]
+            var lo=TitleText.charCodeAt(++i);
+            if(i<l&&lo>=0xDC00&&lo<=0xDFFF){ //followed by [0xDC00, 0xDFFF]
+                LineByte+=4;
+            }else{
+                throw new Error("UCS-2 String malformed");
+            }
+        }else if(Code < 0xE000){ //[0xDC00, 0xDFFF]
+            throw new Error("UCS-2 String malformed");
+        }else{ //[0xE000, 0xFFFF]
+            LineByte+=3;
+        }
+    }
+    return LineByte
+}
+
+function getLastText(Text) {
+    let byteCheck = '', SearchCharPoint, TitleLastTmp
+    let ArrayDB = Text.split(/\s/).filter(function(e){return e})//빈 배열값 제거
+    let SeriesExp = new RegExp(Series + '.*')
+
+    //console.log(JapaneseChar.test([ArrayDB.length -1]) , ArrayDB[ArrayDB.length -1], ArrayDB[ArrayDB.length -2] + ' ' + ArrayDB[ArrayDB.length -1])
+    if(Series && SeriesExp.test(Text)){
+        console.log(Series, SeriesExp)
+        //console.log(Text.match(SeriesExp))
+        TitleLastTmp = Text.match(SeriesExp) ? Text.match(SeriesExp).pop() : ''
+    }
+    else if(/朝までハシゴ酒/.test(Text)){
+        TitleLastTmp = Text.match(/朝までハシゴ酒.*/)[0]
+    }
+    else if(/\d+/.test(ArrayDB[ArrayDB.length -1])){
+        console.log(ArrayDB[ArrayDB.length -1])
+        if(/ファイル\d+/.test(ArrayDB[ArrayDB.length -1])){
+            TitleLastTmp = ArrayDB[ArrayDB.length - 2] + ' ' + ArrayDB[ArrayDB.length - 1]
+            console.log('1st Match:' , TitleLastTmp)
+        }
+        else if(JapaneseChar.test(ArrayDB[ArrayDB.length -1])){
+            TitleLastTmp = ArrayDB[ArrayDB.length -1]
+            console.log('2nd Match:' , TitleLastTmp)
+        }
+        else if(byteLengthOfCheck(ArrayDB[ArrayDB.length -1]) < 100) {
+            TitleLastTmp = ArrayDB[ArrayDB.length - 2] + ' ' + ArrayDB[ArrayDB.length - 1]
+            console.log('3th Match:' , TitleLastTmp)
+        }
+    }
+    console.log('TitleLastTmp: ', TitleLastTmp, /\d+/.test(ArrayDB[ArrayDB.length -1]), byteLengthOfCheck(TitleLastTmp))
+    if(typeof TitleLastTmp == 'undefined' || !TitleLastTmp || TitleLastTmp.length === 0 || TitleLastTmp === "" || !/[^\s]/.test(TitleLastTmp) || /^\s*$/.test(TitleLastTmp) || TitleLastTmp.replace(/\s/g,"") === ""){
+        return byteCheck
+    }
+    else if(TitleLastTmp.match(/\d+/)){
+        if(SearchChar(TitleLastTmp, '】')){
+            SearchCharPoint = Text.lastIndexOf("【")
+            TitleLastTmp = Text.substring(SearchCharPoint)
+            console.log('TitleLastTmp: ', TitleLastTmp)
+        }
+        else if(SearchChar(TitleLastTmp, '、') && TitleLastTmp.length <= 10 ){
+            SearchCharPoint = TitleLastTmp.lastIndexOf("、")
+            TitleLastTmp = TitleLastTmp.substring(SearchCharPoint + 1)
+            console.log('TitleLastTmp: ', TitleLastTmp)
+        }
+        byteCheck = TitleLastTmp
+        console.log('byteCheck: ', byteCheck)
+        let FlagPoint = getFlag(byteCheck)
+        if (byteLengthOfCheck(byteCheck) >= 100){
+            console.log('CheckFlag: ', byteCheck, byteLengthOfCheck(byteCheck))
+            let byteCheckTmp = byteCheck.substring(FlagPoint[0])
+            if(!JapaneseChar.test(byteCheckTmp)){
+                byteCheckTmp = byteCheck.substring(FlagPoint[1])
+            }
+            if(byteLengthOfCheck(byteCheckTmp) > 250 - byteLengthOfCheck(ID)){
+                byteCheckTmp = ''
+            }
+            byteCheck = byteCheckTmp
+        }
+        if(!/\d+|【.*】$/.test(byteCheck)){
+            byteCheck = ''
+        }
+        console.log('TitleLast: ' , byteCheck)
+    }
+    return byteCheck
+}
+
+function SearchChar(Text, Char){
+    let result = ''
+    let SearchEx = new RegExp(Char, 'g')
+    if(Text.match(SearchEx)){
+        return Text.match(SearchEx).reverse()[0]
+    }
+    else return result
+}
+function getFlag(Text) {
+    let Point = []
+    let LastPoint = Text.length - 1
+    for (let j = LastPoint; j > 0; j--) {
+        let Code = Text.charCodeAt(j)
+        if(Code > 65280 && Code < 65375 && Code != 65306){
+            console.log(j, Code, String.fromCodePoint(Code))
+            Point.push(j+1)
+        }
+    }
+    return Point
+}
+
+
+function getNodeText(nodeWithText) {
+    var textNode = $(nodeWithText).contents().filter(function () {
+        return this.nodeType == Node.TEXT_NODE;
+    })[0];
+    var range = document.createRange();
+    range.selectNode(textNode);
+    return {
+        top: range.getBoundingClientRect().top,
+        width: range.getBoundingClientRect().width,
+        left: range.getBoundingClientRect().left,
+        height: range.getBoundingClientRect().height
+    }
+}
+
+//첫글자 대문자
+function nameCorrection(str) {
+    let strPerfect = str.replace(/\s+/g, " ").trim();
+    let strSmall = strPerfect.toLowerCase();
+    let arrSmall = strSmall.split(" ");
+    let arrCapital = [];
+    for (let x of arrSmall.values()) {
+        arrCapital.push(x[0].toUpperCase() + x.slice(1));
+    }
+
+    return arrCapital.join(" ");
+}
+
+function capitalize(str) {
+    console.log('capitalize: ', str)
+    let result = str[0].toUpperCase();
+
+    for(let i = 1; i < str.length; i++) {
+        if(str[i - 1] === ' ') {
+            result += str[i].toUpperCase();
+        } else {
+            result += str[i];
+        }
+    }
+
+    return result;
+}
+
+//파일명 사용불가 문자 전각문자로 변환
+function FilenameConvert(text) {
+    var result = text.replace(ExcludeChar, function (elem) {
+        return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
+    });
+    return result
+}
+
+
+/**
+ * 해당 함수는
+ * php의 mb_convert_kana의 Javascript 버전이다.
+ * 히라가나는 반각이 없음.
+ */
+
+function mbConvertKana(text, option) {
+    var katahan, kanazen, hirazen, mojilength, i, re;
+    katahan = ["ｶﾞ", "ｷﾞ", "ｸﾞ", "ｹﾞ", "ｺﾞ", "ｻﾞ", "ｼﾞ", "ｽﾞ", "ｾﾞ", "ｿﾞ", "ﾀﾞ", "ﾁﾞ", "ﾂﾞ", "ﾃﾞ", "ﾄﾞ", "ﾊﾞ", "ﾊﾟ", "ﾋﾞ", "ﾋﾟ", "ﾌﾞ", "ﾌﾟ", "ﾍﾞ", "ﾍﾟ", "ﾎﾞ", "ﾎﾟ", "ｳﾞ", "ｰ", "ｧ", "ｱ", "ｨ", "ｲ", "ｩ", "ｳ", "ｪ", "ｴ", "ｫ", "ｵ", "ｶ", "ｷ", "ｸ", "ｹ", "ｺ", "ｻ", "ｼ", "ｽ", "ｾ", "ｿ", "ﾀ", "ﾁ", "ｯ", "ﾂ", "ﾃ", "ﾄ", "ﾅ", "ﾆ", "ﾇ", "ﾈ", "ﾉ", "ﾊ", "ﾋ", "ﾌ", "ﾍ", "ﾎ", "ﾏ", "ﾐ", "ﾑ", "ﾒ", "ﾓ", "ｬ", "ﾔ", "ｭ", "ﾕ", "ｮ", "ﾖ", "ﾗ", "ﾘ", "ﾙ", "ﾚ", "ﾛ", "ﾜ", "ｦ", "ﾝ", "ｶ", "ｹ", "ﾜ", "ｲ", "ｴ", "ﾞ", "ﾟ"];
+    kanazen = ["ガ", "ギ", "グ", "ゲ", "ゴ", "ザ", "ジ", "ズ", "ゼ", "ゾ", "ダ", "ヂ", "ヅ", "デ", "ド", "バ", "パ", "ビ", "ピ", "ブ", "プ", "ベ", "ペ", "ボ", "ポ", "ヴ", "ー", "ァ", "ア", "ィ", "イ", "ゥ", "ウ", "ェ", "エ", "ォ", "オ", "カ", "キ", "ク", "ケ", "コ", "サ", "シ", "ス", "セ", "ソ", "タ", "チ", "ッ", "ツ", "テ", "ト", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "ヒ", "フ", "ヘ", "ホ", "マ", "ミ", "ム", "メ", "モ", "ャ", "ヤ", "ュ", "ユ", "ョ", "ヨ", "ラ", "リ", "ル", "レ", "ロ", "ワ", "ヲ", "ン", "ヵ", "ヶ", "ヮ", "ヰ", "ヱ", "゛", "゜"];
+    hirazen = ["が", "ぎ", "ぐ", "げ", "ご", "ざ", "じ", "ず", "ぜ", "ぞ", "だ", "ぢ", "づ", "で", "ど", "ば", "ぱ", "び", "ぴ", "ぶ", "ぷ", "べ", "ぺ", "ぼ", "ぽ", "ヴ", "ー", "ぁ", "あ", "ぃ", "い", "ぅ", "う", "ぇ", "え", "ぉ", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "っ", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "ゃ", "や", "ゅ", "ゆ", "ょ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん", "か", "け", "ゎ", "ゐ", "ゑ", "゛", "゜"];
+    mojilength = katahan.length;
+    // r: 전각문자를 반각으로 변환
+    // a: 전각영문자를 반각으로 변환
+    if (option.match(/[ra]/)) {
+        text = text.replace(/[Ａ-ｚ]/g, function (elem) {
+            return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
+        });
+    }
+    // R: 반각문자를 전각으로 변환
+    // A: 반각영문자를 전각으로 변환
+    if (option.match(/[RA]/)) {
+        text = text.replace(/[A-z]/g, function (elem) {
+            return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
+        });
+    }
+    // n: 전각숫자를 반각으로 변환
+    // a: 전각 영숫자를 반각으로 변환
+    if (option.match(/[na]/)) {
+        text = text.replace(/[０-９]/g, function (elem) {
+            return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
+        });
+    }
+    // N: 반각숫자를 전각으로 변환
+    // A: 반각영숫자를 전각으로 변환
+    if (option.match(/[NA]/)) {
+        text = text.replace(/[0-9]/g, function (elem) {
+            return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
+        });
+    }
+    // s: 전각스페이스를 반각으로 변환
+    if (option.match(/s/)) {
+        text = text.replace(/　/g, " ");
+    }
+    // S: 반각스페이스를 전각으로 변환
+    if (option.match(/S/)) {
+        text = text.replace(/ /g, "　");
+    }
+    // k: 전각카타카나를 반각 카타카타로 변환
+    if (option.match(/k/)) {
+        for (i = 0; i < mojilength; i++) {
+            re = new RegExp(kanazen[i], "g");
+            text = text.replace(re, katahan[i]);
+        }
+    }
+    // K: 반각카타카타를 전각카타카타로 변환
+    // V: 탁점사용중인 문자를 글자로 변환
+    if (option.match(/K/)) {
+        if (!option.match(/V/)) {
+            text = text.replace(/ﾞ/g, "゛");
+            text = text.replace(/ﾟ/g, "゜");
+        }
+        for (i = 0; i < mojilength; i++) {
+            re = new RegExp(katahan[i], "g");
+            text = text.replace(re, kanazen[i]);
+        }
+    }
+    // h: 전각히라가나를 반각카타카나로 변환
+    if (option.match(/h/)) {
+        for (i = 0; i < mojilength; i++) {
+            re = new RegExp(hirazen[i], "g");
+            text = text.replace(re, katahan[i]);
+        }
+    }
+    // H: 반각카타카나를 전각히라가라로 변환
+    // V: 탁점사용중인 문자를 글자로 변환
+    if (option.match(/H/)) {
+        if (!option.match(/V/)) {
+            text = text.replace(/ﾞ/g, "゛");
+            text = text.replace(/ﾟ/g, "゜");
+        }
+        for (i = 0; i < mojilength; i++) {
+            re = new RegExp(katahan[i], "g");
+            text = text.replace(re, hirazen[i]);
+        }
+    }
+    // c: 전각카타카나를 전각히라가나로 변환
+    if(option.match(/c/)) {
+        for(i = 0; i < mojilength; i++) {
+            re = new RegExp(kanazen[i], "g");
+            text = text.replace(re, hirazen[i]);
+        }
+    }
+    // C: 전각히라가나를 전각카타카나로 변환
+    if (option.match(/C/)) {
+        for(i = 0; i < mojilength; i++) {
+            re = new RegExp(hirazen[i], "g");
+            text = text.replace(re, kanazen[i]);
+        }
+    }
+    return text;
+}
+
+
+
+
