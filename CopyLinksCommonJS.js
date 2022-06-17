@@ -21,8 +21,8 @@ function getZIndex(el) {
 };
 
 
-function getPosition(element) {
-    var rect = element.getBoundingClientRect();
+function getPosition(Selector) {
+    var rect = document.querySelector(Selector).getBoundingClientRect()
     return {
         x: rect.left,
         y: rect.top
