@@ -1,3 +1,5 @@
+const ExcludeChar = /[<\/:>*?"|\\]/g
+
 function MaxZIndexFromPoint(selector) {
     //console.log(selector, getAllElementsFromPoint(document.querySelector(selector)) + 1)
     return getAllElementsFromPoint(document.querySelector(selector))
@@ -14,7 +16,7 @@ function getMaxZIndex() {
 
 function getZIndex(el) {
     if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
-        var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
+        let z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
         if (isNaN(z)) return getZIndex(el.parentNode);
     }
     return z;
@@ -22,7 +24,7 @@ function getZIndex(el) {
 
 
 function getPosition(element) {
-    var rect = element.getBoundingClientRect()
+    let rect = element.getBoundingClientRect()
     return {
         x: rect.x,
         y: rect.y
@@ -30,10 +32,10 @@ function getPosition(element) {
 }
 
 function getAllElementsFromPoint(el) {
-    var elements = [];
-    var display = [];
-    var zIndex= []
-    var item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
+    let elements = [];
+    let display = [];
+    let zIndex= []
+    let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
     while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
         elements.push(item);
         display.push(item.style.display)
@@ -45,14 +47,14 @@ function getAllElementsFromPoint(el) {
         item = document.elementFromPoint(getPosition(el).x, getPosition(el).y);
     }
     // restore display property
-    for (var i = 0; i < elements.length; i++) {
+    for (let i = 0; i < elements.length; i++) {
         elements[i].style.display = display[i];
     }
     return Math.max(...zIndex, 1);
 }
 
 function getElementOffset(el) {
-    var rect = el.getBoundingClientRect()    
+    let rect = el.getBoundingClientRect()    
     return {
         top: rect.top,
         bottom: rect.bottom,
@@ -268,10 +270,10 @@ function getFlag(Text) {
 
 //ingnore childNodes Text
 function ingnoreChildNodesText(element) {
-  var childNodes = element.childNodes;
+  let childNodes = element.childNodes;
   result = '';
 
-  for (var i = 0; i < childNodes.length; i++) {
+  for (let i = 0; i < childNodes.length; i++) {
     if(childNodes[i].nodeType == 3) {
       result += childNodes[i].data;
     }
@@ -282,10 +284,10 @@ function ingnoreChildNodesText(element) {
 
 // innerText except A tag
 function getDirectInnerText(element) {
-    var childNodes = element.childNodes;
-    var result = ''
+    let childNodes = element.childNodes;
+    let result = ''
 
-    for (var i = 0; i < childNodes.length; i++) {
+    for (let i = 0; i < childNodes.length; i++) {
         //console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
         if(childNodes[i]. tagName === 'A' || childNodes[i].nodeType == 3) {
             result += childNodes[i].data ? childNodes[i].data : childNodes[i].textContent;
@@ -297,12 +299,12 @@ function getDirectInnerText(element) {
 
 
 function getNodeText(nodeWithText) {
-    var textNode = $(nodeWithText).contents().filter(function () {
+    let textNode = nodeWithText.contents().filter(function () {
         return this.nodeType == Node.TEXT_NODE;
     })[0];
-    var range = document.createRange();
+    let range = document.createRange();
     range.selectNode(textNode);
-    var rect = range.getBoundingClientRect() 
+    let rect = range.getBoundingClientRect() 
     return {
         top: rect.top,
         bottom: rect.bottom,
@@ -343,7 +345,7 @@ function capitalize(str) {
 
 //파일명 사용불가 문자 전각문자로 변환
 function FilenameConvert(text) {
-    var result = text.replace(ExcludeChar, function (elem) {
+    let result = text.replace(ExcludeChar, function (elem) {
         return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
     });
     return result
@@ -372,7 +374,7 @@ function getNumericMonth(monthAbbr) {
  */
 
 function mbConvertKana(text, option) {
-    var katahan, kanazen, hirazen, mojilength, i, re;
+    let katahan, kanazen, hirazen, mojilength, i, re;
     katahan = ["ｶﾞ", "ｷﾞ", "ｸﾞ", "ｹﾞ", "ｺﾞ", "ｻﾞ", "ｼﾞ", "ｽﾞ", "ｾﾞ", "ｿﾞ", "ﾀﾞ", "ﾁﾞ", "ﾂﾞ", "ﾃﾞ", "ﾄﾞ", "ﾊﾞ", "ﾊﾟ", "ﾋﾞ", "ﾋﾟ", "ﾌﾞ", "ﾌﾟ", "ﾍﾞ", "ﾍﾟ", "ﾎﾞ", "ﾎﾟ", "ｳﾞ", "ｰ", "ｧ", "ｱ", "ｨ", "ｲ", "ｩ", "ｳ", "ｪ", "ｴ", "ｫ", "ｵ", "ｶ", "ｷ", "ｸ", "ｹ", "ｺ", "ｻ", "ｼ", "ｽ", "ｾ", "ｿ", "ﾀ", "ﾁ", "ｯ", "ﾂ", "ﾃ", "ﾄ", "ﾅ", "ﾆ", "ﾇ", "ﾈ", "ﾉ", "ﾊ", "ﾋ", "ﾌ", "ﾍ", "ﾎ", "ﾏ", "ﾐ", "ﾑ", "ﾒ", "ﾓ", "ｬ", "ﾔ", "ｭ", "ﾕ", "ｮ", "ﾖ", "ﾗ", "ﾘ", "ﾙ", "ﾚ", "ﾛ", "ﾜ", "ｦ", "ﾝ", "ｶ", "ｹ", "ﾜ", "ｲ", "ｴ", "ﾞ", "ﾟ"];
     kanazen = ["ガ", "ギ", "グ", "ゲ", "ゴ", "ザ", "ジ", "ズ", "ゼ", "ゾ", "ダ", "ヂ", "ヅ", "デ", "ド", "バ", "パ", "ビ", "ピ", "ブ", "プ", "ベ", "ペ", "ボ", "ポ", "ヴ", "ー", "ァ", "ア", "ィ", "イ", "ゥ", "ウ", "ェ", "エ", "ォ", "オ", "カ", "キ", "ク", "ケ", "コ", "サ", "シ", "ス", "セ", "ソ", "タ", "チ", "ッ", "ツ", "テ", "ト", "ナ", "ニ", "ヌ", "ネ", "ノ", "ハ", "ヒ", "フ", "ヘ", "ホ", "マ", "ミ", "ム", "メ", "モ", "ャ", "ヤ", "ュ", "ユ", "ョ", "ヨ", "ラ", "リ", "ル", "レ", "ロ", "ワ", "ヲ", "ン", "ヵ", "ヶ", "ヮ", "ヰ", "ヱ", "゛", "゜"];
     hirazen = ["が", "ぎ", "ぐ", "げ", "ご", "ざ", "じ", "ず", "ぜ", "ぞ", "だ", "ぢ", "づ", "で", "ど", "ば", "ぱ", "び", "ぴ", "ぶ", "ぷ", "べ", "ぺ", "ぼ", "ぽ", "ヴ", "ー", "ぁ", "あ", "ぃ", "い", "ぅ", "う", "ぇ", "え", "ぉ", "お", "か", "き", "く", "け", "こ", "さ", "し", "す", "せ", "そ", "た", "ち", "っ", "つ", "て", "と", "な", "に", "ぬ", "ね", "の", "は", "ひ", "ふ", "へ", "ほ", "ま", "み", "む", "め", "も", "ゃ", "や", "ゅ", "ゆ", "ょ", "よ", "ら", "り", "る", "れ", "ろ", "わ", "を", "ん", "か", "け", "ゎ", "ゐ", "ゑ", "゛", "゜"];
