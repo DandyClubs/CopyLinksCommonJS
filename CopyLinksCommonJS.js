@@ -266,7 +266,21 @@ function getFlag(Text) {
 }
 
 
-// ingnore childNodes innerText
+//ingnore childNodes Text
+function ingnoreChildNodesText(element) {
+  var childNodes = element.childNodes;
+  result = '';
+
+  for (var i = 0; i < childNodes.length; i++) {
+    if(childNodes[i].nodeType == 3) {
+      result += childNodes[i].data;
+    }
+  }
+
+  return result;
+}
+
+// innerText except A tag
 function getDirectInnerText(element) {
     var childNodes = element.childNodes;
     var result = ''
