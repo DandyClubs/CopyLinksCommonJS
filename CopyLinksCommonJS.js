@@ -299,7 +299,7 @@ function getDirectInnerText(element) {
 
 
 function getNodeText(nodeWithText) {
-    let textNode = nodeWithText.contents().filter(function () {
+    let textNode = Object.values(nodeWithText).contents().filter(function () {
         return this.nodeType == Node.TEXT_NODE;
     })[0];
     let range = document.createRange();
