@@ -22,7 +22,7 @@ function getZIndex(el) {
 
 
 function getPosition(element) {
-    var rect = element.getBoundingClientRect();
+    var rect = element.getBoundingClientRect()
     return {
         x: rect.left,
         y: rect.top
