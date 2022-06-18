@@ -33,16 +33,14 @@ function getPosition(element) {
 }
 
 function getAllElementsFromPoint(el) {
-    let elements = [];
-    let display = [];
+    let elements = []    
     let zIndex= []
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
-    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {
-        console.log(item)
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {        
         elements.push(item);        
         if(!isNaN(getZIndex(item))){
             let zI = getZIndex(item)
-            console.log(zI)
+            console.log(item, zI)
             zIndex.push(zI)
         }
         item.style.visibility = 'hidden'
