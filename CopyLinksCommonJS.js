@@ -40,7 +40,7 @@ function getAllElementsFromPoint(el) {
     while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
         console.log(item)
         elements.push(item);
-        display.push(item.style.display)
+        item.style.visibility = 'hidden'
         if(!isNaN(getZIndex(item))){
             let zI = getZIndex(item)
             console.log(zI)
@@ -51,7 +51,7 @@ function getAllElementsFromPoint(el) {
     }
     // restore display property
     for (let i = 0; i < elements.length; i++) {
-        elements[i].style.display = display[i];
+        elements[i].style.visibility = 'visible'
     }
     return Math.max(...zIndex, 1);
 }
