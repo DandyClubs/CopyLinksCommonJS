@@ -16,7 +16,7 @@ function getMaxZIndex() {
 
 function getZIndex(el) {    
     if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
-        var z = window.document.defaultView.getComputedStyle(el, null).getPropertyValue('z-index');
+        var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
         if (isNaN(z)) return getZIndex(el.parentNode);
     }
     return z;
@@ -32,22 +32,25 @@ function getPosition(element) {
 }
 
 function getAllElementsFromPoint(el) {
-    let elements = []    
+    let elements = [];
+    let display = [];
     let zIndex= []
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
-    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {        
-        elements.push(item);        
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
+        console.log(item)
+        elements.push(item);
+        display.push(item.style.display)
         if(!isNaN(getZIndex(item))){
             let zI = getZIndex(item)
-            console.log(item, zI)
+            console.log(zI)
             zIndex.push(zI)
         }
-        item.style.visibility = 'hidden'
+        item.style.display = "none";
         item = document.elementFromPoint(getPosition(el).x, getPosition(el).y);
     }
     // restore display property
     for (let i = 0; i < elements.length; i++) {
-        elements[i].style.visibility = 'visible'
+        elements[i].style.display = display[i];
     }
     return Math.max(...zIndex, 1);
 }
