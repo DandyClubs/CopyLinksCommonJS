@@ -15,12 +15,12 @@ function getMaxZIndex() {
 }
 
 function getZIndex(el) {
-    let z = 0
+    let z = ''
     if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
         z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
         if (isNaN(z)) return getZIndex(el.parentNode);
     }
-    return z;
+    return z ? z : 0;
 };
 
 
