@@ -16,7 +16,7 @@ function getMaxZIndex() {
 
 function getZIndex(el) {    
     if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
-        var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
+        var z = window.document.defaultView.getComputedStyle(el, null).getPropertyValue('z-index');
         if (isNaN(z)) return getZIndex(el.parentNode);
     }
     return z;
