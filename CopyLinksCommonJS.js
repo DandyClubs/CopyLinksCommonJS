@@ -37,7 +37,7 @@ function getAllElementsFromPoint(el) {
     let display = [];
     let zIndex= []
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
-    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
+    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {
         console.log(item)
         elements.push(item);
         item.style.visibility = 'hidden'
