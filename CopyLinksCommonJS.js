@@ -39,14 +39,13 @@ function getAllElementsFromPoint(el) {
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
     while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement) {
         console.log(item)
-        elements.push(item);
-        item.style.visibility = 'hidden'
+        elements.push(item);        
         if(!isNaN(getZIndex(item))){
             let zI = getZIndex(item)
             console.log(zI)
             zIndex.push(zI)
         }
-        item.style.display = "none";
+        item.style.visibility = 'hidden'
         item = document.elementFromPoint(getPosition(el).x, getPosition(el).y);
     }
     // restore display property
