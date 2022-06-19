@@ -99,6 +99,11 @@ function getDefaultFontSize() {
 }
 
 
+function GetBackGroundUrl(Area, Selector) {
+    let imgURL = Area.querySelector(selector).style.background    
+    return imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
+}
+
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
     //console.log(Area, regex, attributeToSearch)
