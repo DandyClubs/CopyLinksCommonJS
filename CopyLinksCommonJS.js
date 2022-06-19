@@ -1,6 +1,3 @@
-const ExcludeChar = /[<\/:>*?"|\\]/g
-
-
 function updateClipboard(CopyData) {
     try {
         navigator.clipboard.writeText(CopyData).then(function() {
@@ -364,6 +361,7 @@ function capitalize(str) {
 
 //파일명 사용불가 문자 전각문자로 변환
 function FilenameConvert(text) {
+    const ExcludeChar = /[<\/:>*?"|\\]/g
     let result = text.replace(ExcludeChar, function(elem) {
         return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
     });
