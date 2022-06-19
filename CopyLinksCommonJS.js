@@ -98,12 +98,6 @@ function getDefaultFontSize() {
     return !isNaN(result) ? result : null;
 }
 
-//백그라운드 이미지 가져오기
-function GetBackGroundUrl(Area, Selector) {
-    let imgURL = Area.querySelector(selector).style.background    
-    return imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
-}
-
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
     //console.log(Area, regex, attributeToSearch)
