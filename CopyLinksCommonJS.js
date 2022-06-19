@@ -1,5 +1,18 @@
 const ExcludeChar = /[<\/:>*?"|\\]/g
 
+
+function updateClipboard(CopyData) {
+    try {
+        navigator.clipboard.writeText(CopyData).then(function() {
+            console.log('navigator.clipboard - Copying to clipboard was successful!')
+        })
+    }
+    catch {
+        GM_setClipboard(CopyData)
+        console.log('GM_setClipboard - Copying to clipboard was successful!')
+    }
+}
+
 function MaxZIndexFromPoint(selector) {
     //console.log(selector, getAllElementsFromPoint(document.querySelector(selector)) + 1)
     return getAllElementsFromPoint(document.querySelector(selector))
