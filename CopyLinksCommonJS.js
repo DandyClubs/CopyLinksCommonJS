@@ -98,6 +98,15 @@ function getDefaultFontSize() {
     return !isNaN(result) ? result : null;
 }
 
+
+//백그라운드 이미지 가져오기
+function GetBackGroundUrl(Area) {
+    let BackGroundUrl = ''
+    let imgURL = window.document.defaultView.getComputedStyle(Area, null).getPropertyValue('background')
+    BackGroundUrl = imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
+    return BackGroundUrl
+}
+
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
     //console.log(Area, regex, attributeToSearch)
