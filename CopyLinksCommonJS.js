@@ -115,9 +115,14 @@ function getDefaultFontSize() {
 //백그라운드 이미지 가져오기
 function GetBackGroundUrl(Area) {
     let BackGroundUrl = ''
+    try {
     let imgURL = window.document.defaultView.getComputedStyle(Area, null).getPropertyValue('background')
     BackGroundUrl = imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
     return BackGroundUrl
+} catch (err){
+    console.log(err)
+}
+}
 }
 
 //Match
@@ -492,7 +497,3 @@ function mbConvertKana(text, option) {
     }
     return text;
 }
-
-
-
-
