@@ -6,8 +6,7 @@ function updateClipboard(CopyData) {
         navigator.clipboard.writeText(CopyData).then(function() {
             console.log('navigator.clipboard - Copying to clipboard was successful!')
         })
-    }
-    catch {
+    } catch {
         GM_setClipboard(CopyData)
         console.log('GM_setClipboard - Copying to clipboard was successful!')
     }
@@ -21,20 +20,19 @@ function MaxZIndexFromPoint(selector) {
 function getMaxZIndex() {
     return Math.max(
         ...Array.from(document.querySelectorAll('body *'), el =>
-                      parseFloat(window.getComputedStyle(el).zIndex),
-                     ).filter(zIndex => !Number.isNaN(zIndex)),
+            parseFloat(window.getComputedStyle(el).zIndex),
+        ).filter(zIndex => !Number.isNaN(zIndex)),
         1,
     );
 }
 
-function getZIndex(el) {    
-    if(el && el !== document.body && el !== window && el !== document && el !== document.documentElement){
+function getZIndex(el) {
+    if (el && el !== document.body && el !== window && el !== document && el !== document.documentElement) {
         var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
         if (isNaN(z)) return getZIndex(el.parentNode);
     }
     return z;
 };
-
 
 function getPosition(element) {
     let rect = element.getBoundingClientRect()
@@ -47,13 +45,13 @@ function getPosition(element) {
 function getAllElementsFromPoint(el) {
     let elements = [];
     let display = [];
-    let zIndex= []
+    let zIndex = []
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
     while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
         console.log(item)
         elements.push(item);
         display.push(item.style.display)
-        if(!isNaN(getZIndex(item))){
+        if (!isNaN(getZIndex(item))) {
             let zI = getZIndex(item)
             console.log(zI)
             zIndex.push(zI)
@@ -69,7 +67,7 @@ function getAllElementsFromPoint(el) {
 }
 
 function getElementOffset(el) {
-    let rect = el.getBoundingClientRect()    
+    let rect = el.getBoundingClientRect()
     return {
         top: rect.top,
         bottom: rect.bottom,
@@ -80,11 +78,10 @@ function getElementOffset(el) {
     };
 }
 
-
-function getRelativeOffset(el) {    
+function getRelativeOffset(el) {
     return {
-        top: el.offsetTop,        
-        left: el.offsetLeft,        
+        top: el.offsetTop,
+        left: el.offsetLeft,
         width: el.offsetWidth,
         height: el.offsetHeight
     };
@@ -97,9 +94,9 @@ function getDefaultFontSize() {
     document.body.append(element);
 
     const widthMatch = window
-    .getComputedStyle(element)
-    .getPropertyValue('width')
-    .match(/\d+/);
+        .getComputedStyle(element)
+        .getPropertyValue('width')
+        .match(/\d+/);
 
     element.remove();
 
@@ -110,6 +107,7 @@ function getDefaultFontSize() {
     const result = Number(widthMatch[0]);
     return !isNaN(result) ? result : null;
 }
+
 //백그라운드 이미지 가져오기
 function GetBackGroundUrl(Area) {
     let BackGroundUrl = ''
@@ -121,7 +119,6 @@ function GetBackGroundUrl(Area) {
         console.log(err)
     }
 }
-
 
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
@@ -200,38 +197,37 @@ function querySelectorAllRegex(Area, regex, attributeToSearch) {
     return output;
 }
 
-
-function byteLengthOf(TitleText, maxByte){
+function byteLengthOf(TitleText, maxByte) {
     //assuming the String is UCS-2(aka UTF-16) encoded
     let Result
     let CharByte = 0
     let LineByte = 0
-    for(var i=0,l=TitleText.length; i<l; i++){
-        var Code=TitleText.charCodeAt(i);
-        if(Code < 0x0080){ //[0x0000, 0x007F]
+    for (var i = 0, l = TitleText.length; i < l; i++) {
+        var Code = TitleText.charCodeAt(i);
+        if (Code < 0x0080) { //[0x0000, 0x007F]
             CharByte = 1
-            LineByte+=1;
-        }else if(Code < 0x0800){ //[0x0080, 0x07FF]
-            CharByte =2
-            LineByte+=2;
-        }else if(Code < 0xD800){ //[0x0800, 0xD7FF]
+            LineByte += 1;
+        } else if (Code < 0x0800) { //[0x0080, 0x07FF]
+            CharByte = 2
+            LineByte += 2;
+        } else if (Code < 0xD800) { //[0x0800, 0xD7FF]
             CharByte = 3
-            LineByte+=3;
-        }else if(Code < 0xDC00){ //[0xD800, 0xDBFF]
-            var lo=TitleText.charCodeAt(++i);
-            if(i<l&&lo>=0xDC00&&lo<=0xDFFF){ //followed by [0xDC00, 0xDFFF]
+            LineByte += 3;
+        } else if (Code < 0xDC00) { //[0xD800, 0xDBFF]
+            var lo = TitleText.charCodeAt(++i);
+            if (i < l && lo >= 0xDC00 && lo <= 0xDFFF) { //followed by [0xDC00, 0xDFFF]
                 CharByte = 4
-                LineByte+=4;
-            }else{
+                LineByte += 4;
+            } else {
                 CharByte = 0
                 throw new Error("UCS-2 String malformed");
             }
-        }else if(Code < 0xE000){ //[0xDC00, 0xDFFF]
+        } else if (Code < 0xE000) { //[0xDC00, 0xDFFF]
             CharByte = 0
             throw new Error("UCS-2 String malformed");
-        }else{ //[0xE000, 0xFFFF]
+        } else { //[0xE000, 0xFFFF]
             CharByte = 3
-            LineByte+=3;
+            LineByte += 3;
         }
         //console.log(TitleText[i], CharByte, LineByte)
         if (LineByte >= maxByte) {
@@ -243,69 +239,67 @@ function byteLengthOf(TitleText, maxByte){
     return Result ? Result.trim() : TitleText
 }
 
-
-function byteLengthOfCheck(TitleText){
-    if(typeof TitleText === 'undefined'){return 0}
+function byteLengthOfCheck(TitleText) {
+    if (typeof TitleText === 'undefined') { return 0 }
     //assuming the String is UCS-2(aka UTF-16) encoded
     let LineByte = 0
-    for(var i=0,l=TitleText.length; i<l; i++){
-        var Code=TitleText.charCodeAt(i);
-        if(Code < 0x0080){ //[0x0000, 0x007F]
-            LineByte+=1;
-        }else if(Code < 0x0800){ //[0x0080, 0x07FF]
-            LineByte+=2;
-        }else if(Code < 0xD800){ //[0x0800, 0xD7FF]
-            LineByte+=3;
-        }else if(Code < 0xDC00){ //[0xD800, 0xDBFF]
-            var lo=TitleText.charCodeAt(++i);
-            if(i<l&&lo>=0xDC00&&lo<=0xDFFF){ //followed by [0xDC00, 0xDFFF]
-                LineByte+=4;
-            }else{
+    for (var i = 0, l = TitleText.length; i < l; i++) {
+        var Code = TitleText.charCodeAt(i);
+        if (Code < 0x0080) { //[0x0000, 0x007F]
+            LineByte += 1;
+        } else if (Code < 0x0800) { //[0x0080, 0x07FF]
+            LineByte += 2;
+        } else if (Code < 0xD800) { //[0x0800, 0xD7FF]
+            LineByte += 3;
+        } else if (Code < 0xDC00) { //[0xD800, 0xDBFF]
+            var lo = TitleText.charCodeAt(++i);
+            if (i < l && lo >= 0xDC00 && lo <= 0xDFFF) { //followed by [0xDC00, 0xDFFF]
+                LineByte += 4;
+            } else {
                 throw new Error("UCS-2 String malformed");
             }
-        }else if(Code < 0xE000){ //[0xDC00, 0xDFFF]
+        } else if (Code < 0xE000) { //[0xDC00, 0xDFFF]
             throw new Error("UCS-2 String malformed");
-        }else{ //[0xE000, 0xFFFF]
-            LineByte+=3;
+        } else { //[0xE000, 0xFFFF]
+            LineByte += 3;
         }
     }
     return LineByte
 }
 
-function SearchChar(Text, Char){
+function SearchChar(Text, Char) {
     let result = ''
     let SearchEx = new RegExp(Char, 'g')
-    if(Text.match(SearchEx)){
+    if (Text.match(SearchEx)) {
         return Text.match(SearchEx).reverse()[0]
-    }
-    else return result
+    } else return result
 }
+
 function getFlag(Text) {
     let Point = []
     let LastPoint = Text.length - 1
     for (let j = LastPoint; j > 0; j--) {
         let Code = Text.charCodeAt(j)
-        if(Code > 65280 && Code < 65375 && Code != 65306){
+        if (Code > 65280 && Code < 65375 && Code != 65306) {
             console.log(j, Code, String.fromCodePoint(Code))
-            Point.push(j+1)
+            Point.push(j + 1)
         }
     }
     return Point
 }
 
-
 //ingnore childNodes Text
 function ingnoreChildNodesText(element) {
-  let childNodes = element.childNodes;
-  result = '';
+    let childNodes = element.childNodes;
+    result = '';
 
-  for (let i = 0; i < childNodes.length; i++) {
-    if(childNodes[i].nodeType == 3) {
-      result += childNodes[i].data;
+    for (let i = 0; i < childNodes.length; i++) {
+        if (childNodes[i].nodeType == 3) {
+            result += childNodes[i].data;
+        }
     }
-  }
 
-  return result;
+    return result;
 }
 
 // innerText except A tag
@@ -315,7 +309,7 @@ function getDirectInnerText(element) {
 
     for (let i = 0; i < childNodes.length; i++) {
         //console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
-        if(childNodes[i]. tagName === 'A' || childNodes[i].nodeType == 3) {
+        if (childNodes[i].tagName === 'A' || childNodes[i].nodeType == 3) {
             result += childNodes[i].data ? childNodes[i].data : childNodes[i].textContent;
         }
     }
@@ -323,14 +317,13 @@ function getDirectInnerText(element) {
     return result;
 }
 
-
 function getNodeText(nodeWithText) {
-    let textNode = $(nodeWithText).contents().filter(function () {
+    let textNode = $(nodeWithText).contents().filter(function() {
         return this.nodeType == Node.TEXT_NODE;
     })[0];
     let range = document.createRange();
     range.selectNode(textNode);
-    let rect = range.getBoundingClientRect() 
+    let rect = range.getBoundingClientRect()
     return {
         top: rect.top,
         bottom: rect.bottom,
@@ -358,8 +351,8 @@ function capitalize(str) {
     //console.log('capitalize: ', str)
     let result = str[0].toUpperCase();
 
-    for(let i = 1; i < str.length; i++) {
-        if(str[i - 1] === ' ') {
+    for (let i = 1; i < str.length; i++) {
+        if (str[i - 1] === ' ') {
             result += str[i].toUpperCase();
         } else {
             result += str[i];
@@ -371,7 +364,7 @@ function capitalize(str) {
 
 //파일명 사용불가 문자 전각문자로 변환
 function FilenameConvert(text) {
-    let result = text.replace(ExcludeChar, function (elem) {
+    let result = text.replace(ExcludeChar, function(elem) {
         return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
     });
     return result
@@ -380,17 +373,18 @@ function FilenameConvert(text) {
 function getNumericMonth(monthAbbr) {
     monthAbbr = capitalize(monthAbbr)
     return (String(['January',
-                    'February',
-                    'March',
-                    'April',
-                    'May',
-                    'June',
-                    'July',
-                    'August',
-                    'September',
-                    'October',
-                    'November',
-                    'December'].indexOf(monthAbbr) + 1).padStart(2, '0'))
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ].indexOf(monthAbbr) + 1).padStart(2, '0'))
 }
 
 /**
@@ -408,28 +402,28 @@ function mbConvertKana(text, option) {
     // r: 전각문자를 반각으로 변환
     // a: 전각영문자를 반각으로 변환
     if (option.match(/[ra]/)) {
-        text = text.replace(/[Ａ-ｚ]/g, function (elem) {
+        text = text.replace(/[Ａ-ｚ]/g, function(elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
         });
     }
     // R: 반각문자를 전각으로 변환
     // A: 반각영문자를 전각으로 변환
     if (option.match(/[RA]/)) {
-        text = text.replace(/[A-z]/g, function (elem) {
+        text = text.replace(/[A-z]/g, function(elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
         });
     }
     // n: 전각숫자를 반각으로 변환
     // a: 전각 영숫자를 반각으로 변환
     if (option.match(/[na]/)) {
-        text = text.replace(/[０-９]/g, function (elem) {
+        text = text.replace(/[０-９]/g, function(elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
         });
     }
     // N: 반각숫자를 전각으로 변환
     // A: 반각영숫자를 전각으로 변환
     if (option.match(/[NA]/)) {
-        text = text.replace(/[0-9]/g, function (elem) {
+        text = text.replace(/[0-9]/g, function(elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
         });
     }
@@ -480,15 +474,15 @@ function mbConvertKana(text, option) {
         }
     }
     // c: 전각카타카나를 전각히라가나로 변환
-    if(option.match(/c/)) {
-        for(i = 0; i < mojilength; i++) {
+    if (option.match(/c/)) {
+        for (i = 0; i < mojilength; i++) {
             re = new RegExp(kanazen[i], "g");
             text = text.replace(re, hirazen[i]);
         }
     }
     // C: 전각히라가나를 전각카타카나로 변환
     if (option.match(/C/)) {
-        for(i = 0; i < mojilength; i++) {
+        for (i = 0; i < mojilength; i++) {
             re = new RegExp(hirazen[i], "g");
             text = text.replace(re, kanazen[i]);
         }
