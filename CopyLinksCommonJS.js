@@ -119,11 +119,11 @@ function GetBackGroundUrl(Area) {
     let imgURL = window.document.defaultView.getComputedStyle(Area, null).getPropertyValue('background')
     BackGroundUrl = imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
     return BackGroundUrl
-} catch (err){
+    } catch (err){
     console.log(err)
+    }
 }
-}
-}
+
 
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
