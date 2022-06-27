@@ -363,8 +363,8 @@ function capitalize(str) {
 function FilenameConvert(text) {
     const ExcludeChar = /[<\/:>*?"|\\]/g
     let result = text.replace(ExcludeChar, function(elem) {
-        return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
-    });
+        return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248)
+    })
     return result
 }
 
