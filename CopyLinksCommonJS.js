@@ -319,16 +319,28 @@ function getNodeText(nodeWithText) {
         return this.nodeType == Node.TEXT_NODE;
     })[0];
     let range = document.createRange();
-    range.selectNode(textNode);
-    let rect = range.getBoundingClientRect()
-    return {
-        top: rect.top,
-        bottom: rect.bottom,
-        left: rect.left,
-        right: rect.right,
-        width: rect.width,
-        height: rect.height,
-    }
+    try {
+        range.selectNode(textNode);
+        let rect = range.getBoundingClientRect()
+        return {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+        }    
+    } catch (error) {
+        console.error(error)
+        return {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+        }   
+    }    
 }
 
 //첫글자 대문자
