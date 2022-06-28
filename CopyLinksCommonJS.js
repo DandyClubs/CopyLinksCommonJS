@@ -85,7 +85,7 @@ function getRelativeOffset(el) {
 }
 
 function getNodeTextElementOffset(node) {
-    let textNode = getTextNodesIn(node, includeWhitespaceNodes)
+    let textNode = getTextNodesIn(node, false)
     let range = document.createRange();
     try {
         range.selectNode(textNode);
