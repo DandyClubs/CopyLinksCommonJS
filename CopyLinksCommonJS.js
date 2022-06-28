@@ -84,6 +84,52 @@ function getRelativeOffset(el) {
     };
 }
 
+function getNodeTextElementOffset(node) {
+    let textNode = getTextNodesIn(node, includeWhitespaceNodes)
+    let range = document.createRange();
+    try {
+        range.selectNode(textNode);
+        let rect = range.getBoundingClientRect()
+        return {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+        }    
+    } catch (error) {
+        console.error(error)
+        return {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+        }   
+    }    
+}
+
+function getTextNodesIn(node, includeWhitespaceNodes) {
+    var textNodes = [], nonWhitespaceMatcher = /\S/;
+
+    function getTextNodes(node) {
+        if (node.nodeType == Node.TEXT_NODE) {
+            if (includeWhitespaceNodes || nonWhitespaceMatcher.test(node.nodeValue)) {
+                textNodes.push(node);
+            }
+        } else {
+            for (var i = 0, len = node.childNodes.length; i < len; ++i) {
+                getTextNodes(node.childNodes[i]);
+            }
+        }
+    }
+
+    getTextNodes(node);
+    //console.log(textNodes, textNodes?.length)
+    return textNodes?.length ? textNodes.shift() : null;
+}
 function getDefaultFontSize() {
     const element = document.createElement('div');
     element.style.width = '1rem';
@@ -312,35 +358,6 @@ function getDirectInnerText(element) {
     }
 
     return result;
-}
-
-function getNodeText(nodeWithText) {
-    let textNode = $(nodeWithText).contents().filter(function() {
-        return this.nodeType == Node.TEXT_NODE;
-    })[0];
-    let range = document.createRange();
-    try {
-        range.selectNode(textNode);
-        let rect = range.getBoundingClientRect()
-        return {
-            top: rect.top,
-            bottom: rect.bottom,
-            left: rect.left,
-            right: rect.right,
-            width: rect.width,
-            height: rect.height,
-        }    
-    } catch (error) {
-        console.error(error)
-        return {
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: 0,
-            height: 0,
-        }   
-    }    
 }
 
 //첫글자 대문자
