@@ -45,7 +45,7 @@ function getAllElementsFromPoint(el) {
     let zIndex = []
     let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
     while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
-        console.log(item)
+        //console.log(item)
         elements.push(item);
         display.push(item.style.display)
         if (!isNaN(getZIndex(item))) {
