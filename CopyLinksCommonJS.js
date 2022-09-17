@@ -64,14 +64,14 @@ function getAllElementsFromPoint(el) {
 }
 
 function getElementOffset(el) {
-    let rect = getRelativeOffset(el)
+    let rect = el.getBoundingClientRect()
     return {
         top: rect.top,
-        bottom: rect.top + rect.height,
+        bottom: rect.bottom,
         left: rect.left,
-        right: rect.left + rect.width,
+        right: rect.right,
         width: rect.width,
-        height: rect.height,
+        height: rect.height
     };
 }
 
@@ -89,7 +89,15 @@ function getNodeTextElementOffset(node) {
     let range = document.createRange();
     try {
         range.selectNode(textNode);
-        return getElementOffset(el)   
+        let rect = range.getBoundingClientRect()
+        return {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+        }    
     } catch (error) {
         console.error(error)
         return {
