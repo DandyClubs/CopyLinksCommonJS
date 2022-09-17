@@ -71,16 +71,18 @@ function getElementOffset(el) {
         left: rect.left,
         right: rect.right,
         width: rect.width,
-        height: rect.height
+        height: rect.height,
     };
 }
 
 function getRelativeOffset(el) {
     return {
         top: el.offsetTop,
+        bottom: el.offsetTop + el.offsetHeight,
         left: el.offsetLeft,
+        right: el.offsetLeft + el.offsetWidth,
         width: el.offsetWidth,
-        height: el.offsetHeight
+        height: el.offsetHeight,
     };
 }
 
