@@ -93,12 +93,12 @@ function getNodeTextElementOffset(node) {
         range.selectNode(textNode);
         let rect = range.getBoundingClientRect()
         return {
-            top: el.offsetTop,
-            bottom: el.offsetTop + el.offsetHeight,
-            left: el.offsetLeft,
-            right: el.offsetLeft + el.offsetWidth,
-            width: el.offsetWidth,
-            height: el.offsetHeight,
+            top: rect.offsetTop,
+            bottom: rect.offsetTop + rect.offsetHeight,
+            left: rect.offsetLeft,
+            right: rect.offsetLeft + rect.offsetWidth,
+            width: rect.offsetWidth,
+            height: rect.offsetHeight,
         }    
     } catch (error) {
         console.error(error)
