@@ -49,8 +49,7 @@ function getAllElementsFromPoint(el) {
         elements.push(item);
         display.push(item.style.display)
         if (!isNaN(getZIndex(item))) {
-            let zI = getZIndex(item)
-            console.log(zI)
+            let zI = getZIndex(item)            
             zIndex.push(zI)
         }
         item.style.display = "none";
