@@ -375,7 +375,7 @@ function nameCorrection(str) {
 }
 
 function capitalize(str) {
-    //console.log('capitalize: ', str)
+    console.log('capitalize: ', str)
     let result = str[0].toUpperCase();
 
     for (let i = 1; i < str.length; i++) {
