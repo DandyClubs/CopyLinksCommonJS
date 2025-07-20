@@ -335,7 +335,7 @@ function getFlag(Text) {
 //ingnore childNodes Text
 function ingnoreChildNodesText(element) {
     let childNodes = element.childNodes;
-    result = '';
+    let result = '';
 
     for (let i = 0; i < childNodes.length; i++) {
         if (childNodes[i].nodeType == 3) {
