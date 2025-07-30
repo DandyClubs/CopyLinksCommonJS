@@ -131,16 +131,16 @@ function getTextNodesIn(node, includeWhitespaceNodes) {
     //console.log(textNodes, textNodes?.length)
     return textNodes?.length ? textNodes.shift() : null;
 }
-function getDefaultFontSize() {
+function getDefaultFontSize(){
     const element = document.createElement('div');
     element.style.width = '1rem';
     element.style.display = 'none';
     document.body.append(element);
 
     const widthMatch = window
-        .getComputedStyle(element)
-        .getPropertyValue('width')
-        .match(/\d+/);
+    .getComputedStyle(element)
+    .getPropertyValue('width')
+    .match(/\d+/);
 
     element.remove();
 
@@ -150,7 +150,7 @@ function getDefaultFontSize() {
 
     const result = Number(widthMatch[0]);
     return !isNaN(result) ? result : null;
-}
+};
 
 //백그라운드 이미지 가져오기
 function GetBackGroundUrl(Area) {
@@ -395,11 +395,14 @@ function capitalize(str) {
 
 //파일명 사용불가 문자 전각문자로 변환
 function FilenameConvert(text) {
-    const ExcludeChar = /[<\/:>*?"|\\]/g
-    let result = text.replace(ExcludeChar, function(elem) {
-        return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248)
-    })
-    return result
+    if (typeof text !== 'string') return '';
+
+    // Forbidden characters in filenames (Windows) → replace with fullwidth versions
+    const ExcludeChar = /[<>:"/\\|?*]/g;
+
+    return text.replace(ExcludeChar, char => 
+        String.fromCharCode(char.charCodeAt(0) + 65248)
+    );
 }
 
 function getNumericMonth(monthAbbr) {
