@@ -1,13 +1,17 @@
 function updateClipboard(CopyData) {
-    try {
-        navigator.clipboard.writeText(CopyData).then(function() {
-            console.log('navigator.clipboard - Copying to clipboard was successful!')
-        })
-    } catch {
-        GM_setClipboard(CopyData)
-        console.log('GM_setClipboard - Copying to clipboard was successful!')
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(CopyData).then(() => {
+            console.log('navigator.clipboard - Copying to clipboard was successful!');
+        }).catch(() => {
+            GM_setClipboard(CopyData);
+            console.log('GM_setClipboard fallback - Copying to clipboard was successful!');
+        });
+    } else {
+        GM_setClipboard(CopyData);
+        console.log('GM_setClipboard - Copying to clipboard was successful!');
     }
 }
+
 
 function MaxZIndexFromPoint(selector) {
     //console.log(selector, getAllElementsFromPoint(document.querySelector(selector)) + 1)
@@ -38,29 +42,40 @@ function getPosition(element) {
         y: rect.y
     };
 }
-
 function getAllElementsFromPoint(el) {
-    let elements = [];
-    let display = [];
-    let zIndex = []
-    let item = document.elementFromPoint(getPosition(el).x, getPosition(el).y)
-    while (item && item !== document.body && item !== window && item !== document && item !== document.documentElement && el !== item) {
-        //console.log(item)
+    const elements = [];
+    const displayValues = [];
+    const zIndices = [];
+    
+    const pos = getPosition(el);
+    let item = document.elementFromPoint(pos.x, pos.y);
+    
+    while (
+        item &&
+        item !== document.body &&
+        item !== document.documentElement &&
+        item !== el
+    ) {
         elements.push(item);
-        display.push(item.style.display)
-        if (!isNaN(getZIndex(item))) {
-            let zI = getZIndex(item)            
-            zIndex.push(zI)
+        displayValues.push(item.style.display);
+        
+        const zI = parseInt(window.getComputedStyle(item).zIndex);
+        if (!isNaN(zI)) {
+            zIndices.push(zI);
         }
+        
         item.style.display = "none";
-        item = document.elementFromPoint(getPosition(el).x, getPosition(el).y);
+        item = document.elementFromPoint(pos.x, pos.y);
     }
-    // restore display property
+    
+    // Restore display styles
     for (let i = 0; i < elements.length; i++) {
-        elements[i].style.display = display[i];
+        elements[i].style.display = displayValues[i];
     }
-    return Math.max(...zIndex, 1);
+    
+    return zIndices.length > 0 ? Math.max(...zIndices) : 1;
 }
+
 
 function getElementOffset(el) {
     let rect = el.getBoundingClientRect()
@@ -86,21 +101,8 @@ function getRelativeOffset(el) {
 }
 
 function getNodeTextElementOffset(node) {
-    let textNode = getTextNodesIn(node, false)
-    let range = document.createRange();
-    try {
-        range.selectNode(textNode);
-        let rect = range.getBoundingClientRect()
-        return {
-            top: rect.offsetTop,
-            bottom: rect.offsetTop + rect.offsetHeight,
-            left: rect.offsetLeft,
-            right: rect.offsetLeft + rect.offsetWidth,
-            width: rect.offsetWidth,
-            height: rect.offsetHeight,
-        }    
-    } catch (error) {
-        console.error(error)
+    let textNode = getTextNodesIn(node, false);
+    if (!textNode) {
         return {
             top: 0,
             bottom: 0,
@@ -108,61 +110,94 @@ function getNodeTextElementOffset(node) {
             right: 0,
             width: 0,
             height: 0,
-        }   
-    }    
-}
-
-function getTextNodesIn(node, includeWhitespaceNodes) {
-    var textNodes = [], nonWhitespaceMatcher = /\S/;
-
-    function getTextNodes(node) {
-        if (node.nodeType == Node.TEXT_NODE) {
-            if (includeWhitespaceNodes || nonWhitespaceMatcher.test(node.nodeValue)) {
-                textNodes.push(node);
-            }
-        } else {
-            for (var i = 0, len = node.childNodes.length; i < len; ++i) {
-                getTextNodes(node.childNodes[i]);
-            }
-        }
+        };
     }
 
-    getTextNodes(node);
-    //console.log(textNodes, textNodes?.length)
-    return textNodes?.length ? textNodes.shift() : null;
+    try {
+        const range = document.createRange();
+        range.selectNode(textNode);
+        const rect = range.getBoundingClientRect();
+
+        return {
+            top: rect.top,
+            bottom: rect.bottom,
+            left: rect.left,
+            right: rect.right,
+            width: rect.width,
+            height: rect.height,
+        };
+    } catch (error) {
+        console.error(error);
+        return {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+        };
+    }
 }
-function getDefaultFontSize(){
+
+
+function getFirstTextNode(node, includeWhitespaceNodes = false) {
+    const nonWhitespaceMatcher = /\S/;
+    let result = null;
+
+    function traverse(currentNode) {
+        if (currentNode.nodeType === Node.TEXT_NODE) {
+            if (includeWhitespaceNodes || nonWhitespaceMatcher.test(currentNode.nodeValue)) {
+                result = currentNode;
+                return true; // stop traversal once found
+            }
+        } else {
+            for (let i = 0; i < currentNode.childNodes.length; i++) {
+                if (traverse(currentNode.childNodes[i])) return true;
+            }
+        }
+        return false;
+    }
+
+    traverse(node);
+    return result;
+}
+
+function getDefaultFontSize() {
     const element = document.createElement('div');
     element.style.width = '1rem';
-    element.style.display = 'none';
-    document.body.append(element);
+    element.style.position = 'absolute'; // ensure no layout impact
+    element.style.visibility = 'hidden'; // keep invisible but measurable
+    element.style.height = '0';          // no height needed
+    document.body.appendChild(element);
 
-    const widthMatch = window
-    .getComputedStyle(element)
-    .getPropertyValue('width')
-    .match(/\d+/);
+    const widthStr = window.getComputedStyle(element).width;
+    const widthMatch = widthStr.match(/[\d.]+/); // allow decimals
 
     element.remove();
 
-    if (!widthMatch || widthMatch.length < 1) {
-        return null;
-    }
+    if (!widthMatch) return null;
 
-    const result = Number(widthMatch[0]);
-    return !isNaN(result) ? result : null;
-};
+    const result = parseFloat(widthMatch[0]);
+    return isNaN(result) ? null : result;
+}
+
 
 //백그라운드 이미지 가져오기
-function GetBackGroundUrl(Area) {
-    let BackGroundUrl = ''
+function GetBackGroundUrl(area) {
     try {
-        let imgURL = window.document.defaultView.getComputedStyle(Area, null).getPropertyValue('background')
-        BackGroundUrl = imgURL.replace(/.*\s?url\([\'\"]?/, '').replace(/[\'\"]?\).*/, '')
-        return BackGroundUrl
+        // Get computed 'background' style of the element (may include multiple properties)
+        const backgroundStyle = window.getComputedStyle(area).getPropertyValue('background');
+
+        // Extract the URL inside url("...") or url('...') or url(...)
+        const match = backgroundStyle.match(/url\(["']?(.*?)["']?\)/);
+
+        return match ? match[1] : '';
     } catch (err) {
-        console.log(err)
+        console.error('GetBackGroundUrl error:', err);
+        return '';
     }
 }
+
 
 //Match
 function MatchRegex(Area, regex, attributeToSearch) {
@@ -241,157 +276,160 @@ function querySelectorAllRegex(Area, regex, attributeToSearch) {
     return output;
 }
 
-function byteLengthOf(TitleText, maxByte) {
-    //assuming the String is UCS-2(aka UTF-16) encoded
-    let Result
-    let CharByte = 0
-    let LineByte = 0
-    for (var i = 0, l = TitleText.length; i < l; i++) {
-        var Code = TitleText.charCodeAt(i);
-        if (Code < 0x0080) { //[0x0000, 0x007F]
-            CharByte = 1
-            LineByte += 1;
-        } else if (Code < 0x0800) { //[0x0080, 0x07FF]
-            CharByte = 2
-            LineByte += 2;
-        } else if (Code < 0xD800) { //[0x0800, 0xD7FF]
-            CharByte = 3
-            LineByte += 3;
-        } else if (Code < 0xDC00) { //[0xD800, 0xDBFF]
-            var lo = TitleText.charCodeAt(++i);
-            if (i < l && lo >= 0xDC00 && lo <= 0xDFFF) { //followed by [0xDC00, 0xDFFF]
-                CharByte = 4
-                LineByte += 4;
+function byteLengthOf(text, maxByte) {
+    let byteCount = 0;
+    let cutIndex = text.length;
+
+    for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+
+        if (code < 0x0080) {
+            byteCount += 1;
+        } else if (code < 0x0800) {
+            byteCount += 2;
+        } else if (code < 0xD800) {
+            byteCount += 3;
+        } else if (code < 0xDC00) {
+            const lo = text.charCodeAt(i + 1);
+            if (i + 1 < text.length && lo >= 0xDC00 && lo <= 0xDFFF) {
+                byteCount += 4;
+                i++; // skip low surrogate
             } else {
-                CharByte = 0
                 throw new Error("UCS-2 String malformed");
             }
-        } else if (Code < 0xE000) { //[0xDC00, 0xDFFF]
-            CharByte = 0
+        } else if (code < 0xE000) {
             throw new Error("UCS-2 String malformed");
-        } else { //[0xE000, 0xFFFF]
-            CharByte = 3
-            LineByte += 3;
+        } else {
+            byteCount += 3;
         }
-        //console.log(TitleText[i], CharByte, LineByte)
-        if (LineByte >= maxByte) {
-            TitleText = TitleText.substr(0, i).replace(/(、|,)$/, '').trim()
-            Result = TitleText + '…'
+
+        if (byteCount >= maxByte) {
+            cutIndex = i;
             break;
         }
     }
-    return Result ? Result.trim() : TitleText
+
+    if (byteCount >= maxByte) {
+        const truncated = text.slice(0, cutIndex).replace(/(、|,)$/, '').trim();
+        return truncated + '…';
+    }
+
+    return text;
 }
 
+
 function byteLengthOfCheck(TitleText) {
-    if (typeof TitleText === 'undefined') { return 0 }
-    //assuming the String is UCS-2(aka UTF-16) encoded
-    let LineByte = 0
-    for (var i = 0, l = TitleText.length; i < l; i++) {
-        var Code = TitleText.charCodeAt(i);
-        if (Code < 0x0080) { //[0x0000, 0x007F]
-            LineByte += 1;
-        } else if (Code < 0x0800) { //[0x0080, 0x07FF]
-            LineByte += 2;
-        } else if (Code < 0xD800) { //[0x0800, 0xD7FF]
-            LineByte += 3;
-        } else if (Code < 0xDC00) { //[0xD800, 0xDBFF]
-            var lo = TitleText.charCodeAt(++i);
-            if (i < l && lo >= 0xDC00 && lo <= 0xDFFF) { //followed by [0xDC00, 0xDFFF]
-                LineByte += 4;
+    if (typeof TitleText === 'undefined') return 0;
+
+    let lineByte = 0;
+    for (let i = 0; i < TitleText.length; i++) {
+        const code = TitleText.charCodeAt(i);
+
+        if (code < 0x0080) {
+            lineByte += 1;
+        } else if (code < 0x0800) {
+            lineByte += 2;
+        } else if (code < 0xD800) {
+            lineByte += 3;
+        } else if (code < 0xDC00) {
+            const lo = TitleText.charCodeAt(++i);
+            if (i < TitleText.length && lo >= 0xDC00 && lo <= 0xDFFF) {
+                lineByte += 4;
             } else {
                 throw new Error("UCS-2 String malformed");
             }
-        } else if (Code < 0xE000) { //[0xDC00, 0xDFFF]
+        } else if (code < 0xE000) {
             throw new Error("UCS-2 String malformed");
-        } else { //[0xE000, 0xFFFF]
-            LineByte += 3;
+        } else {
+            lineByte += 3;
         }
     }
-    return LineByte
+
+    return lineByte;
 }
 
-function SearchChar(Text, Char) {
-    let result = ''
-    let SearchEx = new RegExp(Char, 'g')
-    if (Text.match(SearchEx)) {
-        return Text.match(SearchEx).reverse()[0]
-    } else return result
+
+function SearchChar(text, char) {
+    const regex = new RegExp(char, 'g');
+    const matches = text.match(regex);
+    return matches ? matches[matches.length - 1] : '';
 }
 
-function getFlag(Text) {
-    let Point = []
-    let LastPoint = Text.length - 1
-    for (let j = LastPoint; j > 0; j--) {
-        let Code = Text.charCodeAt(j)
-        if (Code > 65280 && Code < 65375 && Code != 65306) {
-            console.log(j, Code, String.fromCodePoint(Code))
-            Point.push(j + 1)
+
+function getFlag(text) {
+    const points = [];
+    for (let i = text.length - 1; i >= 0; i--) {
+        const code = text.charCodeAt(i);
+        // Full-width punctuation/symbols, excluding full-width colon (：)
+        if (code > 65280 && code < 65375 && code !== 65306) {
+            console.log(i, code, String.fromCodePoint(code));
+            points.push(i + 1);
         }
     }
-    return Point
+    return points;
 }
+
 
 //ingnore childNodes Text
-function ingnoreChildNodesText(element) {
-    let childNodes = element.childNodes;
-    let result = '';
+function ignoreChildNodesText(element) {
+    if (!(element instanceof Element)) return '';
 
-    for (let i = 0; i < childNodes.length; i++) {
-        if (childNodes[i].nodeType == 3) {
-            result += childNodes[i].data;
+    let result = '';
+    for (const node of element.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            result += node.nodeValue;
         }
     }
 
-    return result;
+    return result.replace(/\s+/g, ' ').trim();
 }
+
 
 // innerText except A tag
-function getDirectInnerText(element) {
-    let childNodes = element.childNodes;
-    let result = ''
+function getDirectInnerText(el) {
+  if (!(el instanceof Element)) return '';
+  let parts = [];
 
-    for (let i = 0; i < childNodes.length; i++) {
-        //console.log('nodeType: ', childNodes[i], childNodes[i].nodeType, childNodes[i].tagName )
-        if (childNodes[i].tagName === 'A' || childNodes[i].nodeType == 3) {
-            result += childNodes[i].data ? childNodes[i].data : childNodes[i].textContent;
-        }
+  for (const node of el.childNodes) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      parts.push(node.nodeValue);
     }
+    else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'A') {
+      parts.push(node.textContent);
+    }
+  }
 
-    return result;
+  // Join, trim, and collapse multiple spaces
+  return parts.join('').replace(/\s+/g, ' ').trim();
 }
+
 
 //첫글자 대문자
 function nameCorrection(str) {
-    let strPerfect = str.replace(/\s+/g, " ").trim();
-    let strSmall = strPerfect.toLowerCase();
-    let arrSmall = strSmall.split(" ");
-    let arrCapital = [];
-    for (let x of arrSmall.values()) {
-        arrCapital.push(x[0].toUpperCase() + x.slice(1));
-    }
+    if (typeof str !== 'string') return '';
 
-    return arrCapital.join(" ");
+    return str
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .split(' ')
+        .map(word =>
+            word.replace(/(^\w|[-'][a-z])/g, match => match.toUpperCase())
+        )
+        .join(' ');
 }
 
+
+//첫문자 대문자 나머지 소문자
 function capitalize(str) {
-    //console.log('capitalize: ', str)
-    if(!str){
-        console.log('capitalize: ', str)
-        return
-    } 
-    let result = str[0].toUpperCase();
-
-    for (let i = 1; i < str.length; i++) {
-        if (str[i - 1] === ' ') {
-            result += str[i].toUpperCase();
-        } else {
-            result += str[i];
-        }
-    }
-
-    return result;
+  if (typeof str !== 'string') return '';
+  return str
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, ch => ch.toUpperCase());
 }
+
 
 //파일명 사용불가 문자 전각문자로 변환
 function FilenameConvert(text) {
@@ -405,22 +443,27 @@ function FilenameConvert(text) {
     );
 }
 
-function getNumericMonth(monthAbbr) {
-    monthAbbr = capitalize(monthAbbr)
-    return (String(['January',
-        'February',
-        'March',
-        'April',
-        'May',
-        'June',
-        'July',
-        'August',
-        'September',
-        'October',
-        'November',
-        'December'
-    ].indexOf(monthAbbr) + 1).padStart(2, '0'))
+const MONTH_MAP = {
+  jan: '01', feb: '02', mar: '03', apr: '04',
+  may: '05', jun: '06', jul: '07', aug: '08',
+  sep: '09', oct: '10', nov: '11', dec: '12',
+  january: '01', february: '02', march: '03', april: '04',
+  june: '06', july: '07', august: '08', september: '09',
+  october: '10', november: '11', december: '12'
+};
+
+function getNumericMonth(monthInput) {
+  if (typeof monthInput !== 'string') return null;
+
+  const key = monthInput.trim().toLowerCase().slice(0, 3);
+  const num = MONTH_MAP[key] || null;
+
+  if (!num) {
+    console.warn(`getNumericMonth: invalid month “${monthInput}”`);
+  }
+  return num;
 }
+
 
 /**
  * 해당 함수는
