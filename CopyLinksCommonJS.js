@@ -41,7 +41,12 @@ function getElementPosition(element) {
     };
 }
 
-
+/**
+         * Iterates through all elements in the document and finds the maximum z-index value.
+         * Note that z-index only applies to elements with a 'position' other than 'static'.
+         *
+         * @returns {number|null} The maximum z-index found, or null if no positioned elements are found.
+         */
 function getMaxZIndex() {
     let maxZ = null;
     // Get all elements in the document
