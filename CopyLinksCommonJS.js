@@ -406,16 +406,14 @@ function getDirectInnerText(el) {
 
 //첫글자 대문자
 function nameCorrection(str) {
-    if (typeof str !== 'string') return '';
+    if (!str || typeof str !== 'string') {
+        return '';
+    }
 
-    return str
-        .trim()
-        .replace(/\s+/g, ' ')        
-        .split(' ')
-        .map(word =>
-            word.replace(/(^\w|[-'][a-z])/g, match => match.toUpperCase())
-        )
-        .join(' ');
+    // 정규 표현식: 각 단어의 시작점을 찾습니다.
+    // \b는 단어 경계를 의미합니다. (문자-비문자, 비문자-문자, 혹은 문자열 시작/끝)
+    // 따라서, \b 뒤에 오는 모든 글자를 대문자로 바꿉니다.
+    return str.replace(/\b[a-z]/g, (match) => match.toUpperCase());
 }
 
 
