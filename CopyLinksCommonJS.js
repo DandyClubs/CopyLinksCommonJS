@@ -1,3 +1,4 @@
+
 function updateClipboard(CopyData) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(CopyData).then(() => {
@@ -10,21 +11,6 @@ function updateClipboard(CopyData) {
         GM_setClipboard(CopyData);
         console.log('GM_setClipboard - Copying to clipboard was successful!');
     }
-}
-
-
-function MaxZIndexFromPoint(selector) {
-    //console.log(selector, getAllElementsFromPoint(document.querySelector(selector)) + 1)
-    return getAllElementsFromPoint(document.querySelector(selector))
-}
-
-function getMaxZIndex() {
-    return Math.max(
-        ...Array.from(document.querySelectorAll('body *'), el =>
-            parseFloat(window.getComputedStyle(el).zIndex),
-        ).filter(zIndex => !Number.isNaN(zIndex)),
-        1,
-    );
 }
 
 function getZIndex(el) {
@@ -42,38 +28,42 @@ function getPosition(element) {
         y: rect.y
     };
 }
-function getAllElementsFromPoint(el) {
+
+/**
+ * 특정 요소의 위치에서 가장 높은 z-index 값을 가진 요소를 찾습니다.
+ * @param {Element} targetElement - z-index를 찾을 기준 요소입니다.
+ * @returns {number} - 해당 위치에서 가장 높은 z-index 값 또는 1 (기본값).
+ */
+function getMaxZIndexAtPoint(targetElement) {
     const elements = [];
     const displayValues = [];
     const zIndices = [];
     
-    const pos = getPosition(el);
+    const pos = getPosition(targetElement);
     let item = document.elementFromPoint(pos.x, pos.y);
     
     while (
         item &&
         item !== document.body &&
         item !== document.documentElement &&
-        item !== el
+        item !== targetElement
     ) {
         elements.push(item);
         displayValues.push(item.style.display);
         
-        const zI = parseInt(window.getComputedStyle(item).zIndex);
-        if (!isNaN(zI)) {
-            zIndices.push(zI);
-        }
+        const zIndex = parseInt(window.getComputedStyle(item).zIndex);
+        if (!isNaN(zIndex)) zIndices.push(zIndex);
         
         item.style.display = "none";
         item = document.elementFromPoint(pos.x, pos.y);
     }
     
-    // Restore display styles
+    // 원래 display 스타일 복원
     for (let i = 0; i < elements.length; i++) {
         elements[i].style.display = displayValues[i];
     }
     
-    return zIndices.length > 0 ? Math.max(...zIndices) : 1;
+    return zIndices.length > 0 ? Math.max(...zIndices) : 1; // 최소 1 반환
 }
 
 
