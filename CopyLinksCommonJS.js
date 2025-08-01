@@ -275,100 +275,177 @@ function querySelectorAllRegex(Area, regex, attributeToSearch) {
     }
     return output;
 }
-
+/**
+ * 문자열의 바이트 길이를 제한하여 자르고 '...'을 추가하는 함수입니다.
+ * @param {string} text - 자를 원본 문자열입니다.
+ * @param {number} maxByte - 최대 허용 바이트 길이입니다.
+ * @returns {string} - 바이트 길이에 맞춰 잘린 문자열입니다.
+ */
 function byteLengthOf(text, maxByte) {
-    let byteCount = 0;
-    let cutIndex = text.length;
-
+    let currentByte = 0;
+    let result = '';
     for (let i = 0; i < text.length; i++) {
-        const code = text.charCodeAt(i);
+        const charCode = text.charCodeAt(i);
+        let charByte;
+        if (charCode <= 0x7F) charByte = 1;
+        else if (charCode <= 0x7FF) charByte = 2;
+        else if (charCode <= 0xFFFF) charByte = 3;
+        else {
+            charByte = 4;
+            i++;
+        }
 
-        if (code < 0x0080) {
-            byteCount += 1;
-        } else if (code < 0x0800) {
-            byteCount += 2;
-        } else if (code < 0xD800) {
-            byteCount += 3;
-        } else if (code < 0xDC00) {
-            const lo = text.charCodeAt(i + 1);
-            if (i + 1 < text.length && lo >= 0xDC00 && lo <= 0xDFFF) {
-                byteCount += 4;
-                i++; // skip low surrogate
-            } else {
-                throw new Error("UCS-2 String malformed");
+        if (currentByte + charByte > maxByte) {
+            // 마지막 문자가 '、' 또는 ','인 경우 제거
+            if (result.endsWith('、') || result.endsWith(',')) {
+                result = result.slice(0, -1);
             }
-        } else if (code < 0xE000) {
-            throw new Error("UCS-2 String malformed");
+            return result.trim() + '…';
+        }
+        currentByte += charByte;
+        result += text[i];
+    }
+    return result;
+}
+
+/**
+ * UTF-16 문자열의 바이트 길이를 계산하는 함수입니다.
+ * @param {string} text - 바이트 길이를 계산할 문자열입니다.
+ * @returns {number} - 문자열의 바이트 길이입니다.
+ */
+function byteLengthOfCheck(text) {
+    let byteLength = 0;
+    for (let i = 0; i < text.length; i++) {
+        const charCode = text.charCodeAt(i);
+        if (charCode <= 0x7F) {
+            byteLength += 1;
+        } else if (charCode <= 0x7FF) {
+            byteLength += 2;
+        } else if (charCode <= 0xFFFF) {
+            byteLength += 3;
         } else {
-            byteCount += 3;
-        }
-
-        if (byteCount >= maxByte) {
-            cutIndex = i;
-            break;
+            byteLength += 4;
+            i++; // 서로게이트 페어이므로 다음 문자도 건너뜁니다.
         }
     }
-
-    if (byteCount >= maxByte) {
-        const truncated = text.slice(0, cutIndex).replace(/(、|,)$/, '').trim();
-        return truncated + '…';
-    }
-
-    return text;
+    return byteLength;
 }
 
 
-function byteLengthOfCheck(TitleText) {
-    if (typeof TitleText === 'undefined') return 0;
-
-    let lineByte = 0;
-    for (let i = 0; i < TitleText.length; i++) {
-        const code = TitleText.charCodeAt(i);
-
-        if (code < 0x0080) {
-            lineByte += 1;
-        } else if (code < 0x0800) {
-            lineByte += 2;
-        } else if (code < 0xD800) {
-            lineByte += 3;
-        } else if (code < 0xDC00) {
-            const lo = TitleText.charCodeAt(++i);
-            if (i < TitleText.length && lo >= 0xDC00 && lo <= 0xDFFF) {
-                lineByte += 4;
-            } else {
-                throw new Error("UCS-2 String malformed");
-            }
-        } else if (code < 0xE000) {
-            throw new Error("UCS-2 String malformed");
-        } else {
-            lineByte += 3;
-        }
-    }
-
-    return lineByte;
+/**
+ * 주어진 문자열에서 특정 문자의 마지막 위치를 찾는 함수입니다.
+ * String.prototype.lastIndexOf()를 사용해 더 효율적으로 개선했습니다.
+ *
+ * @param {string} text - 원본 문자열입니다.
+ * @param {string} char - 찾고자 하는 문자입니다.
+ * @returns {number} - 마지막으로 일치하는 문자의 인덱스입니다. 없으면 -1을 반환합니다.
+ */
+function searchChar(text, char) {
+    return text.lastIndexOf(char);
 }
 
-
-function SearchChar(text, char) {
-    const regex = new RegExp(char, 'g');
-    const matches = text.match(regex);
-    return matches ? matches[matches.length - 1] : '';
-}
-
-
+/**
+ * 전각(Full-width) 문자의 위치를 찾는 함수입니다.
+ * 유니코드 값 범위를 사용하여 전각 문자의 인덱스를 찾습니다.
+ *
+ * @param {string} text - 원본 문자열입니다.
+ * @returns {number[]} - 전각 문자가 시작하는 인덱스들의 배열입니다.
+ */
 function getFlag(text) {
     const points = [];
+    // 역순으로 순회하며 전각 문자의 시작점을 찾습니다.
     for (let i = text.length - 1; i >= 0; i--) {
         const code = text.charCodeAt(i);
-        // Full-width punctuation/symbols, excluding full-width colon (：)
-        if (code > 65280 && code < 65375 && code !== 65306) {
-            console.log(i, code, String.fromCodePoint(code));
-            points.push(i + 1);
+        // 전각 문자 범위 (U+FF01-U+FF5F, U+FFE0-U+FFEF)
+        if ((code >= 0xFF01 && code <= 0xFF5F) || (code >= 0xFFE0 && code <= 0xFFEF)) {
+            points.push(i);
         }
     }
     return points;
 }
 
+
+/**
+ * 주어진 문자열에서 마지막 부분을 추출하는 함수입니다.
+ * 특정 패턴(시리즈명, 파일번호 등)에 따라 제목의 끝부분을 찾아 반환합니다.
+ *
+ * @param {string} text - 원본 문자열입니다.
+ * @returns {string} - 추출된 문자열 또는 빈 문자열을 반환합니다.
+ */
+function getLastText(text) {
+    let lastPart = '';
+    const wordList = text.split(/\s/).filter(e => e);
+
+    // 1. 시리즈명이 있는 경우, 시리즈명 이후의 모든 텍스트를 추출
+    if (Series && new RegExp(Series + '.*').test(text)) {
+        lastPart = text.match(new RegExp(Series + '.*'))?.[0] || '';
+    }
+    // 2. '朝までハシゴ酒' 패턴이 있는 경우, 해당 패턴 이후의 텍스트를 추출
+    else if (/朝までハシゴ酒/.test(text)) {
+        lastPart = text.match(/朝までハシゴ酒.*/)?.[0] || '';
+    }
+    // 3. 마지막 단어가 숫자로 끝나는 경우의 복잡한 로직
+    else if (/\d+$/.test(wordList[wordList.length - 1])) {
+        const lastWord = wordList[wordList.length - 1];
+        const secondLastWord = wordList[wordList.length - 2];
+
+        // 마지막 단어가 'ファイル'과 숫자의 조합인 경우
+        if (/ファイル\d+/.test(lastWord)) {
+            lastPart = `${secondLastWord} ${lastWord}`;
+        }
+        // 마지막 단어가 일본어 문자이고 숫자로 끝나는 경우
+        else if (JapaneseChar.test(lastWord)) {
+            lastPart = lastWord;
+        }
+        // 그 외의 경우 (숫자로 끝나는 마지막 두 단어를 결합)
+        else {
+            lastPart = `${secondLastWord} ${lastWord}`;
+        }
+    }
+
+    // 추출된 부분이 비어있으면 즉시 종료
+    if (!lastPart || lastPart.trim() === '') {
+        return '';
+    }
+
+    // 4. 추출된 마지막 부분이 특정 패턴으로 끝나는 경우 추가 처리
+    if (/\d+$/.test(lastPart)) {
+        // 마지막 '【' 이후의 텍스트를 추출
+        if (lastPart.includes('】') && lastPart.includes('【')) {
+            const searchCharPoint = text.lastIndexOf("【");
+            if (searchCharPoint !== -1) {
+                lastPart = text.substring(searchCharPoint);
+            }
+        }
+        // '、'를 포함하고 길이가 10 이하인 경우
+        else if (lastPart.includes('、') && lastPart.length <= 10) {
+            const searchCharPoint = lastPart.lastIndexOf("、");
+            if (searchCharPoint !== -1) {
+                lastPart = lastPart.substring(searchCharPoint + 1);
+            }
+        }
+    }
+
+    // 5. 바이트 길이 체크 및 조정
+    if (byteLengthOfCheck(lastPart) >= 100) {
+        const flagPoints = getFlag(lastPart);
+        if (flagPoints.length > 0) {
+            let tempLastPart = lastPart.substring(flagPoints[0]);
+            if (!JapaneseChar.test(tempLastPart) && flagPoints[1]) {
+                tempLastPart = lastPart.substring(flagPoints[1]);
+            }
+            lastPart = tempLastPart;
+        }
+    }
+
+    // 최종 유효성 검사: 추출된 마지막 부분이 숫자나 특정 태그로 끝나지 않으면 버림
+    if (!/\d+|【.*】$/.test(lastPart)) {
+        lastPart = '';
+    }
+
+    // 최종 바이트 길이 확인
+    return byteLengthOfCheck(lastPart) <= 200 ? lastPart : '';
+}
 
 //ingnore childNodes Text
 function ignoreChildNodesText(element) {
