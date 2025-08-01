@@ -42,15 +42,15 @@ function getElementPosition(element) {
 }
 
 /**
-         * Iterates through all elements in the document and finds the maximum z-index value.
-         * Note that z-index only applies to elements with a 'position' other than 'static'.
-         *
-         * @returns {number|null} The maximum z-index found, or null if no positioned elements are found.
-         */
+        * body의 직접적인 자식인 모든 div 요소들을 순회하며 가장 높은 z-index 값을 찾습니다.
+        * z-index는 'static'이 아닌 position 속성을 가진 요소에만 적용됩니다.
+        *
+        * @returns {number|null} 찾은 가장 높은 z-index 값 또는, z-index가 적용된 요소가 없을 경우 null을 반환합니다.
+        */
 function getMaxZIndex() {
     let maxZ = null;
-    // Get all elements in the document
-    const allElements = document.querySelectorAll('*');
+    // body의 직접적인 자식인 모든 div 요소를 가져옵니다.
+    const allElements = document.querySelectorAll('body > div');
 
     allElements.forEach(element => {
         // Get the computed style of the element
@@ -71,7 +71,6 @@ function getMaxZIndex() {
 
     return maxZ;
 }
-
 /**
  * 특정 요소의 위치에서 가장 높은 z-index 값을 가진 요소를 찾습니다.
  * @param {Element} targetElement - z-index를 찾을 기준 요소입니다.
