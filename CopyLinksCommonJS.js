@@ -410,8 +410,7 @@ function nameCorrection(str) {
 
     return str
         .trim()
-        .replace(/\s+/g, ' ')
-        .toLowerCase()
+        .replace(/\s+/g, ' ')        
         .split(' ')
         .map(word =>
             word.replace(/(^\w|[-'][a-z])/g, match => match.toUpperCase())
