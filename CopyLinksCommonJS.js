@@ -51,7 +51,7 @@ function getMaxZIndexAtPoint(targetElement) {
     const displayValues = [];
     const zIndices = [];
 
-    const pos = getPosition(targetElement);
+    const pos = getElementPosition(targetElement);
     let item = document.elementFromPoint(pos.x, pos.y);
 
     while (
