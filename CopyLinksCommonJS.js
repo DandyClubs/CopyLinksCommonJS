@@ -41,6 +41,32 @@ function getElementPosition(element) {
     };
 }
 
+
+function getMaxZIndex() {
+    let maxZ = null;
+    // Get all elements in the document
+    const allElements = document.querySelectorAll('*');
+
+    allElements.forEach(element => {
+        // Get the computed style of the element
+        const style = window.getComputedStyle(element);
+        const zIndex = style.zIndex;
+
+        // Check if the z-index is a valid number and the element has a non-static position
+        if (zIndex !== 'auto' && !isNaN(parseInt(zIndex))) {
+            const position = style.position;
+            if (position !== 'static') {
+                const currentZ = parseInt(zIndex);
+                if (maxZ === null || currentZ > maxZ) {
+                    maxZ = currentZ;
+                }
+            }
+        }
+    });
+
+    return maxZ;
+}
+
 /**
  * 특정 요소의 위치에서 가장 높은 z-index 값을 가진 요소를 찾습니다.
  * @param {Element} targetElement - z-index를 찾을 기준 요소입니다.
