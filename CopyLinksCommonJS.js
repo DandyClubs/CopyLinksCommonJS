@@ -21,11 +21,23 @@ function getZIndex(el) {
     return z;
 };
 
-function getPosition(element) {
-    let rect = element.getBoundingClientRect()
+function getElementPosition(element) {
+    // 요소가 유효한지 확인하여 오류를 방지합니다.
+    if (!element instanceof HTMLElement) {
+        console.error("유효한 HTML 요소를 전달해야 합니다.");
+        return null;
+    }
+
+    // getBoundingClientRect()를 사용하여 위치와 크기를 가져옵니다.
+    const rect = element.getBoundingClientRect();
+
+    // x, y, top, left 속성을 포함한 객체를 반환합니다.
+    // x/y와 top/left는 대부분의 경우 동일하지만, 오래된 브라우저 호환성을 위해 둘 다 포함합니다.
     return {
         x: rect.x,
-        y: rect.y
+        y: rect.y,
+        top: rect.top,
+        left: rect.left
     };
 }
 
@@ -38,10 +50,10 @@ function getMaxZIndexAtPoint(targetElement) {
     const elements = [];
     const displayValues = [];
     const zIndices = [];
-    
+
     const pos = getPosition(targetElement);
     let item = document.elementFromPoint(pos.x, pos.y);
-    
+
     while (
         item &&
         item !== document.body &&
@@ -50,19 +62,19 @@ function getMaxZIndexAtPoint(targetElement) {
     ) {
         elements.push(item);
         displayValues.push(item.style.display);
-        
+
         const zIndex = parseInt(window.getComputedStyle(item).zIndex);
         if (!isNaN(zIndex)) zIndices.push(zIndex);
-        
+
         item.style.display = "none";
         item = document.elementFromPoint(pos.x, pos.y);
     }
-    
+
     // 원래 display 스타일 복원
     for (let i = 0; i < elements.length; i++) {
         elements[i].style.display = displayValues[i];
     }
-    
+
     return zIndices.length > 0 ? Math.max(...zIndices) : 1; // 최소 1 반환
 }
 
@@ -88,6 +100,38 @@ function getRelativeOffset(el) {
         width: el.offsetWidth,
         height: el.offsetHeight,
     };
+}
+
+function getNodeTextBounds(nodeWithText) {
+    // 전달받은 요소가 유효한지 확인합니다.
+    if (!nodeWithText instanceof HTMLElement) {
+        console.error("유효한 HTML 요소를 전달해야 합니다.");
+        return null;
+    }
+
+    // 자식 노드들을 순회하며 첫 번째 텍스트 노드를 찾습니다.
+    // Text Node의 nodeType은 3입니다.
+    const textNode = Array.from(nodeWithText.childNodes).find(
+        node => node.nodeType === Node.TEXT_NODE
+    );
+
+    // 텍스트 노드가 없는 경우 null을 반환하여 오류를 방지합니다.
+    if (!textNode || !textNode.textContent.trim()) {
+        console.warn("요소 내에 유효한 텍스트 노드가 없습니다.");
+        return null;
+    }
+
+    // Range 객체를 생성하여 텍스트 노드를 선택합니다.
+    const range = document.createRange();
+    range.selectNode(textNode);
+
+    // 선택된 텍스트의 바운딩 사각형을 가져옵니다.
+    const bounds = range.getBoundingClientRect();
+
+    // Range 객체는 더 이상 필요 없으므로 메모리 해제
+    range.detach();
+
+    return bounds;
 }
 
 function getNodeTextElementOffset(node) {
@@ -454,20 +498,20 @@ function ignoreChildNodesText(element) {
 
 // innerText except A tag
 function getDirectInnerText(el) {
-  if (!(el instanceof Element)) return '';
-  let parts = [];
+    if (!(el instanceof Element)) return '';
+    let parts = [];
 
-  for (const node of el.childNodes) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      parts.push(node.nodeValue);
+    for (const node of el.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            parts.push(node.nodeValue);
+        }
+        else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'A') {
+            parts.push(node.textContent);
+        }
     }
-    else if (node.nodeType === Node.ELEMENT_NODE && node.tagName === 'A') {
-      parts.push(node.textContent);
-    }
-  }
 
-  // Join, trim, and collapse multiple spaces
-  return parts.join('').replace(/\s+/g, ' ').trim();
+    // Join, trim, and collapse multiple spaces
+    return parts.join('').replace(/\s+/g, ' ').trim();
 }
 
 
@@ -486,12 +530,12 @@ function nameCorrection(str) {
 
 //첫문자 대문자 나머지 소문자
 function capitalize(str) {
-  if (typeof str !== 'string') return '';
-  return str
-    .trim()
-    .replace(/\s+/g, ' ')
-    .toLowerCase()
-    .replace(/\b\w/g, ch => ch.toUpperCase());
+    if (typeof str !== 'string') return '';
+    return str
+        .trim()
+        .replace(/\s+/g, ' ')
+        .toLowerCase()
+        .replace(/\b\w/g, ch => ch.toUpperCase());
 }
 
 
@@ -502,30 +546,30 @@ function FilenameConvert(text) {
     // Forbidden characters in filenames (Windows) → replace with fullwidth versions
     const ExcludeChar = /[<>:"/\\|?*]/g;
 
-    return text.replace(ExcludeChar, char => 
+    return text.replace(ExcludeChar, char =>
         String.fromCharCode(char.charCodeAt(0) + 65248)
     );
 }
 
 const MONTH_MAP = {
-  jan: '01', feb: '02', mar: '03', apr: '04',
-  may: '05', jun: '06', jul: '07', aug: '08',
-  sep: '09', oct: '10', nov: '11', dec: '12',
-  january: '01', february: '02', march: '03', april: '04',
-  june: '06', july: '07', august: '08', september: '09',
-  october: '10', november: '11', december: '12'
+    jan: '01', feb: '02', mar: '03', apr: '04',
+    may: '05', jun: '06', jul: '07', aug: '08',
+    sep: '09', oct: '10', nov: '11', dec: '12',
+    january: '01', february: '02', march: '03', april: '04',
+    june: '06', july: '07', august: '08', september: '09',
+    october: '10', november: '11', december: '12'
 };
 
 function getNumericMonth(monthInput) {
-  if (typeof monthInput !== 'string') return null;
+    if (typeof monthInput !== 'string') return null;
 
-  const key = monthInput.trim().toLowerCase().slice(0, 3);
-  const num = MONTH_MAP[key] || null;
+    const key = monthInput.trim().toLowerCase().slice(0, 3);
+    const num = MONTH_MAP[key] || null;
 
-  if (!num) {
-    console.warn(`getNumericMonth: invalid month “${monthInput}”`);
-  }
-  return num;
+    if (!num) {
+        console.warn(`getNumericMonth: invalid month “${monthInput}”`);
+    }
+    return num;
 }
 
 
@@ -544,28 +588,28 @@ function mbConvertKana(text, option) {
     // r: 전각문자를 반각으로 변환
     // a: 전각영문자를 반각으로 변환
     if (option.match(/[ra]/)) {
-        text = text.replace(/[Ａ-ｚ]/g, function(elem) {
+        text = text.replace(/[Ａ-ｚ]/g, function (elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
         });
     }
     // R: 반각문자를 전각으로 변환
     // A: 반각영문자를 전각으로 변환
     if (option.match(/[RA]/)) {
-        text = text.replace(/[A-z]/g, function(elem) {
+        text = text.replace(/[A-z]/g, function (elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
         });
     }
     // n: 전각숫자를 반각으로 변환
     // a: 전각 영숫자를 반각으로 변환
     if (option.match(/[na]/)) {
-        text = text.replace(/[０-９]/g, function(elem) {
+        text = text.replace(/[０-９]/g, function (elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) - 65248);
         });
     }
     // N: 반각숫자를 전각으로 변환
     // A: 반각영숫자를 전각으로 변환
     if (option.match(/[NA]/)) {
-        text = text.replace(/[0-9]/g, function(elem) {
+        text = text.replace(/[0-9]/g, function (elem) {
             return String.fromCharCode(parseInt(elem.charCodeAt(0)) + 65248);
         });
     }
