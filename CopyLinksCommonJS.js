@@ -1,4 +1,55 @@
 
+
+// slideToggle 효과를 흉내 내는 함수
+function slideToggle(element, duration, callback) {
+    if (window.getComputedStyle(element).display === 'none') {
+        slideDown(element, duration, callback);
+    } else {
+        slideUp(element, duration, callback);
+    }
+}
+
+// slideDown 효과 구현
+function slideDown(element, duration, callback) {
+    element.style.display = 'block';
+    element.style.height = 'auto';
+    const height = element.offsetHeight;
+    element.style.height = '0px';
+    element.style.overflow = 'hidden';
+    element.style.transition = `height ${duration}ms ease-in-out`;
+
+    setTimeout(() => {
+        element.style.height = `${height}px`;
+    }, 1);
+
+    element.addEventListener('transitionend', function handler() {
+        element.style.overflow = '';
+        element.style.transition = '';
+        element.removeEventListener('transitionend', handler);
+        if (callback) callback();
+    });
+}
+
+// slideUp 효과 구현
+function slideUp(element, duration, callback) {
+    element.style.height = `${element.offsetHeight}px`;
+    element.style.overflow = 'hidden';
+    element.style.transition = `height ${duration}ms ease-in-out`;
+
+    setTimeout(() => {
+        element.style.height = '0px';
+    }, 1);
+
+    element.addEventListener('transitionend', function handler() {
+        element.style.display = 'none';
+        element.style.height = '';
+        element.style.overflow = '';
+        element.style.transition = '';
+        element.removeEventListener('transitionend', handler);
+        if (callback) callback();
+    });
+}
+
 function updateClipboard(CopyData) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(CopyData).then(() => {
