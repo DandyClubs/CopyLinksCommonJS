@@ -1,5 +1,4 @@
-
-function slideToggle(element, duration = 300, callback) {
+function slideToggle(element, duration = 1000, callback) {
     const isHidden = window.getComputedStyle(element).display === 'none';
     if (isHidden) {
         slideDown(element, duration, callback);
@@ -8,53 +7,60 @@ function slideToggle(element, duration = 300, callback) {
     }
 }
 
-function slideDown(element, duration = 300, callback) {
+function slideDown(element, duration = 1000, callback) {
     element.style.removeProperty('display');
-    let display = window.getComputedStyle(element).display;
-    if (display === 'none') display = 'block';
-    element.style.display = display;
+    const display = window.getComputedStyle(element).display;
+    if (display === 'none') element.style.display = 'block';
 
     const height = element.scrollHeight;
-
     element.style.overflow = 'hidden';
     element.style.height = '0';
-    element.style.transition = `height ${duration}ms ease`;
+    element.style.opacity = '0';
+    element.style.willChange = 'height, opacity';
+    element.style.transition = `height ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
 
-    // Trigger reflow
     requestAnimationFrame(() => {
         element.style.height = `${height}px`;
+        element.style.opacity = '1';
 
         element.addEventListener('transitionend', function handler(e) {
-            if (e.target !== element) return;
+            if (e.target !== element || e.propertyName !== 'height') return;
             element.style.removeProperty('height');
             element.style.removeProperty('overflow');
+            element.style.removeProperty('opacity');
             element.style.removeProperty('transition');
+            element.style.removeProperty('will-change');
             element.removeEventListener('transitionend', handler);
             if (callback) callback();
         });
     });
 }
 
-function slideUp(element, duration = 300, callback) {
+function slideUp(element, duration = 400, callback) {
     element.style.height = `${element.scrollHeight}px`;
+    element.style.opacity = '1';
     element.style.overflow = 'hidden';
-    element.style.transition = `height ${duration}ms ease`;
+    element.style.willChange = 'height, opacity';
+    element.style.transition = `height ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
 
-    // Trigger reflow
     requestAnimationFrame(() => {
         element.style.height = '0';
+        element.style.opacity = '0';
 
         element.addEventListener('transitionend', function handler(e) {
-            if (e.target !== element) return;
+            if (e.target !== element || e.propertyName !== 'height') return;
             element.style.display = 'none';
             element.style.removeProperty('height');
+            element.style.removeProperty('opacity');
             element.style.removeProperty('overflow');
             element.style.removeProperty('transition');
+            element.style.removeProperty('will-change');
             element.removeEventListener('transitionend', handler);
             if (callback) callback();
         });
     });
 }
+
 
 function updateClipboard(CopyData) {
     if (navigator.clipboard && navigator.clipboard.writeText) {
