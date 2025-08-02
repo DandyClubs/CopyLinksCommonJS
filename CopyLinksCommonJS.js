@@ -29,7 +29,7 @@ function MoveElementPosition(element) {
     if (topElement) {
         // 해당 요소의 계산된 z-index 값 가져오기
         const zIndex = window.getComputedStyle(topElement).zIndex;
-        //console.log(`좌표 (${centerX}, ${centerY}) 에서 가장 위에 있는 요소의 z-index는 ${zIndex} 입니다.`);
+        console.log(`좌표 (${centerX}, ${centerY}) 에서 가장 위에 있는 요소의 z-index는 ${zIndex} 입니다.`);
         console.log('가장 위에 있는 요소:', topElement);
         topElement.parentNode.insertBefore(element, topElement)
     } else {
