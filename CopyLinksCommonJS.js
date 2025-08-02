@@ -68,7 +68,7 @@ function getMaxZIndex() {
             }
         }
     });
-
+    console.log('Max Z-Index:', maxZ)
     return maxZ;
 }
 /**
