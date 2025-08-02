@@ -546,11 +546,10 @@ function nameCorrection(str) {
     if (!str || typeof str !== 'string') {
         return '';
     }
-
-    // 정규 표현식: 각 단어의 시작점을 찾습니다.
-    // \b는 단어 경계를 의미합니다. (문자-비문자, 비문자-문자, 혹은 문자열 시작/끝)
-    // 따라서, \b 뒤에 오는 모든 글자를 대문자로 바꿉니다.
-    return str.replace(/\b[a-z]/g, (match) => match.toUpperCase());
+    return str.replace(/\b\p{L}+\b/gu, word => {
+        if (/^'\p{L}+$/u.test(word)) return word; // 축약형 방지: 's, 'll 등은 그대로
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
 }
 
 
