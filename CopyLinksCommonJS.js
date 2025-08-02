@@ -359,7 +359,7 @@ function byteLengthOf(text, maxByte) {
             i++;
         }
 
-        if (currentByte + charByte > maxByte) {
+        if (currentByte + charByte >= maxByte) {
             // 마지막 문자가 '、' 또는 ','인 경우 제거
             if (result.endsWith('、') || result.endsWith(',')) {
                 result = result.slice(0, -1);
