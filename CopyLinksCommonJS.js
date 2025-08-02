@@ -13,14 +13,6 @@ function updateClipboard(CopyData) {
     }
 }
 
-function getZIndex(el) {
-    if (el && el !== document.body && el !== window && el !== document && el !== document.documentElement) {
-        var z = window.document.defaultView.getComputedStyle(el).getPropertyValue('z-index');
-        if (isNaN(z)) return getZIndex(el.parentNode);
-    }
-    return z;
-};
-
 function MoveElementPosition(element) {
     // 요소의 좌표 정보 가져오기
     const rect = element.getBoundingClientRect();
@@ -72,66 +64,6 @@ function getElementPosition(element) {
         *
         * @returns {number|null} 찾은 가장 높은 z-index 값 또는, z-index가 적용된 요소가 없을 경우 null을 반환합니다.
         */
-function getMaxZIndex() {
-    let maxZ = null;
-    // body의 직접적인 자식인 모든 div 요소를 가져옵니다.
-    const allElements = document.querySelectorAll('body > div');
-
-    allElements.forEach(element => {
-        // Get the computed style of the element
-        const style = window.getComputedStyle(element);
-        const zIndex = style.zIndex;
-
-        // Check if the z-index is a valid number and the element has a non-static position
-        if (zIndex !== 'auto' && !isNaN(parseInt(zIndex))) {
-            const position = style.position;
-            if (position !== 'static') {
-                const currentZ = parseInt(zIndex);
-                if (maxZ === null || currentZ > maxZ) {
-                    maxZ = currentZ;
-                }
-            }
-        }
-    });
-    console.log('Max Z-Index:', maxZ)
-    return maxZ;
-}
-/**
- * 특정 요소의 위치에서 가장 높은 z-index 값을 가진 요소를 찾습니다.
- * @param {Element} targetElement - z-index를 찾을 기준 요소입니다.
- * @returns {number} - 해당 위치에서 가장 높은 z-index 값 또는 1 (기본값).
- */
-function getMaxZIndexAtPoint(targetElement) {
-    const elements = [];
-    const displayValues = [];
-    const zIndices = [];
-
-    const pos = getElementPosition(targetElement);
-    let item = document.elementFromPoint(pos.x, pos.y);
-
-    while (
-        item &&
-        item !== document.body &&
-        item !== document.documentElement &&
-        item !== targetElement
-    ) {
-        elements.push(item);
-        displayValues.push(item.style.display);
-
-        const zIndex = parseInt(window.getComputedStyle(item).zIndex);
-        if (!isNaN(zIndex)) zIndices.push(zIndex);
-
-        item.style.display = "none";
-        item = document.elementFromPoint(pos.x, pos.y);
-    }
-
-    // 원래 display 스타일 복원
-    for (let i = 0; i < elements.length; i++) {
-        elements[i].style.display = displayValues[i];
-    }
-
-    return zIndices.length > 0 ? Math.max(...zIndices) : 1; // 최소 1 반환
-}
 
 
 function getElementOffset(el) {
