@@ -1,64 +1,69 @@
 function slideToggle(element, duration = 1000, callback) {
     const isHidden = window.getComputedStyle(element).display === 'none';
     if (isHidden) {
-        slideDown(element, duration, callback);
+        slideDown(element, duration);
     } else {
-        slideUp(element, duration, callback);
+        slideUp(element, duration);
     }
 }
 
-function slideDown(element, duration = 1000, callback) {
-    element.style.removeProperty('display');
-    const display = window.getComputedStyle(element).display;
-    if (display === 'none') element.style.display = 'block';
+function slideDown(target, duration = 1000) {
+    target.style.removeProperty('display');
+    let display = window.getComputedStyle(target).display;
 
-    const height = element.scrollHeight;
-    element.style.overflow = 'hidden';
-    element.style.height = '0';
-    element.style.opacity = '0';
-    element.style.willChange = 'height, opacity';
-    element.style.transition = `height ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
+    if (display === 'none') {
+        display = 'block';
+    }
 
-    requestAnimationFrame(() => {
-        element.style.height = `${height}px`;
-        element.style.opacity = '1';
-
-        element.addEventListener('transitionend', function handler(e) {
-            if (e.target !== element || e.propertyName !== 'height') return;
-            element.style.removeProperty('height');
-            element.style.removeProperty('overflow');
-            element.style.removeProperty('opacity');
-            element.style.removeProperty('transition');
-            element.style.removeProperty('will-change');
-            element.removeEventListener('transitionend', handler);
-            if (callback) callback();
-        });
-    });
+    target.style.display = display;
+    let height = target.offsetHeight;
+    target.style.overflow = 'hidden';
+    target.style.height = 0;
+    target.style.paddingTop = 0;
+    target.style.paddingBottom = 0;
+    target.style.marginTop = 0;
+    target.style.marginBottom = 0;
+    target.offsetHeight;
+    target.style.boxSizing = 'border-box';
+    target.style.transitionProperty = "height, margin, padding";
+    target.style.transitionDuration = duration + 'ms';
+    target.style.height = height + 'px';
+    target.style.removeProperty('padding-top');
+    target.style.removeProperty('padding-bottom');
+    target.style.removeProperty('margin-top');
+    target.style.removeProperty('margin-bottom');
+    window.setTimeout(() => {
+        target.style.removeProperty('height');
+        target.style.removeProperty('overflow');
+        target.style.removeProperty('transition-duration');
+        target.style.removeProperty('transition-property');
+    }, duration);
 }
 
-function slideUp(element, duration = 400, callback) {
-    element.style.height = `${element.scrollHeight}px`;
-    element.style.opacity = '1';
-    element.style.overflow = 'hidden';
-    element.style.willChange = 'height, opacity';
-    element.style.transition = `height ${duration}ms ease-in-out, opacity ${duration}ms ease-in-out`;
-
-    requestAnimationFrame(() => {
-        element.style.height = '0';
-        element.style.opacity = '0';
-
-        element.addEventListener('transitionend', function handler(e) {
-            if (e.target !== element || e.propertyName !== 'height') return;
-            element.style.display = 'none';
-            element.style.removeProperty('height');
-            element.style.removeProperty('opacity');
-            element.style.removeProperty('overflow');
-            element.style.removeProperty('transition');
-            element.style.removeProperty('will-change');
-            element.removeEventListener('transitionend', handler);
-            if (callback) callback();
-        });
-    });
+function slideUp(target, duration = 400) {
+    target.style.transitionProperty = 'height, margin, padding';
+    target.style.transitionDuration = duration + 'ms';
+    target.style.boxSizing = 'border-box';
+    target.style.height = target.offsetHeight + 'px';
+    target.offsetHeight;
+    target.style.overflow = 'hidden';
+    target.style.height = 0;
+    target.style.paddingTop = 0;
+    target.style.paddingBottom = 0;
+    target.style.marginTop = 0;
+    target.style.marginBottom = 0;
+    window.setTimeout(() => {
+        target.style.display = 'none';
+        target.style.removeProperty('height');
+        target.style.removeProperty('padding-top');
+        target.style.removeProperty('padding-bottom');
+        target.style.removeProperty('margin-top');
+        target.style.removeProperty('margin-bottom');
+        target.style.removeProperty('overflow');
+        target.style.removeProperty('transition-duration');
+        target.style.removeProperty('transition-property');
+        //alert("!");
+    }, duration);
 }
 
 
