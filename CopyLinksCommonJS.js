@@ -64,30 +64,6 @@ function updateClipboard(CopyData) {
     }
 }
 
-function MoveElementPosition(element) {
-    // 요소의 좌표 정보 가져오기
-    const rect = element.getBoundingClientRect();
-
-    // 요소의 왼쪽 상단 좌표 사용
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-
-    // 해당 좌표에 있는 모든 요소 가져오기
-    const elementsAtPoint = document.elementsFromPoint(centerX, centerY);
-
-    // 가장 위에 있는 요소 (배열의 첫 번째 요소)
-    const topElement = elementsAtPoint[0];
-    if (topElement) {
-        // 해당 요소의 계산된 z-index 값 가져오기
-        const zIndex = window.getComputedStyle(topElement).zIndex;
-        console.log(`좌표 (${centerX}, ${centerY}) 에서 가장 위에 있는 요소의 z-index는 ${zIndex} 입니다.`);
-        console.log('가장 위에 있는 요소:', topElement);
-        topElement.parentNode.insertBefore(element, topElement)
-    } else {
-        console.log(`좌표 (${centerX}, ${centerY}) 에 아무런 요소가 없습니다.`);
-    }
-}
-
 
 function getElementPosition(element) {
     // 요소가 유효한지 확인하여 오류를 방지합니다.
