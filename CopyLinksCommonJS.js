@@ -1,70 +1,69 @@
-function slideToggle(element, duration = 1000, callback) {
-    const isHidden = window.getComputedStyle(element).display === 'none';
+function fadeSlideDown(el, duration = 400) {
+    if (el.classList.contains('sliding')) return;
+    el.classList.add('sliding');
+    el.style.display = 'block';
+
+    // 강제로 opacity 0, height 0 상태로 초기화
+    el.style.overflow = 'hidden';
+    el.style.height = '0px';
+    el.style.opacity = '0';
+    el.offsetHeight; // 리플로우
+
+    // 전환 적용
+    el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
+    el.style.height = el.scrollHeight + 'px';
+    el.style.opacity = '1';
+
+    const onTransitionEnd = (e) => {
+        if (e.propertyName === 'height') {
+            el.style.removeProperty('height');
+            el.style.removeProperty('overflow');
+            el.style.removeProperty('transition');
+            el.classList.remove('sliding');
+            el.removeEventListener('transitionend', onTransitionEnd);
+        }
+    };
+
+    el.addEventListener('transitionend', onTransitionEnd);
+}
+
+function fadeSlideUp(el, duration = 400) {
+    if (el.classList.contains('sliding')) return;
+    el.classList.add('sliding');
+
+    el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
+    el.style.height = el.scrollHeight + 'px';
+    el.style.overflow = 'hidden';
+    el.offsetHeight; // 리플로우
+
+    // 슬라이드 업 + 페이드 아웃 시작
+    el.style.height = '0px';
+    el.style.opacity = '0';
+
+    const onTransitionEnd = (e) => {
+        if (e.propertyName === 'height') {
+            el.style.display = 'none';
+            el.style.removeProperty('height');
+            el.style.removeProperty('opacity');
+            el.style.removeProperty('overflow');
+            el.style.removeProperty('transition');
+            el.classList.remove('sliding');
+            el.removeEventListener('transitionend', onTransitionEnd);
+        }
+    };
+
+    el.addEventListener('transitionend', onTransitionEnd);
+}
+
+function fadeSlideToggle(el, duration = 400) {
+    const isHidden = window.getComputedStyle(el).display === 'none' || el.offsetHeight === 0;
     if (isHidden) {
-        slideDown(element, duration);
+        fadeSlideDown(el, duration);
     } else {
-        slideUp(element, duration);
+        fadeSlideUp(el, duration);
     }
 }
 
-function slideDown(target, duration = 1000) {
-    target.style.removeProperty('display');
-    let display = window.getComputedStyle(target).display;
-
-    if (display === 'none') {
-        display = 'block';
-    }
-
-    target.style.display = display;
-    let height = target.offsetHeight;
-    target.style.overflow = 'hidden';
-    target.style.height = 0;
-    target.style.paddingTop = 0;
-    target.style.paddingBottom = 0;
-    target.style.marginTop = 0;
-    target.style.marginBottom = 0;
-    target.offsetHeight;
-    target.style.boxSizing = 'border-box';
-    target.style.transitionProperty = "height, margin, padding";
-    target.style.transitionDuration = duration + 'ms';
-    target.style.height = height + 'px';
-    target.style.removeProperty('padding-top');
-    target.style.removeProperty('padding-bottom');
-    target.style.removeProperty('margin-top');
-    target.style.removeProperty('margin-bottom');
-    window.setTimeout(() => {
-        target.style.removeProperty('height');
-        target.style.removeProperty('overflow');
-        target.style.removeProperty('transition-duration');
-        target.style.removeProperty('transition-property');
-    }, duration);
-}
-
-function slideUp(target, duration = 400) {
-    target.style.transitionProperty = 'height, margin, padding';
-    target.style.transitionDuration = duration + 'ms';
-    target.style.boxSizing = 'border-box';
-    target.style.height = target.offsetHeight + 'px';
-    target.offsetHeight;
-    target.style.overflow = 'hidden';
-    target.style.height = 0;
-    target.style.paddingTop = 0;
-    target.style.paddingBottom = 0;
-    target.style.marginTop = 0;
-    target.style.marginBottom = 0;
-    window.setTimeout(() => {
-        target.style.display = 'none';
-        target.style.removeProperty('height');
-        target.style.removeProperty('padding-top');
-        target.style.removeProperty('padding-bottom');
-        target.style.removeProperty('margin-top');
-        target.style.removeProperty('margin-bottom');
-        target.style.removeProperty('overflow');
-        target.style.removeProperty('transition-duration');
-        target.style.removeProperty('transition-property');
-        //alert("!");
-    }, duration);
-}
 
 
 function updateClipboard(CopyData) {
