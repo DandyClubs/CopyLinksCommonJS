@@ -639,6 +639,14 @@ function nameCorrection(str, preserveText = '') {
             }
         }
 
+        if (
+            /[A-Z]/.test(word) &&
+            /[a-z]/.test(word) &&
+            !/^([A-Z]+|[a-z]+)$/.test(word)
+        ) {
+            return word;
+        }
+
         // 단어가 모두 대문자면 그대로 반환
         if (word === word.toUpperCase()) return word;
 
