@@ -16,6 +16,7 @@ function waitNextFrame() {
 async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000) {
     if (!el || !(el instanceof Element)) return false;
 
+    const computedStyle = getComputedStyle(el);
     if (computedStyle.position === 'static') {
         el.style.position = 'relative'; // position이 있어야 z-index 적용됨
     }
@@ -24,7 +25,7 @@ async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000)
         el.classList.add('dynamic-z');
     }
 
-    const computedStyle = getComputedStyle(el);
+    
     let currentZ = parseInt(computedStyle.getPropertyValue('--dynamic-zindex'), 10);
     if (isNaN(currentZ)) currentZ = 0;
 
