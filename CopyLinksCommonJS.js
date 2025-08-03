@@ -577,6 +577,8 @@ function nameCorrection(str, preserveText = '') {
     return str.replace(/\b[\p{L}']+\b/gu, word => {
         if (/^'\p{L}+$/u.test(word)) return word;
 
+        if (word === word.toUpperCase()) return word;
+
         // preserve 리스트에 대소문자 무시 매칭 시, 입력 단어 그대로 유지
         if (preserveRegexes.some(regex => regex.test(word))) {
             return word;
