@@ -545,15 +545,53 @@ function getDirectInnerText(el) {
 }
 
 
-//첫글자 대문자
-function nameCorrection(str) {
-    if (!str || typeof str !== 'string') {
-        return '';
-    }
-    return str.replace(/\b\p{L}+\b/gu, word => {
-        if (/^'\p{L}+$/u.test(word)) return word; // 축약형 방지: 's, 'll 등은 그대로
-        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+const preserveList = `
+JVID
+`;
+
+function nameCorrection(str, preserveText = '') {
+    if (!str || typeof str !== 'string') return '';
+
+    // 패턴 분리 및 ignoreCase 플래그 처리
+    const preservePatterns = preserveText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(pattern => {
+            let ignoreCase = false;
+            if (pattern.startsWith('(?i)')) {
+                ignoreCase = true;
+                pattern = pattern.slice(4);
+            }
+            const isRegexPattern = /[\(\)\[\]\?\:\|\!\<\>]/.test(pattern);
+            if (!isRegexPattern) {
+                pattern = escapeRegExp(pattern);
+            }
+            return { pattern, ignoreCase };
+        });
+
+    const preserveRegexes = preservePatterns.map(({ pattern, ignoreCase }) =>
+        new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u')
+    );
+
+    return str.replace(/\b[\p{L}']+\b/gu, word => {
+        if (/^'\p{L}+$/u.test(word)) return word;
+
+        // preserve 리스트에 대소문자 무시 매칭 시, 입력 단어 그대로 유지
+        if (preserveRegexes.some(regex => regex.test(word))) {
+            return word;
+        }
+
+        // 아니면 Title Case 변환
+        return word
+            .split(/(?<=\p{L})'(?=\p{L})/u)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+            .join("'");
     });
+}
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 
