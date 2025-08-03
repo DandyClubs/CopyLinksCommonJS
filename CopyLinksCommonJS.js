@@ -9,36 +9,42 @@ function isElementCovered(el) {
     return !(el === topElement || el.contains(topElement));
 }
 
-function bringElementToFrontWithSteps(el, maxSteps = 10) {
-    if (!el) return false;
-    const style = el.style;
-    const computedStyle = getComputedStyle(el);
+function waitNextFrame() {
+    return new Promise(resolve => requestAnimationFrame(resolve));
+}
 
-    // position이 static이면 relative로 변경
+async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000) {
+    if (!el || !(el instanceof Element)) return false;
+
     if (computedStyle.position === 'static') {
-        style.position = 'relative';
+        el.style.position = 'relative'; // position이 있어야 z-index 적용됨
+    }
+    // .dynamic-z 클래스가 없으면 추가
+    if (!el.classList.contains('dynamic-z')) {
+        el.classList.add('dynamic-z');
     }
 
-    // 기존 z-index 파싱, 없으면 0으로
-    let currentZ = parseInt(computedStyle.zIndex, 10);
+    const computedStyle = getComputedStyle(el);
+    let currentZ = parseInt(computedStyle.getPropertyValue('--dynamic-zindex'), 10);
     if (isNaN(currentZ)) currentZ = 0;
 
     for (let i = 1; i <= maxSteps; i++) {
-        const newZ = currentZ + i * 1000;
-        style.zIndex = newZ;
+        const newZ = currentZ + i * stepSize;
+        el.style.setProperty('--dynamic-zindex', newZ);
 
-        // 잠깐 브라우저 렌더링 시간을 준다 (필요하면)
-        // 체크 즉시 진행해도 무방
+        await waitNextFrame();
 
         if (!isElementCovered(el)) {
-            console.log(`가려짐 해제: z-index = ${newZ}`);
-            return true; // 성공적으로 가려짐 해제
+            console.log(`✅ 가려짐 해제됨: z-index = ${newZ}`);
+            return true;
         }
     }
 
-    console.warn('최대 z-index 단계까지 올렸지만 여전히 가려짐');
-    return false; // 실패
+    console.warn('⚠️ 최대 z-index 단계까지 올렸지만 여전히 가려짐');
+    return false;
 }
+
+
 
 
 function fadeSlideDown(el, duration = 400) {
