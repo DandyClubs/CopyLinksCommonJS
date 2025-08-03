@@ -547,12 +547,12 @@ function getDirectInnerText(el) {
 
 const preserveList = `
 JVID
+FC2(-)?PPV
 `;
 
 function nameCorrection(str, preserveText = '') {
     if (!str || typeof str !== 'string') return '';
 
-    // 패턴 분리 및 ignoreCase 플래그 처리
     const preservePatterns = preserveText
         .split('\n')
         .map(line => line.trim())
@@ -567,7 +567,7 @@ function nameCorrection(str, preserveText = '') {
             if (!isRegexPattern) {
                 pattern = escapeRegExp(pattern);
             }
-            return { pattern, ignoreCase };
+            return { pattern, ignoreCase, rawPattern: pattern };
         });
 
     const preserveRegexes = preservePatterns.map(({ pattern, ignoreCase }) =>
@@ -577,19 +577,26 @@ function nameCorrection(str, preserveText = '') {
     return str.replace(/\b[\p{L}']+\b/gu, word => {
         if (/^'\p{L}+$/u.test(word)) return word;
 
-        if (word === word.toUpperCase()) return word;
-
-        // preserve 리스트에 대소문자 무시 매칭 시, 입력 단어 그대로 유지
-        if (preserveRegexes.some(regex => regex.test(word))) {
-            return word;
+        for (let i = 0; i < preserveRegexes.length; i++) {
+            if (preserveRegexes[i].test(word)) {
+                // preserve 단어인 경우 무조건 대문자 변환
+                return word.toUpperCase();
+            }
         }
 
-        // 아니면 Title Case 변환
+        // 단어가 모두 대문자면 그대로 반환
+        if (word === word.toUpperCase()) return word;
+
+        // 그 외는 Title Case 변환
         return word
             .split(/(?<=\p{L})'(?=\p{L})/u)
             .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
             .join("'");
     });
+}
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function escapeRegExp(str) {
