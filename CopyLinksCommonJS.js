@@ -1,3 +1,46 @@
+function isElementCovered(el) {
+    if (!el) return false;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return true;
+    const x = rect.left + rect.width / 2;
+    const y = rect.top + rect.height / 2;
+    if (x < 0 || y < 0 || x > window.innerWidth || y > window.innerHeight) return true;
+    const topElement = document.elementFromPoint(x, y);
+    return !(el === topElement || el.contains(topElement));
+}
+
+function bringElementToFrontWithSteps(el, maxSteps = 10) {
+    if (!el) return false;
+    const style = el.style;
+    const computedStyle = getComputedStyle(el);
+
+    // position이 static이면 relative로 변경
+    if (computedStyle.position === 'static') {
+        style.position = 'relative';
+    }
+
+    // 기존 z-index 파싱, 없으면 0으로
+    let currentZ = parseInt(computedStyle.zIndex, 10);
+    if (isNaN(currentZ)) currentZ = 0;
+
+    for (let i = 1; i <= maxSteps; i++) {
+        const newZ = currentZ + i * 1000;
+        style.zIndex = newZ;
+
+        // 잠깐 브라우저 렌더링 시간을 준다 (필요하면)
+        // 체크 즉시 진행해도 무방
+
+        if (!isElementCovered(el)) {
+            console.log(`가려짐 해제: z-index = ${newZ}`);
+            return true; // 성공적으로 가려짐 해제
+        }
+    }
+
+    console.warn('최대 z-index 단계까지 올렸지만 여전히 가려짐');
+    return false; // 실패
+}
+
+
 function fadeSlideDown(el, duration = 400) {
     if (el.classList.contains('sliding')) return;
     el.classList.add('sliding');
