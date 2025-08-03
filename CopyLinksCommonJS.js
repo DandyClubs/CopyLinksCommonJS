@@ -545,10 +545,15 @@ function getDirectInnerText(el) {
 }
 
 
-let preserveList = `
-JVID
-FC2(-)?PPV
-`;
+function addToPreserveList(word, listText, ignoreCase = false) {
+    const lines = listText.split('\n').map(line => line.trim()).filter(Boolean);
+    const formatted = ignoreCase ? `(?i)${word}` : word;
+
+    if (!lines.includes(formatted)) {
+        lines.push(formatted);
+    }
+    return lines.join('\n');
+}
 
 function nameCorrection(str, preserveText = '') {
     if (!str || typeof str !== 'string') return '';
@@ -598,7 +603,6 @@ function nameCorrection(str, preserveText = '') {
 function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
-
 
 //첫문자 대문자 나머지 소문자
 function capitalize(str) {
