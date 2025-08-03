@@ -545,7 +545,7 @@ function getDirectInnerText(el) {
 }
 
 
-const preserveList = `
+let preserveList = `
 JVID
 FC2(-)?PPV
 `;
@@ -593,10 +593,6 @@ function nameCorrection(str, preserveText = '') {
             .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
             .join("'");
     });
-}
-
-function escapeRegExp(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function escapeRegExp(str) {
