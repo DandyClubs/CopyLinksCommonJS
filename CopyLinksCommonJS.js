@@ -607,7 +607,7 @@ function addToPreserveList(word, listText, ignoreCase = false) {
 
 function nameCorrection(str, preserveText = '') {
     if (!str || typeof str !== 'string') return '';
-
+    
     const preservePatterns = preserveText
         .split('\n')
         .map(line => line.trim())
@@ -629,12 +629,22 @@ function nameCorrection(str, preserveText = '') {
         new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u')
     );
 
-    return str.replace(/\b[\p{L}']+\b/gu, word => {
+    const contractionParts = ['t', 'll', 's', 're', 've', 'd', 'm'];
+
+    const lowerCaseWords = new Set([
+        'a', 'an', 'the',
+        'and', 'but', 'or', 'nor', 'for', 'so', 'yet',
+        'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
+        'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
+        'that', 'this', 'these', 'those',
+        'my', 'let', "can't", "i'll", 'be'
+    ]);
+
+    function correctWord(word, isFirstWord, isLastWord) {
         if (/^'\p{L}+$/u.test(word)) return word;
 
         for (let i = 0; i < preserveRegexes.length; i++) {
             if (preserveRegexes[i].test(word)) {
-                // preserve 단어인 경우 무조건 대문자 변환
                 return word.toUpperCase();
             }
         }
@@ -647,16 +657,67 @@ function nameCorrection(str, preserveText = '') {
             return word;
         }
 
-        // 단어가 모두 대문자면 그대로 반환
         if (word === word.toUpperCase()) return word;
 
-        // 그 외는 Title Case 변환
-        return word
-            .split(/(?<=\p{L})'(?=\p{L})/u)
-            .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-            .join("'");
-    });
+        const parts = word.split(/(?<=\p{L})'(?=\p{L})/u);
+
+        return parts.map((part, i) => {
+            const lower = part.toLowerCase();
+
+            if (i > 0 && contractionParts.includes(lower)) {
+                return lower;
+            }
+
+            if (isFirstWord || isLastWord || !lowerCaseWords.has(lower)) {
+                return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+            } else {
+                return lower;
+            }
+        }).join("'");
+    }
+
+    // 단어 분리 (공백과 구두점 포함)
+    const words = str.match(/\b[\p{L}'\-\/:_]+\b|[^\w\s]+|\s+/gu) || [];
+
+    // 첫/마지막 알파벳 단어 인덱스 찾기
+    const firstWordIdx = words.findIndex(w => /\p{L}/u.test(w));
+    let lastWordIdx = -1;
+    for (let i = words.length - 1; i >= 0; i--) {
+        if (/\p{L}/u.test(words[i])) {
+            lastWordIdx = i;
+            break;
+        }
+    }
+
+    // 구분자 배열 (분리 후 다시 붙일 때 사용)
+    const delimiters = ['-', '/', ':', '_'];
+
+    return words.map((word, idx) => {
+        if (/^\s+$/.test(word) || /^[^\w\s]+$/.test(word)) return word;
+
+        // 구분자 포함 시 분리 후 각 부분 Title Case 적용
+        let splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
+        if (splitRegex.test(word)) {
+            const parts = word.split(splitRegex);
+            // parts 배열 예시: ['tamply', '-', 'total']
+
+            return parts.map((part, i) => {
+                if (delimiters.includes(part)) {
+                    return part; // 구분자 그대로 유지
+                } else {
+                    const isFirst = idx === firstWordIdx && i === 0;
+                    const isLast = idx === lastWordIdx && i === parts.length - 1;
+                    return correctWord(part, isFirst, isLast);
+                }
+            }).join('');
+        }
+
+        const isFirst = idx === firstWordIdx;
+        const isLast = idx === lastWordIdx;
+        return correctWord(word, isFirst, isLast);
+    }).join('');
 }
+
 
 function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
