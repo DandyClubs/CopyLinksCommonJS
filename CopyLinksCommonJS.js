@@ -25,7 +25,7 @@ async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000)
         el.classList.add('dynamic-z');
     }
 
-    
+
     let currentZ = parseInt(computedStyle.getPropertyValue('--dynamic-zindex'), 10);
     if (isNaN(currentZ)) currentZ = 0;
 
@@ -131,56 +131,6 @@ function updateClipboard(CopyData) {
 }
 
 
-function getElementPosition(element) {
-    // 요소가 유효한지 확인하여 오류를 방지합니다.
-    if (!element instanceof HTMLElement) {
-        console.error("유효한 HTML 요소를 전달해야 합니다.");
-        return null;
-    }
-
-    // getBoundingClientRect()를 사용하여 위치와 크기를 가져옵니다.
-    const rect = element.getBoundingClientRect();
-
-    // x, y, top, left 속성을 포함한 객체를 반환합니다.
-    // x/y와 top/left는 대부분의 경우 동일하지만, 오래된 브라우저 호환성을 위해 둘 다 포함합니다.
-    return {
-        x: rect.x,
-        y: rect.y,
-        top: rect.top,
-        left: rect.left
-    };
-}
-
-/**
-        * body의 직접적인 자식인 모든 div 요소들을 순회하며 가장 높은 z-index 값을 찾습니다.
-        * z-index는 'static'이 아닌 position 속성을 가진 요소에만 적용됩니다.
-        *
-        * @returns {number|null} 찾은 가장 높은 z-index 값 또는, z-index가 적용된 요소가 없을 경우 null을 반환합니다.
-        */
-
-
-function getElementOffset(el) {
-    let rect = el.getBoundingClientRect()
-    return {
-        top: rect.top,
-        bottom: rect.bottom,
-        left: rect.left,
-        right: rect.right,
-        width: rect.width,
-        height: rect.height,
-    };
-}
-
-function getRelativeOffset(el) {
-    return {
-        top: el.offsetTop,
-        bottom: el.offsetTop + el.offsetHeight,
-        left: el.offsetLeft,
-        right: el.offsetLeft + el.offsetWidth,
-        width: el.offsetWidth,
-        height: el.offsetHeight,
-    };
-}
 
 function getNodeTextBounds(nodeWithText) {
     // 전달받은 요소가 유효한지 확인합니다.
@@ -212,6 +162,183 @@ function getNodeTextBounds(nodeWithText) {
     range.detach();
 
     return bounds;
+}
+
+
+// --- 공통 유틸 함수들 ---
+
+/**
+ * HTMLElement인지 확인
+ * @param {Node} el 
+ * @returns {boolean}
+ */
+function isHTMLElement(el) {
+    return el instanceof HTMLElement;
+}
+
+/**
+ * getBoundingClientRect 호출 안전하게 수행
+ * @param {HTMLElement} el 
+ * @returns {DOMRect|null}
+ */
+function safeGetBoundingClientRect(el) {
+    if (!isHTMLElement(el)) {
+        console.error('HTMLElement가 아닙니다.');
+        return null;
+    }
+    return el.getBoundingClientRect();
+}
+
+/**
+ * element 내부 첫번째 텍스트 노드 찾기
+ * @param {Node} node 
+ * @returns {Text|null}
+ */
+function getFirstTextNode(node) {
+    let textNodes = [];
+    (function recurse(currentNode) {
+        if (currentNode.nodeType === Node.TEXT_NODE) {
+            if (currentNode.textContent.trim() !== '') {
+                textNodes.push(currentNode);
+            }
+        } else {
+            currentNode.childNodes.forEach(child => recurse(child));
+        }
+    })(node);
+    return textNodes[0] || null;
+}
+
+/**
+ * 텍스트 노드 위치 측정
+ * @param {Text} textNode 
+ * @returns {Object|null} 위치 정보 객체
+ */
+function getTextNodeRect(textNode) {
+    try {
+        const range = document.createRange();
+        range.selectNode(textNode);
+        return range.getBoundingClientRect();
+    } catch (e) {
+        console.error(e);
+        return null;
+    }
+}
+
+// --- 주요 API 함수 ---
+
+/**
+ * 요소 위치/크기 계산 (모드별)
+ * @param {Node} el 
+ * @param {Object} options - { mode: 'position'|'relative'|'textNode'|'bounding' }
+ * @returns {Object|null}
+ */
+function getElementMetrics(el, options = {}) {
+    const mode = options.mode || 'bounding';
+
+    if (!el) return null;
+
+    switch (mode) {
+        case 'position': {
+            const rect = safeGetBoundingClientRect(el);
+            if (!rect) return null;
+            return { x: rect.x, y: rect.y, top: rect.top, left: rect.left };
+        }
+        case 'relative': {
+            if (!isHTMLElement(el)) {
+                console.error('relative 모드는 HTMLElement 필요');
+                return null;
+            }
+            return {
+                top: el.offsetTop,
+                bottom: el.offsetTop + el.offsetHeight,
+                left: el.offsetLeft,
+                right: el.offsetLeft + el.offsetWidth,
+                width: el.offsetWidth,
+                height: el.offsetHeight,
+            };
+        }
+        case 'textNode': {
+            let textNode = null;
+            if (isHTMLElement(el)) {
+                textNode = getFirstTextNode(el);
+            } else if (el.nodeType === Node.TEXT_NODE) {
+                textNode = el;
+            }
+            if (!textNode) {
+                return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
+            }
+            const rect = getTextNodeRect(textNode);
+            if (!rect) {
+                return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
+            }
+            return {
+                top: rect.top,
+                bottom: rect.bottom,
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+        case 'bounding':
+        default: {
+            const rect = safeGetBoundingClientRect(el);
+            if (!rect) return null;
+            return {
+                top: rect.top,
+                bottom: rect.bottom,
+                left: rect.left,
+                right: rect.right,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+    }
+}
+
+
+
+function getElementPosition(element) {
+    // 요소가 유효한지 확인하여 오류를 방지합니다.
+    if (!element instanceof HTMLElement) {
+        console.error("유효한 HTML 요소를 전달해야 합니다.");
+        return null;
+    }
+
+    // getBoundingClientRect()를 사용하여 위치와 크기를 가져옵니다.
+    const rect = element.getBoundingClientRect();
+
+    // x, y, top, left 속성을 포함한 객체를 반환합니다.
+    // x/y와 top/left는 대부분의 경우 동일하지만, 오래된 브라우저 호환성을 위해 둘 다 포함합니다.
+    return {
+        x: rect.x,
+        y: rect.y,
+        top: rect.top,
+        left: rect.left
+    };
+}
+
+function getElementOffset(el) {
+    let rect = el.getBoundingClientRect()
+    return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+    };
+}
+
+function getRelativeOffset(el) {
+    return {
+        top: el.offsetTop,
+        bottom: el.offsetTop + el.offsetHeight,
+        left: el.offsetLeft,
+        right: el.offsetLeft + el.offsetWidth,
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+    };
 }
 
 function getNodeTextElementOffset(node) {
@@ -313,82 +440,127 @@ function GetBackGroundUrl(area) {
 }
 
 
-//Match
-function MatchRegex(Area, regex, attributeToSearch) {
-    //console.log(Area, regex, attributeToSearch)
-    const output = [];
-    if (attributeToSearch) {
-        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
-            //console.log(regex.test(element.getAttribute(attributeToSearch)), element)
-            if (regex.test(element.getAttribute(attributeToSearch))) {
-                //console.log(element)
-                output.push(element);
-            }
+/**
+ * DOM 요소 중 regex가 attributeToSearch 값에 매칭되는 요소를 찾습니다.
+ * @param {Element} Area - 검색할 DOM 영역
+ * @param {RegExp} regex - 찾을 정규식
+ * @param {string} [attributeToSearch] - 검색할 속성명 (예: 'src', 'href', 'innerText' 등)
+ * @param {Object} [options]
+ * @param {boolean} [options.ignoreCase=false] - 대소문자 무시 여부
+ * @param {boolean} [options.wholeWord=false] - 전체 단어 매칭 여부
+ * @param {string[]} [options.includeTag] - 포함할 태그 리스트 (대문자 태그명 배열). 지정하면 이 태그만 검색
+ * @param {string[]} [options.excludeTag] - 제외할 태그 리스트 (대문자 태그명 배열). includeTag가 없을 때 적용
+ * @param {boolean} [options.notMatch=false] - regex에 매칭되지 않는 요소를 찾음
+ * @param {boolean} [options.firstOnly=false] - 첫 번째 매칭 요소만 반환
+ * @param {(element: Element) => boolean} [options.filterCallback] - 추가 필터 함수 (true일 때 포함)
+ * @param {number} [options.maxResults=Infinity] - 최대 반환 개수
+ * @returns {Element|Element[]} - 첫 번째 요소 또는 배열 반환 (firstOnly 옵션에 따라)
+ * 
+ * @example
+ * // src 속성에 'example' 포함하는 모든 IMG, VIDEO 태그 찾기
+ * findElementsByRegex(document.body, /example/, 'src', {
+ *   includeTag: ['IMG', 'VIDEO']
+ * });
+ * 
+ * @example
+ * // href 속성에 'http' 포함하지 않는 모든 A 태그 찾기 (notMatch)
+ * findElementsByRegex(document.body, /http/, 'href', {
+ *   includeTag: ['A'],
+ *   notMatch: true
+ * });
+ * 
+ * @example
+ * // 모든 태그 중 script, style 태그는 제외하고 textContent에 'warning' 포함하는 요소 첫 개만 찾기
+ * findElementsByRegex(document.body, /warning/i, 'textContent', {
+ *   excludeTag: ['SCRIPT', 'STYLE'],
+ *   firstOnly: true,
+ *   ignoreCase: true
+ * });
+ */
+
+function querySelectorAllRegex(Area, regex, attributeToSearch = '', options = {}) {
+    if (!Area || !regex) return options.firstOnly ? null : [];
+
+    const {
+        ignoreCase = true,
+        wholeWord = false,
+        excludeTag = [],  //{ excludeTag: ['SCRIPT', 'STYLE'] } 대문자로 태그명 지정해야 함
+        includeTag = null,  //{ includeTag: ['IMG'] }  대문자로 태그명 지정해야 함
+        maxResults = Infinity,
+        filterCallback = null,
+        notMatch = false,
+        firstOnly = false,
+        searchStyle = false,
+    } = options;
+
+    let pattern = typeof regex === 'string' ? regex : regex.source;
+    const flags = (regex.flags || '') + (ignoreCase && !(regex.flags?.includes('i')) ? 'i' : '');
+    const finalPattern = wholeWord ? `\\b(?:${pattern})\\b` : pattern;
+    const compiledRegex = new RegExp(finalPattern, flags);
+
+    const tagMap = {
+        'href': ['a'],
+        'src': ['img', 'script', 'iframe', 'video', 'audio', 'source'],
+        'innerText': ['*'],
+        'textContent': ['*'],
+        'script': ['script'],
+        'style': ['*']
+    };
+
+    const tags = tagMap[attributeToSearch] || ['*'];
+    const selector = tags.join(',');
+
+    const isTagAllowed = (tagName) => {
+        if (includeTag && includeTag.length > 0) {
+            return includeTag.includes(tagName);
         }
-    } else {
-        for (let element of Area.querySelectorAll('*')) {
-            for (let attribute of element.attributes) {
-                if (regex.test(attribute.value)) {
-                    //console.log(element)
-                    output.push(element);
+        return !excludeTag.includes(tagName);
+    };
+
+    const elements = Area.querySelectorAll(selector);
+    const results = [];
+
+    for (const el of elements) {
+        const tagName = el.tagName.toUpperCase();
+        if (!isTagAllowed(tagName)) continue;
+
+        let value = '';
+
+        if (attributeToSearch === 'innerText' || attributeToSearch === 'textContent') {
+            value = el.textContent || '';
+        } else if (attributeToSearch === 'script') {
+            if (tagName !== 'SCRIPT') continue;
+            value = el.textContent || '';
+        } else if (attributeToSearch === 'style') {
+            if (!searchStyle) continue;
+            value = el.getAttribute('style') || '';
+        } else if (attributeToSearch) {
+            value = el.getAttribute?.(attributeToSearch) || '';
+        } else {
+            let found = false;
+            for (const attr of el.attributes) {
+                if (compiledRegex.test(attr.value)) {
+                    found = true;
+                    value = attr.value;
+                    break;
                 }
             }
+            if (!found) continue;
         }
+
+        const isMatch = compiledRegex.test(value);
+        if (notMatch ? isMatch : !isMatch) continue;
+
+        if (filterCallback && !filterCallback(el)) continue;
+
+        results.push(el);
+        if (firstOnly || results.length >= maxResults) break;
     }
-    return output;
+
+    return firstOnly ? (results[0] || null) : results;
 }
 
-// Not Match
-function NotMatchRegex(Area, regex, attributeToSearch) {
-    const output = [];
-    if (attributeToSearch) {
-        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
-            if (!regex.test(element.getAttribute(attributeToSearch))) {
-                //console.log(element)
-                output.push(element);
-            }
-        }
-    } else {
-        for (let element of Area.querySelectorAll('*')) {
-            for (let attribute of element.attributes) {
-                if (!regex.test(attribute.value)) {
-                    //console.log(element)
-                    output.push(element);
-                }
-            }
-        }
-    }
-    return output;
-}
 
-function querySelectorAllRegex(Area, regex, attributeToSearch) {
-    const output = [];
-    if (attributeToSearch === 'href') {
-        for (let element of Area.querySelectorAll('A')) {
-            if (element.href && !regex.test(element.href)) {
-                //console.log(element, regex)
-                output.push(element);
-            }
-        }
-    } else if (attributeToSearch) {
-        for (let element of Area.querySelectorAll(`[${attributeToSearch}]`)) {
-            if (!regex.test(element.getAttribute(attributeToSearch))) {
-                console.log(element, regex)
-                output.push(element);
-            }
-        }
-    } else {
-        for (let element of Area.querySelectorAll('*')) {
-            for (let attribute of element.attributes) {
-                if (!regex.test(attribute.value)) {
-                    console.log(element)
-                    output.push(element);
-                }
-            }
-        }
-    }
-    return output;
-}
 /**
  * 문자열의 바이트 길이를 제한하여 자르고 '...'을 추가하는 함수입니다.
  * @param {string} text - 자를 원본 문자열입니다.
@@ -607,7 +779,7 @@ function addToPreserveList(word, listText, ignoreCase = false) {
 
 function nameCorrection(str, preserveText = '') {
     if (!str || typeof str !== 'string') return '';
-    
+
     const preservePatterns = preserveText
         .split('\n')
         .map(line => line.trim())
