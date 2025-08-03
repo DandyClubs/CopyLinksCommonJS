@@ -637,7 +637,7 @@ function nameCorrection(str, preserveText = '') {
         'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
         'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
         'that', 'this', 'these', 'those',
-        'my', 'let', "can't", "i'll", 'be'
+        'let', "can't", "i'll", 'be'
     ]);
 
     function correctWord(word, isFirstWord, isLastWord) {
