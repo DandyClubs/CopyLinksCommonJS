@@ -189,24 +189,6 @@ function safeGetBoundingClientRect(el) {
     return el.getBoundingClientRect();
 }
 
-/**
- * element 내부 첫번째 텍스트 노드 찾기
- * @param {Node} node 
- * @returns {Text|null}
- */
-function getFirstTextNode(node) {
-    let textNodes = [];
-    (function recurse(currentNode) {
-        if (currentNode.nodeType === Node.TEXT_NODE) {
-            if (currentNode.textContent.trim() !== '') {
-                textNodes.push(currentNode);
-            }
-        } else {
-            currentNode.childNodes.forEach(child => recurse(child));
-        }
-    })(node);
-    return textNodes[0] || null;
-}
 
 /**
  * 텍스트 노드 위치 측정
