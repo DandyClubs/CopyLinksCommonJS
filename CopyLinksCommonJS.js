@@ -1,3 +1,45 @@
+/**
+ * 주어진 텍스트에서 일본어 문자의 개수를 세어 반환합니다.
+ * 히라가나, 가타카나, 한자를 포함합니다.
+ * @param {string} text - 일본어 문자를 찾을 문자열
+ * @returns {number} - 찾은 일본어 문자의 개수
+ */
+function countJapaneseCharacters(text) {
+    const japanesePattern = /[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]/g;
+    const matches = text.match(japanesePattern);
+    return matches ? matches.length : 0;
+}
+
+/**
+ * 두 문장 중 일본어 문자가 더 많이 포함된 문장을 찾아 반환합니다.
+ * 일본어 문자 수가 같을 경우, 더 긴 문장을 반환합니다.
+ * @param {string} sentence1 - 첫 번째 문장
+ * @param {string} sentence2 - 두 번째 문장
+ * @returns {string} - 결과 메시지
+ */
+function compareSentences(sentence1, sentence2) {
+    if (sentence1 === sentence2) {
+        return sentence1
+    }
+
+    const count1 = countJapaneseCharacters(sentence1);
+    const count2 = countJapaneseCharacters(sentence2);
+
+    if (count1 > count2) {
+        return sentence1
+    } else if (count2 > count1) {
+        return sentence2
+    } else {
+        
+        if (sentence1.length > sentence2.length) {
+            return sentence1
+        } else {
+            return sentence2
+        }
+    }
+}
+
+
 function createFloatPanelFrom(el, {
     id = 'FloatingCenterBox',
     offset = { top: '20px', right: '20px' },
