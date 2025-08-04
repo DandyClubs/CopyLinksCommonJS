@@ -18,13 +18,12 @@ async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000)
 
     const computedStyle = getComputedStyle(el);
     if (computedStyle.position === 'static') {
-        el.style.position = 'relative'; // position이 있어야 z-index 적용됨
+        el.style.position = 'relative';
     }
-    // .dynamic-z 클래스가 없으면 추가
+
     if (!el.classList.contains('dynamic-z')) {
         el.classList.add('dynamic-z');
     }
-
 
     let currentZ = parseInt(computedStyle.getPropertyValue('--dynamic-zindex'), 10);
     if (isNaN(currentZ)) currentZ = 0;
@@ -45,6 +44,30 @@ async function bringElementToFrontWithSteps(el, maxSteps = 10, stepSize = 10000)
     return false;
 }
 
+
+function observeAndAutoUncover(targetEl, options = { subtree: true, childList: true, attributes: true }) {
+    if (!targetEl || !(targetEl instanceof Element)) return;
+
+    const observedElements = new WeakSet(); // 중복 관찰 방지
+
+    if (observedElements.has(targetEl)) return;
+    observedElements.add(targetEl);
+
+    const observer = new MutationObserver(() => {
+        if (isElementCovered(targetEl)) {
+            bringElementToFrontWithSteps(targetEl);
+        }
+    });
+
+    observer.observe(document.body, options);
+
+    // 초기 상태가 가려졌다면 즉시 복구 시도
+    if (isElementCovered(targetEl)) {
+        bringElementToFrontWithSteps(targetEl);
+    }
+
+    return observer;
+}
 
 
 
@@ -829,9 +852,10 @@ function nameCorrection(str, preserveText = '') {
             }
         }).join("'");
     }
-    
+
     // 단어 분리 (공백과 구두점 포함, 숫자/단위 묶음 유지)
     const words = str.match(/[\[\]()]|\b[\p{L}\d]+(?:[\/:.][\p{L}\d]+)*\b|[^\w\s]+|\s+/gu) || [];
+
 
 
     // 첫/마지막 알파벳 단어 인덱스 찾기
