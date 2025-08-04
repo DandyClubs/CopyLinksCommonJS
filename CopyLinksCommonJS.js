@@ -17,9 +17,9 @@ function countJapaneseCharacters(text) {
  * @param {string} sentence2 - 두 번째 문장
  * @returns {string} - 결과 메시지
  */
-function compareSentences(sentence1, sentence2) {
+function compareJapaneseCharacters(sentence1, sentence2) {
     if (sentence1 === sentence2) {
-        return sentence1
+        return null
     }
 
     const count1 = countJapaneseCharacters(sentence1);
@@ -30,15 +30,97 @@ function compareSentences(sentence1, sentence2) {
     } else if (count2 > count1) {
         return sentence2
     } else {
-        
+
         if (sentence1.length > sentence2.length) {
             return sentence1
-        } else {
+        }
+        if (sentence1.length > sentence2.length) {
             return sentence2
+        } else {
+            return null
         }
     }
 }
 
+/**
+ * 주어진 텍스트를 정리하고 단어 배열로 반환합니다.
+ * - 소문자로 변환
+ * - 구두점 및 특수문자 제거
+ * @param {string} text - 처리할 문자열
+ * @returns {string[]} - 정리된 단어들의 배열
+ */
+function tokenizeAndClean(text) {
+    // 소문자로 변환하고, 알파벳과 숫자, 공백을 제외한 모든 문자를 제거
+    const cleanedText = text.toLowerCase().replace(/[^\w\s]/g, '');
+    // 공백을 기준으로 단어를 분리
+    return cleanedText.split(/\s+/).filter(word => word.length > 0);
+}
+
+/**
+ * 두 문장의 단어 일치율을 계산합니다.
+ * @param {string} sentence1 - 첫 번째 문장
+ * @param {string} sentence2 - 두 번째 문장
+ * @returns {number} - 0에서 100 사이의 일치율(퍼센트)
+ */
+function getWordMatchPercentage(sentence1, sentence2) {
+    const words1 = tokenizeAndClean(sentence1);
+    const words2 = tokenizeAndClean(sentence2);
+
+    // 두 문장이 완전히 동일하면 100% 일치
+    if (words1.join(' ') === words2.join(' ')) {
+        return 100;
+    }
+
+    // Set을 사용하여 중복되지 않는 단어 목록을 만듭니다.
+    const set1 = new Set(words1);
+    const set2 = new Set(words2);
+
+    // 더 짧은 문장의 단어 수를 기준으로 일치율을 계산합니다.
+    const shorterWordCount = Math.min(set1.size, set2.size);
+    if (shorterWordCount === 0) {
+        return 0;
+    }
+
+    let matchedWordsCount = 0;
+    for (const word of set1) {
+        if (set2.has(word)) {
+            matchedWordsCount++;
+        }
+    }
+
+    return (matchedWordsCount / shorterWordCount) * 100;
+}
+
+/**
+ * 두 문장을 비교하여 조건에 맞는 문장을 반환합니다.
+ * - 단어 일치율이 높은 문장
+ * - 일치율이 같을 경우, 총 길이가 더 긴 문장
+ * @param {string} sentence1 - 첫 번째 문장
+ * @param {string} sentence2 - 두 번째 문장
+ * @returns {string} - 결과 메시지
+ */
+function compareSentencesByWordMatch(sentence1, sentence2) {
+    const matchPercentage1 = getWordMatchPercentage(sentence1, sentence2);
+    const matchPercentage2 = getWordMatchPercentage(sentence2, sentence1);
+
+    // 이중 비교를 통해 더 높은 일치율을 찾습니다.
+    // 이 로직은 `shorterWordCount` 기준으로 계산되므로, 두 문장의 일치율은 항상 동일합니다.
+    const matchPercentage = matchPercentage1;
+
+    if (matchPercentage > 0) {
+        // 일치율이 0보다 큰 경우에만 길이 비교를 진행합니다.
+        const length1 = sentence1.length;
+        const length2 = sentence2.length;
+
+        if (length1 > length2) {
+            return sentence1
+        } else {
+            return sentence2
+        }
+    } else {
+        return sentence2
+    }
+}
 
 function createFloatPanelFrom(el, {
     id = 'FloatingCenterBox',
@@ -63,7 +145,7 @@ function createFloatPanelFrom(el, {
         maxWidth: '90vw',
         maxHeight: '90vh',
         overflow: 'auto',
-    });    
+    });
 }
 
 
