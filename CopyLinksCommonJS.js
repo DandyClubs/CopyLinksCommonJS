@@ -1,3 +1,30 @@
+function createFloatPanelFrom(el, {
+    id = 'FloatingCenterBox',
+    offset = { top: '20px', right: '20px' },
+    draggable = true
+} = {}) {
+    if (!el || !(el instanceof HTMLElement)) return;
+
+    el.id = id;
+    el.classList.add('float-panel');
+
+    Object.assign(el.style, {
+        position: 'fixed',
+        zIndex: '999999',
+        top: offset.top,
+        right: offset.right,
+        background: 'rgba(0,0,0,0.8)',
+        color: 'white',
+        padding: '6px 12px',
+        borderRadius: '10px',
+        fontSize: '14px',
+        maxWidth: '90vw',
+        maxHeight: '90vh',
+        overflow: 'auto',
+    });    
+}
+
+
 function isElementCovered(el) {
     if (!el) return false;
     const rect = el.getBoundingClientRect();
