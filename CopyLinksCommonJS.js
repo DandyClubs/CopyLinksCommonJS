@@ -829,9 +829,10 @@ function nameCorrection(str, preserveText = '') {
             }
         }).join("'");
     }
+    
+    // 단어 분리 (공백과 구두점 포함, 숫자/단위 묶음 유지)
+    const words = str.match(/[\[\]()]|\b[\p{L}\d]+(?:[\/:.][\p{L}\d]+)*\b|[^\w\s]+|\s+/gu) || [];
 
-    // 단어 분리 (공백과 구두점 포함)
-    const words = str.match(/\b[\p{L}'\-\/:_]+\b|[^\w\s]+|\s+/gu) || [];
 
     // 첫/마지막 알파벳 단어 인덱스 찾기
     const firstWordIdx = words.findIndex(w => /\p{L}/u.test(w));
