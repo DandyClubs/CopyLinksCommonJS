@@ -892,13 +892,21 @@ function capitalize(str) {
 function FilenameConvert(text) {
     if (typeof text !== 'string') return '';
 
-    // Forbidden characters in filenames (Windows) → replace with fullwidth versions
-    const ExcludeChar = /[<>:"/\\|?*]/g;
+    const replacements = {
+        '<': '＜',
+        '>': '＞',
+        ':': '：',
+        '"': '＂',
+        '/': '／',
+        '\\': '＼',
+        '|': '｜',
+        '?': '？',
+        '*': '＊',
+    };
 
-    return text.replace(ExcludeChar, char =>
-        String.fromCharCode(char.charCodeAt(0) + 65248)
-    );
+    return [...text].map(c => replacements[c] || c).join('');
 }
+
 
 const MONTH_MAP = {
     jan: '01', feb: '02', mar: '03', apr: '04',
