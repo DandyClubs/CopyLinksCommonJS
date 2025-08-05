@@ -19,7 +19,7 @@ function countJapaneseCharacters(text) {
  */
 function compareJapaneseCharacters(sentence1, sentence2) {
     if (sentence1 === sentence2) {
-        return null
+        return sentence1
     }
 
     const count1 = countJapaneseCharacters(sentence1);
@@ -37,7 +37,7 @@ function compareJapaneseCharacters(sentence1, sentence2) {
         if (sentence1.length > sentence2.length) {
             return sentence2
         } else {
-            return null
+            return sentence2
         }
     }
 }
