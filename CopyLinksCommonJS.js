@@ -306,6 +306,7 @@ function updateClipboard(CopyData) {
 
 
 
+
 function getNodeTextBounds(nodeWithText) {
     // 전달받은 요소가 유효한지 확인합니다.
     if (!nodeWithText instanceof HTMLElement) {
@@ -350,37 +351,7 @@ function isHTMLElement(el) {
     return el instanceof HTMLElement;
 }
 
-/**
- * getBoundingClientRect 호출 안전하게 수행
- * @param {HTMLElement} el 
- * @returns {DOMRect|null}
- */
-function safeGetBoundingClientRect(el) {
-    if (!isHTMLElement(el)) {
-        console.error('HTMLElement가 아닙니다.');
-        return null;
-    }
-    return el.getBoundingClientRect();
-}
-
-
-/**
- * 텍스트 노드 위치 측정
- * @param {Text} textNode 
- * @returns {Object|null} 위치 정보 객체
- */
-function getTextNodeRect(textNode) {
-    try {
-        const range = document.createRange();
-        range.selectNode(textNode);
-        return range.getBoundingClientRect();
-    } catch (e) {
-        console.error(e);
-        return null;
-    }
-}
-
-// --- 주요 API 함수 ---
+// --- 주요 API 함수 (통합) ---
 
 /**
  * 요소 위치/크기 계산 (모드별)
@@ -390,18 +361,32 @@ function getTextNodeRect(textNode) {
  */
 function getElementMetrics(el, options = {}) {
     const mode = options.mode || 'bounding';
+    const emptyMetrics = { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0, centerX: 0, centerY: 0 };
 
-    if (!el) return null;
+    if (!el) {
+        console.error('유효한 요소를 전달해야 합니다.');
+        return null;
+    }
 
     switch (mode) {
         case 'position': {
-            const rect = safeGetBoundingClientRect(el);
-            if (!rect) return null;
-            return { x: rect.x, y: rect.y, top: rect.top, left: rect.left };
+            if (!isHTMLElement(el)) {
+                console.error('position 모드는 HTMLElement가 필요합니다.');
+                return null;
+            }
+            const rect = el.getBoundingClientRect();
+            return {
+                x: rect.x,
+                y: rect.y,
+                top: rect.top,
+                left: rect.left,
+                centerX: rect.left + rect.width / 2,
+                centerY: rect.top + rect.height / 2,
+            };
         }
         case 'relative': {
             if (!isHTMLElement(el)) {
-                console.error('relative 모드는 HTMLElement 필요');
+                console.error('relative 모드는 HTMLElement가 필요합니다.');
                 return null;
             }
             return {
@@ -411,6 +396,8 @@ function getElementMetrics(el, options = {}) {
                 right: el.offsetLeft + el.offsetWidth,
                 width: el.offsetWidth,
                 height: el.offsetHeight,
+                centerX: el.offsetLeft + el.offsetWidth / 2,
+                centerY: el.offsetTop + el.offsetHeight / 2,
             };
         }
         case 'textNode': {
@@ -420,26 +407,37 @@ function getElementMetrics(el, options = {}) {
             } else if (el.nodeType === Node.TEXT_NODE) {
                 textNode = el;
             }
+
             if (!textNode) {
-                return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
+                return emptyMetrics;
             }
-            const rect = getTextNodeRect(textNode);
-            if (!rect) {
-                return { top: 0, bottom: 0, left: 0, right: 0, width: 0, height: 0 };
+
+            try {
+                const range = document.createRange();
+                range.selectNode(textNode);
+                const rect = range.getBoundingClientRect();
+                return {
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    left: rect.left,
+                    right: rect.right,
+                    width: rect.width,
+                    height: rect.height,
+                    centerX: rect.left + rect.width / 2,
+                    centerY: rect.top + rect.height / 2,
+                };
+            } catch (error) {
+                console.error('텍스트 노드 위치 계산 중 오류 발생:', error);
+                return emptyMetrics;
             }
-            return {
-                top: rect.top,
-                bottom: rect.bottom,
-                left: rect.left,
-                right: rect.right,
-                width: rect.width,
-                height: rect.height,
-            };
         }
         case 'bounding':
         default: {
-            const rect = safeGetBoundingClientRect(el);
-            if (!rect) return null;
+            if (!isHTMLElement(el)) {
+                console.error('bounding 모드는 HTMLElement가 필요합니다.');
+                return null;
+            }
+            const rect = el.getBoundingClientRect();
             return {
                 top: rect.top,
                 bottom: rect.bottom,
@@ -447,117 +445,43 @@ function getElementMetrics(el, options = {}) {
                 right: rect.right,
                 width: rect.width,
                 height: rect.height,
+                centerX: rect.left + rect.width / 2,
+                centerY: rect.top + rect.height / 2,
             };
         }
     }
 }
 
+// --- 보조 유틸 함수 ---
 
-
-function getElementPosition(element) {
-    // 요소가 유효한지 확인하여 오류를 방지합니다.
-    if (!element instanceof HTMLElement) {
-        console.error("유효한 HTML 요소를 전달해야 합니다.");
+/**
+ * 주어진 노드에서 공백이 아닌 내용을 포함하는 첫 번째 텍스트 노드를 재귀적으로 찾습니다.
+ * @param {Node} node - 탐색을 시작할 노드.
+ * @returns {Text|null} - 찾은 텍스트 노드 또는 찾지 못한 경우 null.
+ */
+function getFirstTextNode(node) {
+    if (!node) {
         return null;
     }
 
-    // getBoundingClientRect()를 사용하여 위치와 크기를 가져옵니다.
-    const rect = element.getBoundingClientRect();
-
-    // x, y, top, left 속성을 포함한 객체를 반환합니다.
-    // x/y와 top/left는 대부분의 경우 동일하지만, 오래된 브라우저 호환성을 위해 둘 다 포함합니다.
-    return {
-        x: rect.x,
-        y: rect.y,
-        top: rect.top,
-        left: rect.left
-    };
-}
-
-function getElementOffset(el) {
-    let rect = el.getBoundingClientRect()
-    return {
-        top: rect.top,
-        bottom: rect.bottom,
-        left: rect.left,
-        right: rect.right,
-        width: rect.width,
-        height: rect.height,
-    };
-}
-
-function getRelativeOffset(el) {
-    return {
-        top: el.offsetTop,
-        bottom: el.offsetTop + el.offsetHeight,
-        left: el.offsetLeft,
-        right: el.offsetLeft + el.offsetWidth,
-        width: el.offsetWidth,
-        height: el.offsetHeight,
-    };
-}
-
-function getNodeTextElementOffset(node) {
-    let textNode = getTextNodesIn(node, false);
-    if (!textNode) {
-        return {
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: 0,
-            height: 0,
-        };
-    }
-
-    try {
-        const range = document.createRange();
-        range.selectNode(textNode);
-        const rect = range.getBoundingClientRect();
-
-        return {
-            top: rect.top,
-            bottom: rect.bottom,
-            left: rect.left,
-            right: rect.right,
-            width: rect.width,
-            height: rect.height,
-        };
-    } catch (error) {
-        console.error(error);
-        return {
-            top: 0,
-            bottom: 0,
-            left: 0,
-            right: 0,
-            width: 0,
-            height: 0,
-        };
-    }
-}
-
-
-function getFirstTextNode(node, includeWhitespaceNodes = false) {
-    const nonWhitespaceMatcher = /\S/;
-    let result = null;
-
-    function traverse(currentNode) {
-        if (currentNode.nodeType === Node.TEXT_NODE) {
-            if (includeWhitespaceNodes || nonWhitespaceMatcher.test(currentNode.nodeValue)) {
-                result = currentNode;
-                return true; // stop traversal once found
-            }
-        } else {
-            for (let i = 0; i < currentNode.childNodes.length; i++) {
-                if (traverse(currentNode.childNodes[i])) return true;
-            }
+    // NodeList를 배열로 변환하여 for...of 루프 사용
+    for (const childNode of Array.from(node.childNodes)) {
+        // 텍스트 노드인지 확인하고, 공백이 아닌 텍스트가 있는지 검사
+        if (childNode.nodeType === Node.TEXT_NODE && childNode.textContent.trim().length > 0) {
+            return childNode;
         }
-        return false;
+
+        // 자식 노드에 대해 재귀적으로 탐색
+        const foundNode = getFirstTextNode(childNode);
+        if (foundNode) {
+            return foundNode;
+        }
     }
 
-    traverse(node);
-    return result;
+    return null;
 }
+
+
 
 function getDefaultFontSize() {
     const element = document.createElement('div');
