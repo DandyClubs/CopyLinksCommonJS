@@ -1,4 +1,85 @@
 /**
+ * 웹페이지의 특정 영역에서 제목, 링크, 비밀번호 등의 정보를 추출하여 구조화된 배열로 반환합니다.
+ * @param {HTMLElement} area - 정보를 추출할 DOM 영역.
+ * @returns {Array<object>} 추출된 정보가 담긴 객체 배열.
+ */
+function extractPostData(area) {
+    if (!area) {
+        console.error("⚠️ Invalid 'area' argument. Please provide a valid DOM element.");
+        return [];
+    }
+
+    const dataItems = [];
+    let currentItem = null;
+
+    function saveCurrentItem() {
+        if (currentItem) {
+            // 중복 링크 제거
+            if (currentItem.links) {
+                currentItem.links = [...new Set(currentItem.links)];
+            }
+            dataItems.push(currentItem);
+        }
+    }
+
+    // NodeList를 배열로 변환하여 순회
+    Array.from(area.childNodes).forEach(node => {
+        const text = node.textContent?.trim() || '';
+
+        // 【影片名稱】：을 기준으로 새 그룹 시작
+        if (text.startsWith('【影片名稱】：')) {
+            saveCurrentItem();
+            currentItem = {
+                title: text.replace('【影片名稱】：', '').trim(),
+                links: [],
+                size: null,
+                password: null,
+                releaseDate: null
+            };
+        }
+
+        // <tr> 태그 안의 정보를 파싱
+        if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'tr') {
+            const header = node.querySelector('.header')?.textContent?.trim();
+            const value = node.querySelector('.text')?.textContent?.trim();
+            if (currentItem && header && value) {
+                if (header === '発売日:') {
+                    currentItem.releaseDate = value;
+                }
+            }
+        }
+
+        // 텍스트 기반 정보 추출
+        if (currentItem) {
+            // 링크 추출 (<a> 태그)
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const linksInNode = Array.from(node.querySelectorAll('a'))
+                    .map(a => a.href)
+                    .filter(href => href && (href.includes('katfile.com') || href.includes('mega.nz')));
+                if (linksInNode.length > 0) {
+                    currentItem.links.push(...linksInNode);
+                }
+            }
+
+            // 【影片大小】： 추출
+            const sizeMatch = text.match(/【影片大小】：(.*)/);
+            if (sizeMatch) {
+                currentItem.size = sizeMatch[1].trim();
+            }
+
+            // 【解壓密碼】： 추출
+            const passwordMatch = text.match(/【解壓密碼】：(.*)/);
+            if (passwordMatch) {
+                currentItem.password = passwordMatch[1].trim();
+            }
+        }
+    });
+
+    saveCurrentItem(); // 마지막 그룹 저장
+    return dataItems;
+}
+
+/**
  * 웹페이지에서 링크(URL)를 유연한 옵션에 따라 찾아 반환합니다.
  *
  * @param {HTMLElement} area - 검색을 수행할 DOM 영역.
@@ -18,6 +99,18 @@
  * - 예시: [['src', /.+\.png/, /^((?!ad).)*$/gi], ['href', /example\.com/]]
  * - src 속성에서 '.png'를 포함하고 'ad'는 제외하는 필터.
  * - 위 필터에서 결과가 없으면 href 속성에서 'example.com'을 포함하는 URL을 찾음.
+ * @returns {Array<*>} 조건에 맞는 링크(URL) 배열 또는 그룹 객체 배열을 반환합니다.
+ */
+/**
+ * 웹페이지에서 링크(URL)를 유연한 옵션에 따라 찾아 반환합니다.
+ *
+ * @param {HTMLElement} area - 검색을 수행할 DOM 영역.
+ * @param {Array<string>|object|undefined} [tags] - 추출할 태그 이름 배열, 또는 모든 옵션을 담은 객체.
+ * @param {string|RegExp|undefined} [separator] - 그룹을 나눌 텍스트, 정규식, 또는 CSS 셀렉터.
+ * @param {Array<string|number>|undefined} [resolutionPriority] - 해상도 우선순위 배열.
+ * @param {Array<Array<string|RegExp>>|undefined} [urlFilters] - URL을 필터링할 속성 및 정규식 배열.
+ * @param {boolean} [knownHosts] - 알려진 파일 공유 사이트 링크를 자동으로 필터링할지 여부.
+ * @param {boolean} [excludeSelf] - 현재 사이트 주소를 자동으로 제외할지 여부.
  * @returns {Array<*>} 조건에 맞는 링크(URL) 배열 또는 그룹 객체 배열을 반환합니다.
  */
 function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownHosts, excludeSelf) {
@@ -44,16 +137,14 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
         resolutionPriority: finalResolutionPriority = ['1920', '3840', '1280'],
         urlFilters: finalUrlFilters,
         knownHosts: autoKnownHosts = false,
-        excludeSelf: autoExcludeSelf = true // 현재 사이트 주소는 기본적으로 제외
+        excludeSelf: autoExcludeSelf = true
     } = options;
 
-    // 알려진 파일 공유 사이트 목록
     const KNOWN_HOSTS = [
         'katfile.com', 'mega.nz', 'drive.google.com', 'filespace.com',
         'nitroflare.com', 'uploadgig.com', 'uptobox.com'
     ];
 
-    // 자동으로 필터링할 광고, 현재 사이트 등의 제외 목록
     let EXCLUDE_HOSTS = ['google.com', 'gstatic.com', 'adservice.google.com', 'doubleclick.net',
         'youtube.com', 'youtu.be', 'developershome.com', 'md5file.com', 'netlify.app'
     ];
@@ -63,16 +154,13 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
 
     let effectiveUrlFilters = finalUrlFilters || [];
 
-    // 제외 필터 자동 추가
-    if (!effectiveUrlFilters.some(f => f[0] === 'href' && f.some(r => r instanceof RegExp && r.source.includes(EXCLUDE_HOSTS[0])))) {
-        const excludeRegex = new RegExp(`(${EXCLUDE_HOSTS.map(host => `(?:^|\\W)${host.replace(/\./g, '\\.')}`).join('|')})`, 'i');
-        effectiveUrlFilters = effectiveUrlFilters.concat([['href', `?!${excludeRegex.source}`]]);
-    }
+    const excludeRegexSource = EXCLUDE_HOSTS.map(host => `(?:^|\\W)${host.replace(/\./g, '\\.')}`).join('|');
+    const excludeRegex = new RegExp(`^((?!${excludeRegexSource}).)*$`, 'i');
+    effectiveUrlFilters.push(['href', excludeRegex]);
 
-    // 포함 필터 자동 추가 (knownHosts 옵션이 true일 때만)
     if (autoKnownHosts) {
-        const knownHostsRegex = new RegExp(`(${KNOWN_HOSTS.map(host => host.replace(/\./g, '\\.')).join('|')})`);
-        effectiveUrlFilters = effectiveUrlFilters.concat([['href', knownHostsRegex]]);
+        const knownHostsRegex = new RegExp(`(${KNOWN_HOSTS.map(host => host.replace(/\./g, '\\.')).join('|')})`, 'i');
+        effectiveUrlFilters.push(['href', knownHostsRegex]);
     }
 
     const findResolutionInText = (text) => {
@@ -104,14 +192,6 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
         const checkResolutionCondition = (linkResolution, condition) => {
             if (!linkResolution) return false;
             const linkResValue = parseInt(linkResolution);
-
-            const rangeMatches = String(condition).match(/(\d+)\s*-\s*(\d+)/);
-            if (rangeMatches) {
-                const min = parseInt(rangeMatches[1]);
-                const max = parseInt(rangeMatches[2]);
-                return linkResValue >= min && linkResValue <= max;
-            }
-
             const comparisonMatches = String(condition).trim().match(/(>=|<=|>|<|=)?\s*(\d+)|(\d+)\s*(>=|<=|>|<|=)?/);
             if (comparisonMatches) {
                 let operator, value;
@@ -130,14 +210,12 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
                     case '=': default: return linkResValue === value;
                 }
             }
-
             return linkResolution === String(condition).trim();
         };
 
         const allLinksInGroup = links.map(el => ({
             url: el.url,
             element: el.element,
-            // ⚠️ 해상도 탐색 로직 수정: 그룹의 해상도 정보를 사용
             resolution: groupResolution
         })).filter(el => el.url);
 
@@ -156,16 +234,16 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
                     return foundMax.map(el => el.url);
                 }
             }
-            priority.splice(maxResolutionIndex, 1);
         }
 
-        for (const res of priority) {
+        for (const res of priority.filter(p => String(p).toLowerCase() !== 'max')) {
             const found = allLinksInGroup.filter(el => el.resolution && checkResolutionCondition(el.resolution, res));
             if (found.length > 0) {
                 return found.map(link => link.url);
             }
         }
-        return [];
+
+        return allLinksInGroup.map(el => el.url);
     };
 
     const applyUrlFilters = (linkElements, filters) => {
@@ -173,80 +251,88 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
             return linkElements;
         }
 
-        let currentLinks = [...linkElements];
-        for (const filterGroup of filters) {
+        return filters.reduce((filtered, filterGroup) => {
             const attributeName = filterGroup[0];
-            const regexList = filterGroup.slice(1);
+            const regex = filterGroup[1];
 
-            currentLinks = currentLinks.filter(el => {
+            return filtered.filter(el => {
                 const attributeValue = el.element.getAttribute(attributeName) || '';
-
-                return regexList.some(regex => {
-                    if (typeof regex === 'string' && regex.startsWith('?!')) {
-                        return !new RegExp(regex.substring(2)).test(attributeValue);
-                    }
-                    return new RegExp(regex).test(attributeValue);
-                });
+                return regex.test(attributeValue);
             });
-        }
-        return currentLinks;
+        }, linkElements);
     };
 
     // -----------------------------------------------------------
-    // Case 1: Grouping Mode
+    // Case 1: Text-based or CSS-based Grouping Mode
     // -----------------------------------------------------------
     if (finalSeparator) {
         let finalLinks = [];
-        const groupBlocks = area.querySelectorAll(finalSeparator);
+        let groupNodes = [];
+        const tagsSelector = finalTags.map(t => t.toLowerCase()).join(',');
 
-        if (groupBlocks.length === 0) {
-            const allLinks = Array.from(area.querySelectorAll(finalTags.map(t => t.toLowerCase()).join(',')))
-                .map(el => ({ element: el, url: extractURL(el) }))
-                .filter(el => el.url);
-
-            const filteredLinks = applyUrlFilters(allLinks, effectiveUrlFilters);
-
-            if (filteredLinks.length > 0) {
-                return filteredLinks.map(link => link.url);
+        if (typeof finalSeparator === 'string' && finalSeparator.trim().length > 0 && finalSeparator.includes(' ')) {
+            // CSS selector
+            groupNodes = Array.from(area.querySelectorAll(finalSeparator));
+        } else {
+            // Text or RegExp separator
+            let separatorPattern = finalSeparator;
+            if (typeof separatorPattern === 'string') {
+                const escapedSeparator = separatorPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                separatorPattern = new RegExp(`(.*${escapedSeparator}.*)`, 'i');
             }
 
-            console.log(`⚠️ No groups found with selector: '${finalSeparator}'. Returning all links on the page.`);
-            return allLinks.map(el => el.url);
+            let currentGroupNodes = [];
+            Array.from(area.childNodes).forEach(node => {
+                if ((node.nodeType === Node.TEXT_NODE || node.nodeType === Node.ELEMENT_NODE) && separatorPattern.test(node.textContent)) {
+                    if (currentGroupNodes.length > 0) {
+                        const tempDiv = document.createElement('div');
+                        currentGroupNodes.forEach(n => tempDiv.appendChild(n.cloneNode(true)));
+                        groupNodes.push(tempDiv);
+                    }
+                    currentGroupNodes = [node];
+                } else {
+                    currentGroupNodes.push(node);
+                }
+            });
+            if (currentGroupNodes.length > 0) {
+                const tempDiv = document.createElement('div');
+                currentGroupNodes.forEach(n => tempDiv.appendChild(n.cloneNode(true)));
+                groupNodes.push(tempDiv);
+            }
         }
 
-        groupBlocks.forEach(groupBlock => {
-            // ⚠️ 그룹 내 해상도 정보를 먼저 추출
-            const groupResolution = findResolutionInText(groupBlock.textContent);
+        if (groupNodes.length === 0) {
+            const allLinks = Array.from(area.querySelectorAll(tagsSelector))
+                .map(el => ({ element: el, url: extractURL(el) }))
+                .filter(el => el.url);
+            return applyUrlFilters(allLinks, effectiveUrlFilters).map(el => el.url);
+        }
 
-            let linksInGroup = Array.from(groupBlock.querySelectorAll(finalTags.map(t => t.toLowerCase()).join(',')))
+        groupNodes.forEach(groupBlock => {
+            const groupResolution = findResolutionInText(groupBlock.textContent);
+            let linksInGroup = Array.from(groupBlock.querySelectorAll(tagsSelector))
                 .map(el => ({ element: el, url: extractURL(el) }))
                 .filter(el => el.url);
 
             linksInGroup = applyUrlFilters(linksInGroup, effectiveUrlFilters);
 
             if (linksInGroup.length > 0) {
-                // ⚠️ 추출한 해상도 정보를 함수에 전달
                 const bestLinks = findBestLinkInGroup(linksInGroup, finalResolutionPriority, groupResolution);
                 finalLinks.push(...bestLinks);
+            } else {
+                const allLinks = Array.from(groupBlock.querySelectorAll(tagsSelector))
+                    .map(el => ({ element: el, url: extractURL(el) }))
+                    .filter(el => el.url);
+                finalLinks.push(...applyUrlFilters(allLinks, effectiveUrlFilters).map(el => el.url));
             }
         });
 
         if (finalLinks.length > 0) {
-            return finalLinks;
+            return [...new Set(finalLinks)];
         }
-
-        console.log('⚠️ No specific links found in groups. Returning all grouped links.');
-        return Array.from(groupBlocks).flatMap(block => {
-            let links = Array.from(block.querySelectorAll(finalTags.map(t => t.toLowerCase()).join(',')))
-                .map(el => ({ element: el, url: extractURL(el) }))
-                .filter(el => el.url);
-            links = applyUrlFilters(links, effectiveUrlFilters);
-            return links.map(el => el.url);
-        });
     }
-
     // -----------------------------------------------------------
-    // Case 2: Resolution & URL Filtering Mode
+    // Case 2: Resolution & URL Filtering Mode (No separator)
     // -----------------------------------------------------------
     const allElements = [];
     let currentResolutionContext = null;
@@ -292,11 +378,20 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
                     return foundMax.map(el => el.url);
                 }
             }
-            finalResolutionPriority.splice(maxResolutionIndex, 1);
+            const filteredPriority = finalResolutionPriority.filter((_, index) => index !== maxResolutionIndex);
+
+            for (const res of filteredPriority) {
+                const found = filteredLinksByUrl.filter(el => el.resolution && checkResolutionCondition(el.resolution, res));
+                if (found.length > 0) {
+                    return found.map(link => link.url);
+                }
+            }
+
+            return [];
         }
 
         for (const res of finalResolutionPriority) {
-            const found = filteredLinksByUrl.filter(el => el.resolution && checkCondition(el.resolution, res));
+            const found = filteredLinksByUrl.filter(el => el.resolution && checkResolutionCondition(el.resolution, res));
             if (found.length > 0) {
                 return found.map(link => link.url);
             }
