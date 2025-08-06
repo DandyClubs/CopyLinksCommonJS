@@ -101,18 +101,6 @@ function extractPostData(area) {
  * - 위 필터에서 결과가 없으면 href 속성에서 'example.com'을 포함하는 URL을 찾음.
  * @returns {Array<*>} 조건에 맞는 링크(URL) 배열 또는 그룹 객체 배열을 반환합니다.
  */
-/**
- * 웹페이지에서 링크(URL)를 유연한 옵션에 따라 찾아 반환합니다.
- *
- * @param {HTMLElement} area - 검색을 수행할 DOM 영역.
- * @param {Array<string>|object|undefined} [tags] - 추출할 태그 이름 배열, 또는 모든 옵션을 담은 객체.
- * @param {string|RegExp|undefined} [separator] - 그룹을 나눌 텍스트, 정규식, 또는 CSS 셀렉터.
- * @param {Array<string|number>|undefined} [resolutionPriority] - 해상도 우선순위 배열.
- * @param {Array<Array<string|RegExp>>|undefined} [urlFilters] - URL을 필터링할 속성 및 정규식 배열.
- * @param {boolean} [knownHosts] - 알려진 파일 공유 사이트 링크를 자동으로 필터링할지 여부.
- * @param {boolean} [excludeSelf] - 현재 사이트 주소를 자동으로 제외할지 여부.
- * @returns {Array<*>} 조건에 맞는 링크(URL) 배열 또는 그룹 객체 배열을 반환합니다.
- */
 function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownHosts, excludeSelf) {
     if (!area) {
         console.error("⚠️ Invalid 'area' argument. Please provide a valid DOM element.");
