@@ -622,7 +622,8 @@ function fadeSlideDown(el, duration = 400) {
     el.style.overflow = 'hidden';
     el.style.height = '0px';
     el.style.opacity = '0';
-    el.offsetHeight; // 리플로우
+    el.style.padding = `.25rem 1rem`;
+    el.offsetHeight; // 리플로우    
 
     // 전환 적용
     el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
@@ -657,7 +658,8 @@ function fadeSlideUp(el, duration = 400) {
 
     const onTransitionEnd = (e) => {
         if (e.propertyName === 'height') {
-            el.style.display = 'none';
+            el.style.display = 'none';            
+            el.style.removeProperty('padding');
             el.style.removeProperty('height');
             el.style.removeProperty('opacity');
             el.style.removeProperty('overflow');
