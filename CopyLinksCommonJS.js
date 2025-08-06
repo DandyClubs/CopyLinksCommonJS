@@ -613,72 +613,174 @@ function observeAndAutoUncover(targetEl, options = { subtree: true, childList: t
 
 
 
+// 유틸
+
+// 내부 컨텐츠(패딩 등)를 담는 요소를 찾아줌
+function getInnerForMeasurement(el) {
+    // 사용자가 .panel-inner처럼 지정해놨다면 그걸 우선 사용
+    const inner = el.querySelector('.panel-inner');
+    return inner || el;
+}
+
+function ensureDisplayBlock(el) {
+    if (window.getComputedStyle(el).display === 'none') {
+        el.style.display = 'block';
+        return true;
+    }
+    return false;
+}
+
+// fadeSlideDown: Promise 반환 (transition 끝나면 resolve)
 function fadeSlideDown(el, duration = 400) {
-    if (el.classList.contains('sliding')) return;
-    el.classList.add('sliding');
-    el.style.display = 'block';
+    return new Promise((resolve) => {
+        if (el.classList.contains('sliding')) {
+            // 이미 슬라이딩 중이면 바로 resolve (또는 대기 로직을 넣어도 됨)
+            resolve();
+            return;
+        }
+        el.classList.add('sliding');
 
-    // 강제로 opacity 0, height 0 상태로 초기화
-    el.style.overflow = 'hidden';
-    el.style.height = '0px';
-    el.style.opacity = '0';
-    el.style.padding = `.25rem 1rem`;
-    el.offsetHeight; // 리플로우    
+        const measured = getInnerForMeasurement(el);
+        const wasHidden = ensureDisplayBlock(el);
 
-    // 전환 적용
-    el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
-    el.style.height = el.scrollHeight + 'px';
-    el.style.opacity = '1';
+        el.style.overflow = 'hidden';
+        // 닫힌 상태에서 패딩 깜빡임을 방지하기 위해 inline padding 건드리지 않음.
+        // 초기 상태: 높이 0, opacity 0
+        el.style.height = '0px';
+        el.style.opacity = '0';
 
-    const onTransitionEnd = (e) => {
-        if (e.propertyName === 'height') {
-            el.style.removeProperty('height');
-            el.style.removeProperty('overflow');
+        // 강제 리플로우
+        el.offsetHeight;
+
+        // 적용: transition 설정
+        el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
+
+        // 읽어온 실제 컨텐츠 높이 (inner의 scrollHeight 사용)
+        const targetHeight = measured.scrollHeight;
+        // 애니메이션 시작: 높이(px)와 opacity 1로
+        // use requestAnimationFrame to ensure previous style applied
+        requestAnimationFrame(() => {
+            el.style.height = targetHeight + 'px';
+            el.style.opacity = '1';
+        });
+
+        const onTransitionEnd = (e) => {
+            // height 변화가 끝났을 때만 처리
+            if (e.propertyName !== 'height') return;
+            el.style.removeProperty('height');     // allow auto height after open
+            el.style.removeProperty('overflow');   // restore overflow
             el.style.removeProperty('transition');
             el.classList.remove('sliding');
             el.removeEventListener('transitionend', onTransitionEnd);
-        }
-    };
+            resolve();
+        };
 
-    el.addEventListener('transitionend', onTransitionEnd);
+        // 안전장치: 브라우저가 transitionend를 안주거나 빠르게 끝나는 경우 대비 타임아웃
+        const safetyTimeout = setTimeout(() => {
+            if (el.classList.contains('sliding')) {
+                // 동일한 정리
+                el.style.removeProperty('height');
+                el.style.removeProperty('overflow');
+                el.style.removeProperty('transition');
+                el.classList.remove('sliding');
+                el.removeEventListener('transitionend', onTransitionEnd);
+                resolve();
+            }
+        }, duration + 100);
+
+        el.addEventListener('transitionend', function handler(e) {
+            // 위 onTransitionEnd 함수와 동일 처리; use single handler to clear timeout too
+            if (e.propertyName !== 'height') return;
+            clearTimeout(safetyTimeout);
+            onTransitionEnd(e);
+        }, { once: true });
+    });
 }
 
+// fadeSlideUp: Promise 반환 (transition 끝나면 resolve)
 function fadeSlideUp(el, duration = 400) {
-    if (el.classList.contains('sliding')) return;
-    el.classList.add('sliding');
+    return new Promise((resolve) => {
+        if (el.classList.contains('sliding')) {
+            resolve();
+            return;
+        }
+        el.classList.add('sliding');
 
-    el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
-    el.style.height = el.scrollHeight + 'px';
-    el.style.overflow = 'hidden';
-    el.offsetHeight; // 리플로우
+        // 측정 대상: 내부가 있으면 내부의 높이를 기준으로
+        const measured = getInnerForMeasurement(el);
 
-    // 슬라이드 업 + 페이드 아웃 시작
-    el.style.height = '0px';
-    el.style.opacity = '0';
+        // 현재 실제 높이를 픽셀로 고정 (scrollHeight 사용)
+        const currentHeight = measured.scrollHeight;
+        el.style.height = currentHeight + 'px';
+        el.style.overflow = 'hidden';
+        // ensure opacity exists
+        if (!el.style.opacity) {
+            const comp = window.getComputedStyle(el);
+            el.style.opacity = comp.opacity || '1';
+        }
 
-    const onTransitionEnd = (e) => {
-        if (e.propertyName === 'height') {
-            el.style.display = 'none';            
-            el.style.removeProperty('padding');
+        // 리플로우
+        el.offsetHeight;
+
+        // transition 적용
+        el.style.transition = `height ${duration}ms ease, opacity ${duration}ms ease`;
+
+        // 시작: 높이 0, opacity 0
+        requestAnimationFrame(() => {
+            el.style.height = '0px';
+            el.style.opacity = '0';
+        });
+
+        const onTransitionEnd = (e) => {
+            if (e.propertyName !== 'height') return;
+            // 닫힌 뒤 display none 처리
+            el.style.display = 'none';
+            // inline 스타일 정리 (padding 등은 건드리지 않음)
             el.style.removeProperty('height');
             el.style.removeProperty('opacity');
             el.style.removeProperty('overflow');
             el.style.removeProperty('transition');
             el.classList.remove('sliding');
             el.removeEventListener('transitionend', onTransitionEnd);
-        }
-    };
+            resolve();
+        };
 
-    el.addEventListener('transitionend', onTransitionEnd);
+        const safetyTimeout = setTimeout(() => {
+            if (el.classList.contains('sliding')) {
+                el.style.display = 'none';
+                el.style.removeProperty('height');
+                el.style.removeProperty('opacity');
+                el.style.removeProperty('overflow');
+                el.style.removeProperty('transition');
+                el.classList.remove('sliding');
+                el.removeEventListener('transitionend', onTransitionEnd);
+                resolve();
+            }
+        }, duration + 100);
+
+        el.addEventListener('transitionend', function handler(e) {
+            if (e.propertyName !== 'height') return;
+            clearTimeout(safetyTimeout);
+            onTransitionEnd(e);
+        }, { once: true });
+    });
 }
 
+// toggle 유틸 (기존 로직과 유사하게 display/offsetHeight 검사)
 function fadeSlideToggle(el, duration = 400) {
     const isHidden = window.getComputedStyle(el).display === 'none' || el.offsetHeight === 0;
     if (isHidden) {
-        fadeSlideDown(el, duration);
+        return fadeSlideDown(el, duration);
     } else {
-        fadeSlideUp(el, duration);
+        return fadeSlideUp(el, duration);
     }
+}
+
+// showThenHide: 열고 pause(ms) 만큼 대기했다가 닫음
+async function showThenHide(el, { duration = 400, pause = 1000 } = {}) {
+    await fadeSlideDown(el, duration);
+    await sleep(pause);
+    await fadeSlideUp(el, duration);
 }
 
 
