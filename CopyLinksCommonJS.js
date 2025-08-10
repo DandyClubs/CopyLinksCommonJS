@@ -775,10 +775,12 @@ function getLastText(text) {
     // 1. 시리즈명이 있는 경우, 시리즈명 이후의 모든 텍스트를 추출
     if (Series && new RegExp(Series + '.*').test(text)) {
         lastPart = text.match(new RegExp(Series + '.*'))?.[0] || '';
+        console.log({ lastPart })
     }
     // 2. '朝までハシゴ酒' 패턴이 있는 경우, 해당 패턴 이후의 텍스트를 추출
     else if (/朝までハシゴ酒/.test(text)) {
         lastPart = text.match(/朝までハシゴ酒.*/)?.[0] || '';
+        console.log({ lastPart })
     }
     // 3. 마지막 단어가 숫자로 끝나는 경우의 복잡한 로직
     else if (/\d+$/.test(wordList[wordList.length - 1])) {
@@ -788,14 +790,17 @@ function getLastText(text) {
         // 마지막 단어가 'ファイル'과 숫자의 조합인 경우
         if (/ファイル\d+/.test(lastWord)) {
             lastPart = `${secondLastWord} ${lastWord}`;
+            console.log({ lastPart })
         }
         // 마지막 단어가 일본어 문자이고 숫자로 끝나는 경우
         else if (JapaneseChar.test(lastWord)) {
             lastPart = lastWord;
+            console.log({ lastPart })
         }
         // 그 외의 경우 (숫자로 끝나는 마지막 두 단어를 결합)
         else {
             lastPart = `${secondLastWord} ${lastWord}`;
+            console.log({ lastPart })
         }
     }
 
@@ -811,6 +816,7 @@ function getLastText(text) {
             const searchCharPoint = text.lastIndexOf("【");
             if (searchCharPoint !== -1) {
                 lastPart = text.substring(searchCharPoint);
+                console.log({ lastPart })
             }
         }
         // '、'를 포함하고 길이가 10 이하인 경우
@@ -818,6 +824,7 @@ function getLastText(text) {
             const searchCharPoint = lastPart.lastIndexOf("、");
             if (searchCharPoint !== -1) {
                 lastPart = lastPart.substring(searchCharPoint + 1);
+                console.log({ lastPart })
             }
         }
     }
@@ -831,6 +838,7 @@ function getLastText(text) {
                 tempLastPart = lastPart.substring(flagPoints[1]);
             }
             lastPart = tempLastPart;
+            console.log({ lastPart })
         }
     }
 
