@@ -949,12 +949,12 @@ function nameCorrection(str, preserveText = '') {
 
         if (word === word.toUpperCase()) return word;
 
-        const parts = word.split(/(?<=\p{L})'(?=\p{L})/u);
+        const parts = word.split(/(?<=\p{L})('|’)(?=\p{L})/u);
 
         return parts.map((part, i) => {
             const lower = part.toLowerCase();
 
-            if (i > 0 && contractionParts.includes(lower)) {
+            if (i === 0 && contractionParts.includes(lower)) {
                 return lower;
             }
 
