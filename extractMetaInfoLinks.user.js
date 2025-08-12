@@ -132,6 +132,7 @@ function createGroupsFromArea(area, siteRule = {}) {
     return groups;
 }
 
+/*
 // ✅ 메인 파이프라인
 async function analyzePage(area, options = {}) {
     const {
@@ -160,3 +161,4 @@ async function analyzePage(area, options = {}) {
     console.log('[✅ analyzePage Final Extracted]', results);
     return results;
 }
+*/
