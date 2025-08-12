@@ -919,6 +919,7 @@ function nameCorrection(str, preserveText = '') {
         new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u')
     );
 
+    // 's'를 contractionParts에 추가하여 소유격 's'도 소문자로 유지되도록 함
     const contractionParts = ['t', 'll', 's', 're', 've', 'd', 'm'];
 
     const lowerCaseWords = new Set([
@@ -931,7 +932,8 @@ function nameCorrection(str, preserveText = '') {
     ]);
 
     function correctWord(word, isFirstWord, isLastWord) {
-        if (/^'\p{L}+$/u.test(word)) return word;
+
+        if (/^['’‘]\p{L}+$/u.test(word)) return word;
 
         for (let i = 0; i < preserveRegexes.length; i++) {
             if (preserveRegexes[i].test(word)) {
@@ -942,35 +944,51 @@ function nameCorrection(str, preserveText = '') {
         if (
             /[A-Z]/.test(word) &&
             /[a-z]/.test(word) &&
-            !/^([A-Z]+|[a-z]+)$/.test(word)
+            !/^([A-Z]+|[a-z]+)$/.test(word) &&
+            !/['’‘]/.test(word)
         ) {
             return word;
         }
 
         if (word === word.toUpperCase()) return word;
 
-        const parts = word.split(/(?<=\p{L})('|’)(?=\p{L})/u);
+        
+        const parts = word.split(/(?<=\p{L})['’‘](?=\p{L})/gu);
+        
 
         return parts.map((part, i) => {
             const lower = part.toLowerCase();
 
-            if (i === 0 && contractionParts.includes(lower)) {
+            // 어포스트로피 뒤에 오는 부분이 contractionParts에 포함되면 소문자로 유지
+            if (i > 0 && contractionParts.includes(lower)) {
                 return lower;
             }
 
-            if (isFirstWord || isLastWord || !lowerCaseWords.has(lower)) {
+            // 첫 단어의 첫 부분만 대문자로 만들고 나머지는 소문자로
+            if (i === 0) {
+                // 단어의 첫 부분이 전체 문장의 첫 단어이거나,
+                // lowerCaseWords에 없는 경우 첫 글자를 대문자로 만듭니다.
+                if (isFirstWord || !lowerCaseWords.has(lower)) {
+                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                } else {
+                    return lower;
+                }
+            }
+
+            // 그 외의 부분은 lowerCaseWords에 없는 경우에만 첫 글자를 대문자로
+            if (!lowerCaseWords.has(lower)) {
                 return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
             } else {
                 return lower;
             }
-        }).join("'");
+
+        }).join(word.match(/['’‘]/)?.[0] || '');
     }
 
     // 단어 분리 (공백과 구두점 포함, 숫자/단위 묶음 유지)
-    //const words = str.match(/[\[\]()]|\b[\p{L}\d]+(?:[\/:.][\p{L}\d]+)*\b|[^\w\s]+|\s+/gu) || [];
-    //const words = str.match(/[\[\]()]|\b[\p{L}\d_]+(?:[\/:.][\p{L}\d_]+)*\b|[^\w\s_]+|\s+/gu) || [];
-    const words = str.match(/[\[\]()]|\b\w+(?:[\/:.]\w+)*\b|[^\w\s]+|\s+/gu) || [];
-
+    
+    const words = str.match(/\b[\p{L}\d'’‘_]+\b|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
+    
 
     // 첫/마지막 알파벳 단어 인덱스 찾기
     const firstWordIdx = words.findIndex(w => /\p{L}/u.test(w));
@@ -989,10 +1007,9 @@ function nameCorrection(str, preserveText = '') {
         if (/^\s+$/.test(word) || /^[^\w\s]+$/.test(word)) return word;
 
         // 구분자 포함 시 분리 후 각 부분 Title Case 적용
-        let splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
+        const splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
         if (splitRegex.test(word)) {
             const parts = word.split(splitRegex);
-            // parts 배열 예시: ['tamply', '-', 'total']
 
             return parts.map((part, i) => {
                 if (delimiters.includes(part)) {
