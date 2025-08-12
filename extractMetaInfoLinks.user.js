@@ -24,23 +24,27 @@ function getStandardResolution(text) {
 // ✅ 해상도 블록 생성 (div 스캔 기반)
 function groupResolutionOfDiv(div) {
     const groups = {};
-    const children = Array.from(div.children);
+    const children = Array.from(div.childNodes);
     let currentRes = null;
 
     for (const el of children) {
-        const text = el.textContent || '';
+        const text = el?.textContent || '';
         const res = getStandardResolution(text);
         if (res && res !== currentRes) {
             currentRes = res;
             if (!groups[currentRes]) groups[currentRes] = [];
         }
-
-        const links = el.querySelectorAll('a[href]');
-        if (currentRes && links.length) {
-            links.forEach(a => groups[currentRes].push(a));
+        if (el.nodeType === Node.ELEMENT_NODE) {
+            const linksInNode = Array.from(el.querySelectorAll('a'))
+                .map(a => a.href)
+                .filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href));
+            console.log(el, currentRes, linksInNode)
+            if (currentRes && linksInNode.length > 0) {
+                linksInNode.forEach(a => groups[currentRes].push(a));
+                console.log(groups[currentRes])
+            }
         }
     }
-
     return groups;
 }
 
@@ -107,9 +111,10 @@ function extractMetaInfo(div, { resolutionMap, priority = [], useResolution = tr
 
 // ✅ area 내 그룹 생성
 function createGroupsFromArea(area, siteRule = {}) {
-    const children = Array.from(area.children);
+    const children = Array.from(area.childNodes);
     const groups = [];
     let currentGroup = document.createElement('div');
+    console.log(currentGroup)
 
     const separatorText = siteRule.separatorText || [];
 
@@ -128,7 +133,6 @@ function createGroupsFromArea(area, siteRule = {}) {
     if (currentGroup.children.length) {
         groups.push(currentGroup);
     }
-
     return groups;
 }
 
