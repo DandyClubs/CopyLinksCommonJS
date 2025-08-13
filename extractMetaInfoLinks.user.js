@@ -10,8 +10,17 @@ const resolutionMap = {
     'other': []
 };
 
+
+function GetFileName(url) {
+    console.log(url)
+    let name = url.split('/').pop()?.replace('.html', '')
+    return name.substring(0, name.lastIndexOf('.'))
+}
+
 // ✅ 해상도 정규식 추출
 function getStandardResolution(text) {
+
+    // link filename 이나 innertext 비교
     const lowerText = text.toLowerCase();
     for (const [key, keywords] of Object.entries(resolutionMap)) {
         if (keywords.some(k => lowerText.includes(k))) {
@@ -21,13 +30,13 @@ function getStandardResolution(text) {
     return null;
 }
 
-// ✅ 해상도 블록 생성 (div 스캔 기반)
-function groupResolutionOfDiv(div) {
-    const groups = {};
-    const children = Array.from(div.childNodes);
+// ✅ 해상도 블록 생성
+function groupResolution(div, siteRule = {}) {
+    let groups = {};
+    const childrenNodes = Array.from(div.childNodes);
     let currentRes = null;
 
-    for (const el of children) {
+    for (const el of childrenNodes) {
         const text = el?.textContent || '';
         const res = getStandardResolution(text);
         if (res && res !== currentRes) {
@@ -36,12 +45,15 @@ function groupResolutionOfDiv(div) {
         }
         if (el.nodeType === Node.ELEMENT_NODE) {
             const linksInNode = Array.from(el.querySelectorAll('a'))
-                .map(a => a.href)
-                .filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href));
-            console.log(el, currentRes, linksInNode)
-            if (currentRes && linksInNode.length > 0) {
-                linksInNode.forEach(a => groups[currentRes].push(a));
-                console.log(groups[currentRes])
+                .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));//siteRule urlFilter
+
+            if (linksInNode.length > 0) {
+                linksInNode.forEach(a => {
+                    const fileName = GetFileName(a.href) + ' ' + (/^https?:/.test(a.textContent) ? GetFileName(a.textContent) : a.textContent);
+                    const res = getStandardResolution(fileName)                    
+                    const finalRes = res ? res : currentRes ? currentRes : 'other'                    
+                    groups[finalRes].push(a)
+                });
             }
         }
     }
@@ -49,33 +61,34 @@ function groupResolutionOfDiv(div) {
 }
 
 // ✅ 메타 정보 추출
-function extractMetaInfo(div, { resolutionMap, priority = [], useResolution = true }) {
+async function extractMetaInfo(div, siteRule = {}) {
     const text = div.textContent;
 
-    const titleMatch = text.match(/影片名稱[:：]?\s*(.+)/i);
+    const titleMatch = text.match(siteRule.getTitleRegex);
     const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
-    const passwordMatch = text.match(/【解壓密碼】：(.+?)\s|Password\s?:\s?([^\s]+)/i);
+    const passwordMatch = text.match(siteRule.passwordRegex);
 
     const coverImage = div.querySelector('img')?.src || null;
 
-    const allLinks = Array.from(div.querySelectorAll('a[href]'));
+    // 🎯 텍스트 기반 해상도 그룹 분류
+    const Blocks = await groupResolution(div, siteRule = {});    
 
-    const resolutionGroups = {};
+    const allLinks = Array.from(div.querySelectorAll('a[href]')).filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href))  
+
+    let resolutionGroups = {};
     allLinks.forEach(link => {
-        const combined = link.textContent + ' ' + link.href;
-        const res = getStandardResolution(combined) || 'other';
+        const fileName = GetFileName(link.href) + ' ' + (/^https?:/.test(link.textContent) ? GetFileName(link.textContent) : link.textContent);
+        const res = getStandardResolution(fileName) || 'other';
         if (!resolutionGroups[res]) resolutionGroups[res] = [];
         resolutionGroups[res].push(link.href);
     });
 
-    // 🎯 텍스트 기반 해상도 그룹 분류
-    const resBlocks = groupResolutionOfDiv(div);
-
-    for (const [res, links] of Object.entries(resBlocks)) {
-        if (!resolutionGroups[res]) resolutionGroups[res] = [];
-        resolutionGroups[res].push(...links.map(a => a.href));
+    if (Object.keys(Blocks).length > 0) {
+        for (const [res, links] of Object.entries(Blocks)) {            
+            if (!resolutionGroups[res]) resolutionGroups[res] = [];
+            resolutionGroups[res].push(...links.map(a => a.href))            
+        }
     }
-
     // 🧹 중복 제거
     for (const res in resolutionGroups) {
         resolutionGroups[res] = [...new Set(resolutionGroups[res])];
@@ -111,24 +124,24 @@ function extractMetaInfo(div, { resolutionMap, priority = [], useResolution = tr
 
 // ✅ area 내 그룹 생성
 function createGroupsFromArea(area, siteRule = {}) {
-    const children = Array.from(area.childNodes);
+    const childrenNodes = Array.from(area.childNodes);
     const groups = [];
     let currentGroup = document.createElement('div');
-    console.log(currentGroup)
+
 
     const separatorText = siteRule.separatorText || [];
 
-    children.forEach(el => {
-        const text = el.textContent.trim();
+    for (const el of childrenNodes) {
+        const text = el?.textContent.trim();
         const isSeparator = separatorText.some(keyword => text.includes(keyword));
 
-        if (isSeparator && currentGroup.children.length > 0) {
+        if (isSeparator && currentGroup.childNodes.length > 0) {
             groups.push(currentGroup);
             currentGroup = document.createElement('div');
         }
 
         currentGroup.appendChild(el.cloneNode(true));
-    });
+    };
 
     if (currentGroup.children.length) {
         groups.push(currentGroup);
