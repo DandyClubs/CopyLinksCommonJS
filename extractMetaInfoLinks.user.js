@@ -99,6 +99,7 @@ function extractMetaInfo(div, siteRule = {}) {
             }
 
             // 🎯 우선순위 적용
+            console.log(siteRule.useResolution, siteRule.priority, resolutionGroups)
             if (siteRule.useResolution && siteRule.priority?.length) {
                 for (const res of siteRule.priority) {
                     if (resolutionGroups[res]?.length) {
@@ -106,7 +107,7 @@ function extractMetaInfo(div, siteRule = {}) {
                             title: titleMatch?.[1]?.trim() || '',
                             date: dateMatch?.[1] || null,
                             password: passwordMatch?.[1] || passwordMatch?.[2] || null,
-                            coverImage,
+                            coverImage: siteRule.coverImage,
                             [res]: resolutionGroups[res]
                         });
                         return;
@@ -120,7 +121,7 @@ function extractMetaInfo(div, siteRule = {}) {
                 title: titleMatch?.[1]?.trim() || text.split('\n')[0], // siteRule.firstLine 
                 date: dateMatch?.[1] || null,
                 password: passwordMatch?.[1] || passwordMatch?.[2] || null,
-                coverImage,
+                coverImage: siteRule.coverImage,
                 links: [...new Set(mergedLinks)]
             });
         });
@@ -141,7 +142,7 @@ function createGroupsFromArea(area, siteRule = {}) {
             const text = el?.textContent.trim();
             const isSeparator = separatorText.some(keyword => text.includes(keyword));
             const isBreakPoint = breakPoint.some(keyword => text.includes(keyword));
-
+            console.log('isBreakPoint: ', isBreakPoint, '\nisSeparator: ', isSeparator, '\ntext: ', text)
             if (isBreakPoint) {
                 // 지금까지의 currentGroup이 비어있지 않다면 저장
                 if (currentGroup.childNodes.length > 0) {
