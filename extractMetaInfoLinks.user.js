@@ -75,8 +75,9 @@ function extractMetaInfo(div, siteRule = {}) {
         const text = div.textContent;
         const titleMatch = text.match(siteRule.getTitleRegex);
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
-        const passwordMatch = text.match(siteRule.passwordRegex);
-        const coverImage = div.querySelector('img')?.src || null;
+        const passwordMatch = text.match(siteRule.passwordRegex);        
+        const password = passwordMatch ? passwordMatch.pop().trim() : null;
+
 
         Promise.resolve(groupResolution(div, siteRule)).then(Blocks => {
             const allLinks = Array.from(div.querySelectorAll('a[href]'))
@@ -111,7 +112,7 @@ function extractMetaInfo(div, siteRule = {}) {
                         resolve({
                             title: titleMatch?.[1]?.trim() || '',
                             date: dateMatch?.[1] || null,
-                            password: passwordMatch?.[1] || passwordMatch?.[2] || null,
+                            password: password,
                             coverImage: siteRule.coverImage,
                             [res]: resolutionGroups[res],
                             links: resolutionGroups[res],
@@ -126,7 +127,7 @@ function extractMetaInfo(div, siteRule = {}) {
             resolve({
                 title: titleMatch?.[1]?.trim() || text.split('\n')[0], // siteRule.firstLine 
                 date: dateMatch?.[1] || null,
-                password: passwordMatch?.[1] || passwordMatch?.[2] || null,
+                password: password,
                 coverImage: siteRule.coverImage,
                 links: [...new Set(mergedLinks)]
             });
@@ -191,7 +192,7 @@ function analyzePage(rule) {
             const filteredMetas = metas.filter(meta => Object.keys(meta).some(key => resolutionKeys.includes(key)) || meta.links?.length > 0);
 
 
-            //console.log('[✅ analyzePage Final Extracted]', filteredMetas);
+            console.log('[✅ analyzePage Final Extracted]', filteredMetas);
             return filteredMetas;
         });
 }
