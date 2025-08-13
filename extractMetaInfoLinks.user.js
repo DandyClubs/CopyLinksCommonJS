@@ -1,15 +1,14 @@
 
 // ✅ 전역 해상도 맵
 const resolutionMap = {
-    '3840': ['3840x2160', 'uhd', '4k', '2160p'],
-    '1920': ['1920x1080', 'fhd', '1080p', '1440p', '2560x1440'],
+    '3840': ['3840x2160', 'uhd', 'ultrahd', '4k', '2160p'],
+    '1920': ['1920x1080', '2048x1080', 'fhd', 'fullhd', '1080p', '1440p', '2560x1440'],
     '1280': ['1280x720', 'hd', '720p'],
     '720': ['720p'],
     'low': ['480p', '360p', '240p'],
     'veryhigh': ['8k', '4320p', 'superhd'],
     'other': []
 };
-
 
 function GetFileName(url) {
     console.log(url)
@@ -50,8 +49,8 @@ function groupResolution(div, siteRule = {}) {
             if (linksInNode.length > 0) {
                 linksInNode.forEach(a => {
                     const fileName = GetFileName(a.href) + ' ' + (/^https?:/.test(a.textContent) ? GetFileName(a.textContent) : a.textContent);
-                    const res = getStandardResolution(fileName)                    
-                    const finalRes = res ? res : currentRes ? currentRes : 'other'                    
+                    const res = getStandardResolution(fileName)
+                    const finalRes = res ? res : currentRes ? currentRes : 'other'
                     groups[finalRes].push(a)
                 });
             }
@@ -71,9 +70,9 @@ async function extractMetaInfo(div, siteRule = {}) {
     const coverImage = div.querySelector('img')?.src || null;
 
     // 🎯 텍스트 기반 해상도 그룹 분류
-    const Blocks = await groupResolution(div, siteRule = {});    
+    const Blocks = await groupResolution(div, siteRule = {});
 
-    const allLinks = Array.from(div.querySelectorAll('a[href]')).filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href))  
+    const allLinks = Array.from(div.querySelectorAll('a[href]')).filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href))  //siteRule urlfilter
 
     let resolutionGroups = {};
     allLinks.forEach(link => {
@@ -84,9 +83,9 @@ async function extractMetaInfo(div, siteRule = {}) {
     });
 
     if (Object.keys(Blocks).length > 0) {
-        for (const [res, links] of Object.entries(Blocks)) {            
+        for (const [res, links] of Object.entries(Blocks)) {
             if (!resolutionGroups[res]) resolutionGroups[res] = [];
-            resolutionGroups[res].push(...links.map(a => a.href))            
+            resolutionGroups[res].push(...links.map(a => a.href))
         }
     }
     // 🧹 중복 제거
@@ -130,11 +129,13 @@ function createGroupsFromArea(area, siteRule = {}) {
 
 
     const separatorText = siteRule.separatorText || [];
-
+    const breakPoint = siteRule.breakPoint || [];
     for (const el of childrenNodes) {
         const text = el?.textContent.trim();
         const isSeparator = separatorText.some(keyword => text.includes(keyword));
+        const isbreakPoint = breakPoint.some(keyword => text.includes(keyword));
 
+        if (breakPoint) break;
         if (isSeparator && currentGroup.childNodes.length > 0) {
             groups.push(currentGroup);
             currentGroup = document.createElement('div');
@@ -149,26 +150,14 @@ function createGroupsFromArea(area, siteRule = {}) {
     return groups;
 }
 
-/*
-// ✅ 메인 파이프라인
-async function analyzePage(area, options = {}) {
-    const {
-        siteRule = {},
-        resolutionMap = resolutionMap,
-        priority = ['3840', '1920', '1280', '720'],
-        useResolution = true
-    } = options;
 
-    const blocks = createGroupsFromArea(area, siteRule);
+// ✅ 메인 파이프라인
+async function analyzePage(rule) {
+    const blocks = await createGroupsFromArea(rule.area, rule);
     const results = [];
 
     for (const block of blocks) {
-        const meta = extractMetaInfo(block, {
-            resolutionMap,
-            priority,
-            siteRule,
-            useResolution
-        });
+        const meta = await extractMetaInfo(block, rule);
 
         if (meta && meta.title) {
             results.push(meta);
@@ -178,4 +167,3 @@ async function analyzePage(area, options = {}) {
     console.log('[✅ analyzePage Final Extracted]', results);
     return results;
 }
-*/
