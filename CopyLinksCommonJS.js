@@ -895,6 +895,7 @@ function addToPreserveList(word, listText, ignoreCase = false) {
     return lines.join('\n');
 }
 
+/** 예전 버전
 function nameCorrection(str, preserveText = '') {
     if (!str || typeof str !== 'string') return '';
 
@@ -1027,11 +1028,135 @@ function nameCorrection(str, preserveText = '') {
         return correctWord(word, isFirst, isLast);
     }).join('');
 }
+*/
 
+
+// 새로운 버전
+function nameCorrection(str, preserveText = '') {
+    if (typeof str !== 'string' || !str) return '';
+
+    // 보존/변환 규칙
+    const preservePatterns = preserveText
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+            let mode = 'UPPER'; // 기본은 대문자
+            let pattern = line;
+
+            const match = line.match(/^(UPPER|LOWER|TITLE|KEEP):/i);
+            if (match) {
+                mode = match[1].toUpperCase();
+                pattern = line.slice(match[0].length);
+            }
+
+            let ignoreCase = false;
+            if (pattern.startsWith('(?i)')) {
+                ignoreCase = true;
+                pattern = pattern.slice(4);
+            }
+
+            if (!/[\(\)\[\]\?\:\|\!\<\>]/.test(pattern)) {
+                pattern = escapeRegExp(pattern);
+            }
+
+            return { regex: new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u'), mode };
+        });
+
+    const contractionParts = ['t', 'll', 's', 're', 've', 'd', 'm'];
+    const lowerCaseWords = new Set([
+        'a', 'an', 'the', 'and', 'but', 'or', 'nor', 'for', 'so', 'yet',
+        'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
+        'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
+        'that', 'this', 'these', 'those',
+        'let', "can't", "i'll", 'be'
+    ]);
+
+    const isEnglish = w => /^[A-Za-z'’‘]+$/.test(w);
+
+    function correctWord(word, isFirstWord, isLastWord) {
+        // 영어 단어가 아니면 그대로 반환
+        if (!isEnglish(word)) return word;
+
+        // preserve 규칙 적용
+        for (const { regex, mode } of preservePatterns) {
+            if (regex.test(word)) {
+                switch (mode) {
+                    case 'UPPER': return word.toUpperCase();
+                    case 'LOWER': return word.toLowerCase();
+                    case 'TITLE': return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    case 'KEEP': return word;
+                }
+            }
+        }
+
+        // 대문자/소문자 혼합된 경우(중간 케이스) 보존
+        if (/[A-Z]/.test(word) && /[a-z]/.test(word) &&
+            !/^([A-Z]+|[a-z]+)$/.test(word) && !/['’‘]/.test(word)) {
+            return word;
+        }
+
+        // 전체 대문자 그대로 유지
+        if (word === word.toUpperCase()) return word;
+
+        // 어포스트로피 기준 분리 후 처리
+        return word
+            .split(/(?<=\p{L})['’‘](?=\p{L})/gu)
+            .map((part, i) => {
+                const lower = part.toLowerCase();
+                if (i > 0 && contractionParts.includes(lower)) return lower;
+                if ((i === 0 && (isFirstWord || !lowerCaseWords.has(lower))) ||
+                    (i > 0 && !lowerCaseWords.has(lower))) {
+                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                }
+                return lower;
+            })
+            .join(word.match(/['’‘]/)?.[0] || '');
+    }
+
+    // 단어/기호/공백 분리 (다국어 지원, \b 제거)
+    const words = str.match(/[\p{L}\d'’‘_]+|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
+    const firstIdx = words.findIndex(w => /\p{L}/u.test(w));
+    const lastIdx = [...words].reverse().findIndex(w => /\p{L}/u.test(w));
+    const lastWordIdx = lastIdx === -1 ? -1 : words.length - 1 - lastIdx;
+
+    const delimiters = ['-', '/', ':', '_'];
+
+    return words.map((word, idx) => {
+        if (/^\s+$/.test(word) || /^[^\w\s]+$/.test(word)) return word;
+
+        const splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
+        if (splitRegex.test(word)) {
+            return word.split(splitRegex).map((part, i) => {
+                if (delimiters.includes(part)) return part;
+                return correctWord(part, idx === firstIdx && i === 0, idx === lastWordIdx && i === 2);
+            }).join('');
+        }
+
+        return correctWord(word, idx === firstIdx, idx === lastWordIdx);
+    }).join('');
+}
 
 function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+// preserveText 예제
+
+/**
+const text = "[대한민국] hello nasa and spacex test";
+const preserve = `
+UPPER:NASA
+(?i)UPPER:spacex
+LOWER:TEST
+KEEP:hello
+TITLE:and
+`;
+
+console.log(nameCorrection(text, preserve));
+*/
+
+
 
 //첫문자 대문자 나머지 소문자
 function capitalize(str) {
