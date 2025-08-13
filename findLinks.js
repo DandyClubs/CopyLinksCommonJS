@@ -101,6 +101,19 @@ function extractPostData(area) {
  * - 위 필터에서 결과가 없으면 href 속성에서 'example.com'을 포함하는 URL을 찾음.
  * @returns {Array<*>} 조건에 맞는 링크(URL) 배열 또는 그룹 객체 배열을 반환합니다.
  */
+
+
+// ✅ 전역 해상도 맵
+const resolutionMap = {
+    '3840': ['3840x2160', 'uhd', 'ultrahd', '4k', '2160p'],
+    '1920': ['1920x1080', '2048x1080', 'fhd', 'fullhd', '1080p', '1440p', '2560x1440'],
+    '1280': ['1280x720', 'hd', '720p'],
+    '720': ['720p'],
+    'low': ['480p', '360p', '240p'],
+    'veryhigh': ['8k', '4320p', 'superhd'],
+    'other': []
+};
+
 function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownHosts, excludeSelf) {
     if (!area) {
         console.error("⚠️ Invalid 'area' argument. Please provide a valid DOM element.");
@@ -152,11 +165,7 @@ function findLinks(area, tags, separator, resolutionPriority, urlFilters, knownH
     }
 
     const findResolutionInText = (text) => {
-        const resolutionMap = {
-            '3840': ['3840x2160', 'uhd', '4k', '2160p'],
-            '1920': ['1920x1080', 'fhd', '1080p'],
-            '1280': ['1280x720', 'hd', '720p']
-        };
+
         if (!text) return null;
         text = text.toLowerCase();
         for (const resKey in resolutionMap) {
