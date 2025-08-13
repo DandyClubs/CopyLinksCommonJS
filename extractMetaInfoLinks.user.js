@@ -21,10 +21,12 @@ function getStandardResolution(text) {
 
     for (const [key, keywords] of Object.entries(resolutionMap)) {
         if (keywords.some(k => lowerText.includes(k))) {
+            /*
             if (matchedKey && matchedKey !== key) {
                 // 이미 다른 그룹을 매칭한 적이 있으면 null 반환
                 return null;
             }
+            */
             matchedKey = key;
         }
     }
@@ -41,21 +43,24 @@ function groupResolution(div, siteRule = {}) {
 
         for (const el of childrenNodes) {
             const text = el?.textContent || '';
-            const res = getStandardResolution(text);
+            const splitText = text.split('\n')
+            const resMap = splitText.map(t => getStandardResolution(t)).filter(Boolean)
+            const res = resMap.length > 0 ? Math.max(...resMap) : null
             if (res && res !== currentRes) {
                 currentRes = res;
                 if (!groups[currentRes]) groups[currentRes] = [];
             }
+            //console.log('find groupResolution: ', currentRes, res, text)
+
             if (el.nodeType === Node.ELEMENT_NODE) {
                 const linksInNode = Array.from(el.querySelectorAll('a'))
                     .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));
                 if (linksInNode.length > 0) {
                     linksInNode.forEach(a => {
-                        const fileName = GetFileName(a.href) + ' ' +
-                            (/^https?:/.test(a.textContent) ? GetFileName(a.textContent) : a.textContent);
-                        const res2 = getStandardResolution(fileName);
-                        const finalRes = res2 ? res2 : currentRes ? currentRes : 'other';
-                        groups[finalRes].push(a);
+                        //const fileName = GetFileName(a.href) + ' ' + (/^https?:/.test(a.textContent) ? GetFileName(a.textContent) : a.textContent);
+                        //const res2 = getStandardResolution(fileName);
+                        //const finalRes = res2 ? res2 : currentRes ? currentRes : 'other';
+                        groups[currentRes].push(a);
                     });
                 }
             }
@@ -99,7 +104,7 @@ function extractMetaInfo(div, siteRule = {}) {
             }
 
             // 🎯 우선순위 적용
-            console.log(siteRule.useResolution, siteRule.priority, resolutionGroups)
+            console.log('우선순위 적용: ', siteRule.useResolution, siteRule.priority, resolutionGroups)
             if (siteRule.useResolution && siteRule.priority?.length) {
                 for (const res of siteRule.priority) {
                     if (resolutionGroups[res]?.length) {
@@ -108,7 +113,8 @@ function extractMetaInfo(div, siteRule = {}) {
                             date: dateMatch?.[1] || null,
                             password: passwordMatch?.[1] || passwordMatch?.[2] || null,
                             coverImage: siteRule.coverImage,
-                            [res]: resolutionGroups[res]
+                            [res]: resolutionGroups[res],
+                            links: resolutionGroups[res],
                         });
                         return;
                     }
@@ -142,12 +148,14 @@ function createGroupsFromArea(area, siteRule = {}) {
             const text = el?.textContent.trim();
             const isSeparator = separatorText.some(keyword => text.includes(keyword));
             const isBreakPoint = breakPoint.some(keyword => text.includes(keyword));
-            console.log('isBreakPoint: ', isBreakPoint, '\nisSeparator: ', isSeparator, '\ntext: ', text)
+            //console.log('isBreakPoint: ', isBreakPoint, '\nisSeparator: ', isSeparator, '\ntext: ', text)
             if (isBreakPoint) {
                 // 지금까지의 currentGroup이 비어있지 않다면 저장
+                /*
                 if (currentGroup.childNodes.length > 0) {
                     groups.push(currentGroup);
                 }
+                */
                 break; // 반복 종료
             }
 
@@ -175,7 +183,15 @@ function analyzePage(rule) {
         .then(blocks => Promise.all(blocks.map(block => extractMetaInfo(block, rule))))
         .then(metas => {
             const results = metas.filter(meta => meta && meta.title);
-            //console.log('[✅ analyzePage Final Extracted]', results);
-            return results;
+
+            console.log('그룹별 결과: ', metas)
+            // 비교를 위해 resolutionMap의 키들을 미리 배열로 만들어 둡니다.
+            const resolutionKeys = Object.keys(resolutionMap);
+
+            const filteredMetas = metas.filter(meta => Object.keys(meta).some(key => resolutionKeys.includes(key)) || meta.links?.length > 0);
+
+
+            //console.log('[✅ analyzePage Final Extracted]', filteredMetas);
+            return filteredMetas;
         });
 }
