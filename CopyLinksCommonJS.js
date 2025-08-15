@@ -31,7 +31,6 @@ function compareJapaneseCharacters(sentence1, sentence2) {
     } else if (count2 > count1) {
         return sentence2
     } else {
-
         if (sentence1.length > sentence2.length) {
             return sentence1
         }
@@ -42,6 +41,43 @@ function compareJapaneseCharacters(sentence1, sentence2) {
         }
     }
 }
+
+
+function findSentenceWithMoreChinese(sentence1, sentence2) {
+    const chineseRegex = /[\u4e00-\u9fff]/g;
+
+    // 첫 번째 문장에서 중국어 문자 개수 세기
+    const matches1 = sentence1.match(chineseRegex);
+    const count1 = matches1 ? matches1.length : 0;
+
+    // 두 번째 문장에서 중국어 문자 개수 세기
+    const matches2 = sentence2.match(chineseRegex);
+    const count2 = matches2 ? matches2.length : 0;
+
+    console.log(`'${sentence1}'에 있는 중국어 글자 수: ${count1}`);
+    console.log(`'${sentence2}'에 있는 중국어 글자 수: ${count2}`);
+
+    if (count1 > count2) {
+        return sentence1;
+    } else if (count2 > count1) {
+        return sentence2;
+    } else {
+        if (sentence1.length > sentence2.length) {
+            return sentence1
+        }
+        if (sentence1.length > sentence2.length) {
+            return sentence2
+        } else {
+            return sentence2
+        }
+    }
+}
+
+
+// 예상 출력:
+// '你好，世界。我喜欢写代码。'에 있는 중국어 글자 수: 8
+// '안녕하세요, 저는 개발자입니다. Hello World!'에 있는 중국어 글자 수: 0
+// 중국어 글자가 더 많은 문장: "你好，世界。我喜欢写代码。"
 
 /**
  * 주어진 텍스트를 정리하고 단어 배열로 반환합니다.
