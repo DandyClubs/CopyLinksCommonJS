@@ -36,11 +36,11 @@ function getStandardResolution(text) {
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {        
-                Array.from(div.querySelectorAll('a'))
+        const rebuildedDiv = Array.from(div.querySelectorAll('a'))
                     .forEach(link => link.textContent = '');
         
         let groups = {};
-        const childrenNodes = Array.from(div.childNodes);
+        const childrenNodes = Array.from(rebuildedDiv.childNodes);
         let currentRes = null;
 
         for (const el of childrenNodes) {
