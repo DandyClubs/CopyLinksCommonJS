@@ -4,7 +4,7 @@ const resolutionMap = {
     '1920': ['1920x1080', '2048x1080', 'fhd', 'fullhd', '1080p', '1440p', '2560x1440'],
     '1280': ['1280x720', '720p'],
     '720': ['720x'],
-    '480': ['480x270', '480p', '360p', '240p'],    
+    '480': ['480x270', '480p', '360p', '240p'],
     'other': []
 };
 
@@ -34,31 +34,30 @@ function getStandardResolution(text) {
 
 
 // ✅ 해상도 블록 생성
-function groupResolution(div, siteRule = {}) {    
-    return new Promise((resolve) => {        
+function groupResolution(div, siteRule = {}) {
+    return new Promise((resolve) => {
         const cloneArea = div.cloneNode(true)
-        Array.from(cloneArea.querySelectorAll('a')).forEach(link => link.textContent = '');       
-                    
+        Array.from(cloneArea.querySelectorAll('a')).forEach(link => link.textContent = '');
+
         let groups = {};
         const childrenNodes = Array.from(cloneArea.childNodes);
         let currentRes = null;
 
         for (const el of childrenNodes) {
             const text = el?.textContent || '';
-            const res = getStandardResolution(text) || null
+            const res = getStandardResolution(text)
             if (res && res !== currentRes) {
                 currentRes = res;
                 if (!groups[currentRes]) groups[currentRes] = [];
-            }
-            //console.log('find groupResolution: ', currentRes, res, text)
 
-            if (el.nodeType === Node.ELEMENT_NODE) {
-                const linksInNode = Array.from(el.querySelectorAll('a'))
-                    .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));
-                if (linksInNode.length > 0) {
-                    linksInNode.forEach(a => {
-                        groups[currentRes].push(a);
-                    });
+                if (el.nodeType === Node.ELEMENT_NODE) {
+                    const linksInNode = Array.from(el.querySelectorAll('a'))
+                        .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));
+                    if (linksInNode.length > 0) {
+                        linksInNode.forEach(a => {
+                            groups[currentRes].push(a);
+                        });
+                    }
                 }
             }
         }
@@ -72,7 +71,7 @@ function extractMetaInfo(div, siteRule = {}) {
         const text = div.textContent;
         const titleMatch = text.match(siteRule.getTitleRegex);
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
-        const passwordMatch = text.match(siteRule.passwordRegex);        
+        const passwordMatch = text.match(siteRule.passwordRegex);
         const password = passwordMatch ? passwordMatch.pop().trim() : null;
 
 
@@ -128,7 +127,7 @@ function extractMetaInfo(div, siteRule = {}) {
                 date: dateMatch?.[1] || null,
                 password: password,
                 coverImage: siteRule.coverImage,
-                links: [...new Set(mergedLinks)], 
+                links: [...new Set(mergedLinks)],
                 priorityResolution: 'All',
             });
         });
