@@ -113,6 +113,8 @@ function extractMetaInfo(div, siteRule = {}) {
                             coverImage: siteRule.coverImage,
                             //[res]: resolutionGroups[res],
                             links: resolutionGroups[res],
+                            priorityResolution: res,
+
                         });
                         return;
                     }
@@ -126,7 +128,8 @@ function extractMetaInfo(div, siteRule = {}) {
                 date: dateMatch?.[1] || null,
                 password: password,
                 coverImage: siteRule.coverImage,
-                links: [...new Set(mergedLinks)]
+                links: [...new Set(mergedLinks)], 
+                priorityResolution: 'All',
             });
         });
     });
