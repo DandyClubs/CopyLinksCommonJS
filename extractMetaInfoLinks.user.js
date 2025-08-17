@@ -34,13 +34,13 @@ function getStandardResolution(text) {
 
 
 // ✅ 해상도 블록 생성
-function groupResolution(div, siteRule = {}) {
+function groupResolution(div, siteRule = {}) {    
     return new Promise((resolve) => {        
-        const rebuildedDiv = Array.from(div.querySelectorAll('a'))
-                    .forEach(link => link.textContent = '');
-        
+        const cloneArea = div.cloneNode(true)
+        Array.from(cloneArea.querySelectorAll('a')).forEach(link => link.textContent = '');       
+                    
         let groups = {};
-        const childrenNodes = Array.from(rebuildedDiv.childNodes);
+        const childrenNodes = Array.from(cloneArea.childNodes);
         let currentRes = null;
 
         for (const el of childrenNodes) {
