@@ -3,8 +3,8 @@ const resolutionMap = {
     '3840': ['3840x2160', 'uhd', 'ultrahd', '4k', '2160p'],
     '1920': ['1920x1080', '2048x1080', 'fhd', 'fullhd', '1080p', '1440p', '2560x1440'],
     '1280': ['1280x720', '720p'],
-    '720': ['720p'],
-    '480': ['480p', '360p', '240p'],    
+    '720': ['720x'],
+    '480': ['480x270', '480p', '360p', '240p'],    
     'other': []
 };
 
@@ -42,9 +42,7 @@ function groupResolution(div, siteRule = {}) {
 
         for (const el of childrenNodes) {
             const text = el?.textContent || '';
-            const splitText = text.split('\n')
-            const resMap = splitText.map(t => getStandardResolution(t)).filter(Boolean)
-            const res = resMap.length > 0 ? Math.max(...resMap) : null
+            const res = getStandardResolution(text) || null
             if (res && res !== currentRes) {
                 currentRes = res;
                 if (!groups[currentRes]) groups[currentRes] = [];
