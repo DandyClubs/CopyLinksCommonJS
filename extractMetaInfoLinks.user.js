@@ -111,7 +111,7 @@ function extractMetaInfo(div, siteRule = {}) {
                             date: dateMatch?.[1] || null,
                             password: password,
                             coverImage: siteRule.coverImage,
-                            [res]: resolutionGroups[res],
+                            //[res]: resolutionGroups[res],
                             links: resolutionGroups[res],
                         });
                         return;
