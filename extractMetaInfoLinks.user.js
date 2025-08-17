@@ -35,7 +35,10 @@ function getStandardResolution(text) {
 
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
-    return new Promise((resolve) => {
+    return new Promise((resolve) => {        
+                Array.from(div.querySelectorAll('a'))
+                    .forEach(link => link.textContent = '');
+        
         let groups = {};
         const childrenNodes = Array.from(div.childNodes);
         let currentRes = null;
@@ -54,9 +57,6 @@ function groupResolution(div, siteRule = {}) {
                     .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));
                 if (linksInNode.length > 0) {
                     linksInNode.forEach(a => {
-                        //const fileName = GetFileName(a.href) + ' ' + (/^https?:/.test(a.textContent) ? GetFileName(a.textContent) : a.textContent);
-                        //const res2 = getStandardResolution(fileName);
-                        //const finalRes = res2 ? res2 : currentRes ? currentRes : 'other';
                         groups[currentRes].push(a);
                     });
                 }
