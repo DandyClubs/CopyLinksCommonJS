@@ -70,6 +70,7 @@ function extractMetaInfo(div, siteRule = {}) {
     return new Promise((resolve) => {
         const text = div.textContent;
         const titleMatch = text.match(siteRule.getTitleRegex);
+        const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : ''
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
         const passwordMatch = text.match(siteRule.passwordRegex);
         const password = passwordMatch ? passwordMatch.pop().trim() : null;
@@ -106,7 +107,7 @@ function extractMetaInfo(div, siteRule = {}) {
                 for (const res of siteRule.priority) {
                     if (resolutionGroups[res]?.length) {
                         resolve({
-                            title: titleMatch?.[1]?.trim() || '',
+                            title: getTitle || '',
                             date: dateMatch?.[1] || null,
                             password: password,
                             coverImage: siteRule.coverImage,
@@ -123,7 +124,7 @@ function extractMetaInfo(div, siteRule = {}) {
             // fallback 전체 병합
             const mergedLinks = Object.values(resolutionGroups).flat();
             resolve({
-                title: titleMatch?.[1]?.trim() || text.split('\n')[0], // siteRule.firstLine 
+                title: getTitle || text.split('\n')[0], // siteRule.firstLine 
                 date: dateMatch?.[1] || null,
                 password: password,
                 coverImage: siteRule.coverImage,
