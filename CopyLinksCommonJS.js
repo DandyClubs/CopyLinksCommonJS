@@ -931,143 +931,7 @@ function addToPreserveList(word, listText, ignoreCase = false) {
     return lines.join('\n');
 }
 
-/** 예전 버전
-function nameCorrection(str, preserveText = '') {
-    if (!str || typeof str !== 'string') return '';
-
-    const preservePatterns = preserveText
-        .split('\n')
-        .map(line => line.trim())
-        .filter(Boolean)
-        .map(pattern => {
-            let ignoreCase = false;
-            if (pattern.startsWith('(?i)')) {
-                ignoreCase = true;
-                pattern = pattern.slice(4);
-            }
-            const isRegexPattern = /[\(\)\[\]\?\:\|\!\<\>]/.test(pattern);
-            if (!isRegexPattern) {
-                pattern = escapeRegExp(pattern);
-            }
-            return { pattern, ignoreCase, rawPattern: pattern };
-        });
-
-    const preserveRegexes = preservePatterns.map(({ pattern, ignoreCase }) =>
-        new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u')
-    );
-
-    // 's'를 contractionParts에 추가하여 소유격 's'도 소문자로 유지되도록 함
-    const contractionParts = ['t', 'll', 's', 're', 've', 'd', 'm'];
-
-    const lowerCaseWords = new Set([
-        'a', 'an', 'the',
-        'and', 'but', 'or', 'nor', 'for', 'so', 'yet',
-        'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
-        'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
-        'that', 'this', 'these', 'those',
-        'let', "can't", "i'll", 'be'
-    ]);
-
-    function correctWord(word, isFirstWord, isLastWord) {
-
-        if (/^['’‘]\p{L}+$/u.test(word)) return word;
-
-        for (let i = 0; i < preserveRegexes.length; i++) {
-            if (preserveRegexes[i].test(word)) {
-                return word.toUpperCase();
-            }
-        }
-
-        if (
-            /[A-Z]/.test(word) &&
-            /[a-z]/.test(word) &&
-            !/^([A-Z]+|[a-z]+)$/.test(word) &&
-            !/['’‘]/.test(word)
-        ) {
-            return word;
-        }
-
-        if (word === word.toUpperCase()) return word;
-
-        
-        const parts = word.split(/(?<=\p{L})['’‘](?=\p{L})/gu);
-        
-
-        return parts.map((part, i) => {
-            const lower = part.toLowerCase();
-
-            // 어포스트로피 뒤에 오는 부분이 contractionParts에 포함되면 소문자로 유지
-            if (i > 0 && contractionParts.includes(lower)) {
-                return lower;
-            }
-
-            // 첫 단어의 첫 부분만 대문자로 만들고 나머지는 소문자로
-            if (i === 0) {
-                // 단어의 첫 부분이 전체 문장의 첫 단어이거나,
-                // lowerCaseWords에 없는 경우 첫 글자를 대문자로 만듭니다.
-                if (isFirstWord || !lowerCaseWords.has(lower)) {
-                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-                } else {
-                    return lower;
-                }
-            }
-
-            // 그 외의 부분은 lowerCaseWords에 없는 경우에만 첫 글자를 대문자로
-            if (!lowerCaseWords.has(lower)) {
-                return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
-            } else {
-                return lower;
-            }
-
-        }).join(word.match(/['’‘]/)?.[0] || '');
-    }
-
-    // 단어 분리 (공백과 구두점 포함, 숫자/단위 묶음 유지)
-    
-    const words = str.match(/[\p{L}\d'’‘_]+|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
-    
-
-    // 첫/마지막 알파벳 단어 인덱스 찾기
-    const firstWordIdx = words.findIndex(w => /\p{L}/u.test(w));
-    let lastWordIdx = -1;
-    for (let i = words.length - 1; i >= 0; i--) {
-        if (/\p{L}/u.test(words[i])) {
-            lastWordIdx = i;
-            break;
-        }
-    }
-
-    // 구분자 배열 (분리 후 다시 붙일 때 사용)
-    const delimiters = ['-', '/', ':', '_'];
-
-    return words.map((word, idx) => {
-        if (/^\s+$/.test(word) || /^[^\w\s]+$/.test(word)) return word;
-
-        // 구분자 포함 시 분리 후 각 부분 Title Case 적용
-        const splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
-        if (splitRegex.test(word)) {
-            const parts = word.split(splitRegex);
-
-            return parts.map((part, i) => {
-                if (delimiters.includes(part)) {
-                    return part; // 구분자 그대로 유지
-                } else {
-                    const isFirst = idx === firstWordIdx && i === 0;
-                    const isLast = idx === lastWordIdx && i === parts.length - 1;
-                    return correctWord(part, isFirst, isLast);
-                }
-            }).join('');
-        }
-
-        const isFirst = idx === firstWordIdx;
-        const isLast = idx === lastWordIdx;
-        return correctWord(word, isFirst, isLast);
-    }).join('');
-}
-*/
-
-
-// 새로운 버전
+// 대소문자 규칙
 function nameCorrection(str, preserveText = '') {
     if (typeof str !== 'string' || !str) return '';
 
@@ -1105,7 +969,7 @@ function nameCorrection(str, preserveText = '') {
         'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
         'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
         'that', 'this', 'these', 'those',
-        'let', "can't", "i'll", 'be'
+        'let', "can't", "i'll", 'be', '.net', '.com'
     ]);
 
     const isEnglish = w => /^[A-Za-z'’‘]+$/.test(w);
@@ -1140,12 +1004,24 @@ function nameCorrection(str, preserveText = '') {
             .split(/(?<=\p{L})['’‘](?=\p{L})/gu)
             .map((part, i) => {
                 const lower = part.toLowerCase();
-                if (i > 0 && contractionParts.includes(lower)) return lower;
-                if ((i === 0 && (isFirstWord || !lowerCaseWords.has(lower))) ||
-                    (i > 0 && !lowerCaseWords.has(lower))) {
-                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+
+                // 어포스트로피 앞부분 처리
+                if (i === 0) {
+                    // 문장 첫 단어이거나, 소문자로 변환하지 않을 단어라면
+                    if (isFirstWord || !lowerCaseWords.has(lower)) {
+                        return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                    } else {
+                        return lower; // 그 외에는 소문자
+                    }
                 }
-                return lower;
+
+                // 어포스트로피 뒷부분 처리
+                // 축약어(t, ll 등)이 아니라면 첫 글자를 대문자로
+                if (!contractionParts.includes(lower)) {
+                    return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
+                } else {
+                    return lower; // 축약어는 소문자
+                }
             })
             .join(word.match(/['’‘]/)?.[0] || '');
     }
@@ -1155,7 +1031,6 @@ function nameCorrection(str, preserveText = '') {
     const firstIdx = words.findIndex(w => /\p{L}/u.test(w));
     const lastIdx = [...words].reverse().findIndex(w => /\p{L}/u.test(w));
     const lastWordIdx = lastIdx === -1 ? -1 : words.length - 1 - lastIdx;
-
     const delimiters = ['-', '/', ':', '_'];
 
     return words.map((word, idx) => {
