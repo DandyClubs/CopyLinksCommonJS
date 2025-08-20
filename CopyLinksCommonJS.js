@@ -969,7 +969,7 @@ function nameCorrection(str, preserveText = '') {
         'at', 'by', 'in', 'of', 'on', 'to', 'up', 'via', 'with', 'as',
         'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
         'that', 'this', 'these', 'those',
-        'let', "can't", "i'll", 'be', '.net', '.com'
+        'let', "can't", "i'll", 'be',
     ]);
 
     const isEnglish = w => /^[A-Za-z'’‘]+$/.test(w);
@@ -978,36 +978,43 @@ function nameCorrection(str, preserveText = '') {
         // 영어 단어가 아니면 그대로 반환
         if (!isEnglish(word)) return word;
 
-        // preserve 규칙 적용
+        // 단어 앞뒤의 따옴표 분리
+        const leadingQuoteMatch = word.match(/^['"`“‘]+/);
+        const trailingQuoteMatch = word.match(/['"`’”]+$/);
+        const leadingQuote = leadingQuoteMatch ? leadingQuoteMatch[0] : '';
+        const trailingQuote = trailingQuoteMatch ? trailingQuoteMatch[0] : '';
+        let strippedWord = word.replace(/^['"`“‘]+|['"`’”]+$/g, '');
+
+        // preserve 규칙 적용 (따옴표를 제거한 단어에 적용)
         for (const { regex, mode } of preservePatterns) {
-            if (regex.test(word)) {
+            if (regex.test(strippedWord)) {
                 switch (mode) {
-                    case 'UPPER': return word.toUpperCase();
-                    case 'LOWER': return word.toLowerCase();
-                    case 'TITLE': return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    case 'UPPER': return leadingQuote + strippedWord.toUpperCase() + trailingQuote;
+                    case 'LOWER': return leadingQuote + strippedWord.toLowerCase() + trailingQuote;
+                    case 'TITLE': return leadingQuote + strippedWord.charAt(0).toUpperCase() + strippedWord.slice(1).toLowerCase() + trailingQuote;
                     case 'KEEP': return word;
                 }
             }
         }
 
         // 대문자/소문자 혼합된 경우(중간 케이스) 보존
-        if (/[A-Z]/.test(word) && /[a-z]/.test(word) &&
-            !/^([A-Z]+|[a-z]+)$/.test(word) && !/['’‘]/.test(word)) {
+        if (/[A-Z]/.test(strippedWord) && /[a-z]/.test(strippedWord) &&
+            !/^([A-Z]+|[a-z]+)$/.test(strippedWord) && !/['’‘]/.test(strippedWord)) {
             return word;
         }
 
         // 전체 대문자 그대로 유지
-        if (word === word.toUpperCase()) return word;
+        if (strippedWord === strippedWord.toUpperCase()) return word;
 
         // 어포스트로피 기준 분리 후 처리
-        return word
+        const corrected = strippedWord
             .split(/(?<=\p{L})['’‘](?=\p{L})/gu)
             .map((part, i) => {
                 const lower = part.toLowerCase();
 
-                // 어포스트로피 앞부분 처리
+                // 어포스트로피 앞부분 처리 (i === 0)
                 if (i === 0) {
-                    // 문장 첫 단어이거나, 소문자로 변환하지 않을 단어라면
+                    // 문장의 첫 단어이거나, 소문자로 만들지 않는 단어라면 첫 글자만 대문자
                     if (isFirstWord || !lowerCaseWords.has(lower)) {
                         return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
                     } else {
@@ -1015,15 +1022,17 @@ function nameCorrection(str, preserveText = '') {
                     }
                 }
 
-                // 어포스트로피 뒷부분 처리
-                // 축약어(t, ll 등)이 아니라면 첫 글자를 대문자로
+                // 어포스트로피 뒷부분 처리 (i > 0)
+                // 축약어(t, ll 등)가 아니라면 첫 글자를 대문자로
                 if (!contractionParts.includes(lower)) {
                     return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
                 } else {
                     return lower; // 축약어는 소문자
                 }
             })
-            .join(word.match(/['’‘]/)?.[0] || '');
+            .join(strippedWord.match(/['’‘]/)?.[0] || '');
+
+        return leadingQuote + corrected + trailingQuote;
     }
 
     // 단어/기호/공백 분리 (다국어 지원, \b 제거)
