@@ -1,4 +1,69 @@
 
+function detectJaZh(text) {
+    const t = (text || '').trim();
+    if (!t) return { lang: 'unknown', confidence: 0, scores: { ja: 0, zh: 0 } };
+
+    // --- 문자 범위 ---
+    const re = {
+        hiragana: /[\u3040-\u309F]/g, // ひらがな
+        katakana: /[\u30A0-\u30FF\u31F0-\u31FF\uFF66-\uFF9D]/g, // カタカナ + 반각
+        han: /\p{Script=Han}/gu, // 한자(중·일 공통)
+        bopomofo: /[\u3100-\u312F\u31A0-\u31BF]/g, // 주음부호(중국어 학습용, 가끔 대만)
+    };
+
+    // --- 흔한 기능어/문장 부호 (아주 소수만 사용) ---
+    const jaParticles = /(の|に|へ|と|て|が|を|だ|です|ます|して|いる|だった|でした|ません|でした|ください)/g;
+    const zhFunctionWords = /(的|了|在|是|不|也|很|和|與|与|嗎|吗|呢|們|们|把|被|給|给|對|对)/g;
+
+    // 일본어 쪽에서 자주 보이는 기호
+    const jaPunct = /[「」『』・ー]/g; // ・, 장음 ー, 인용부호
+    // 중국어 쪽에서 자주 보이는 기호
+    const zhPunct = /[《》“”]/g;
+
+    // 카운트 함수
+    const count = (re, s) => (s.match(re) || []).length;
+
+    const counts = {
+        hiragana: count(re.hiragana, t),
+        katakana: count(re.katakana, t),
+        han: count(re.han, t),
+        bopomofo: count(re.bopomofo, t),
+        jaParticles: count(jaParticles, t),
+        zhFunctionWords: count(zhFunctionWords, t),
+        jaPunct: count(jaPunct, t),
+        zhPunct: count(zhPunct, t),
+    };
+
+    // --- 점수 규칙 ---
+    // 가나는 일본어의 강력한 증거
+    let jaScore = 3 * counts.hiragana + 2.5 * counts.katakana;
+    // 조사/어미 + 일본식 문장부호
+    jaScore += 2 * counts.jaParticles + 1.5 * counts.jaPunct;
+
+    // 중국어 기능어 + 문장부호 + (주음부호가 있으면 가산)
+    let zhScore = 2 * counts.zhFunctionWords + 1.5 * counts.zhPunct + 1.5 * counts.bopomofo;
+
+    // 한자만 있을 경우의 보정
+    // 가나가 전혀 없고 한자가 많으면 중국어 쪽에 소폭 가산 (중문은 한자 연속이 많은 편)
+    if (counts.hiragana + counts.katakana === 0 && counts.han >= 2) {
+        zhScore += 0.5 * Math.min(counts.han, 10); // 과도한 가산 방지
+    }
+
+    // 최종 판정
+    let lang = 'unknown';
+    let confidence = 0;
+    if (jaScore > zhScore && jaScore >= 2) {
+        lang = 'ja';
+        confidence = Math.min(0.99, (jaScore - zhScore) / (jaScore + zhScore + 1));
+    } else if (zhScore > jaScore && zhScore >= 2) {
+        lang = 'zh';
+        confidence = Math.min(0.99, (zhScore - jaScore) / (jaScore + zhScore + 1));
+    }
+
+    return { lang, confidence: Number(confidence.toFixed(2)), scores: { ja: jaScore, zh: zhScore }, counts };
+}
+
+
 /**
  * 주어진 텍스트에서 일본어 문자의 개수를 세어 반환합니다.
  * 히라가나, 가타카나, 한자를 포함합니다.
