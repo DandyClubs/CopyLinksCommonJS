@@ -996,17 +996,17 @@ function addToPreserveList(word, listText, ignoreCase = false) {
     return lines.join('\n');
 }
 
-// 대소문자 규칙
+// 수정된 nameCorrection 함수
 function nameCorrection(str, preserveText = '') {
     if (typeof str !== 'string' || !str) return '';
 
-    // 보존/변환 규칙
+    // 보존/변환 규칙은 기존과 동일합니다.
     const preservePatterns = preserveText
         .split('\n')
         .map(line => line.trim())
         .filter(Boolean)
         .map(line => {
-            let mode = 'UPPER'; // 기본은 대문자
+            let mode = 'UPPER';
             let pattern = line;
 
             const match = line.match(/^(UPPER|LOWER|TITLE|KEEP):/i);
@@ -1036,21 +1036,17 @@ function nameCorrection(str, preserveText = '') {
         'that', 'this', 'these', 'those',
         'let', "can't", "i'll", 'be',
     ]);
+    
+    // isFirstWord 대신 isFirstWordOfSentence를 사용하고 isAfterSpecialChar 매개변수를 추가했습니다.
+    function correctWord(word, isFirstWordOfSentence, isAfterSpecialChar) {
+        if (!/^[A-Za-z'’‘]+$/.test(word)) return word;
 
-    const isEnglish = w => /^[A-Za-z'’‘]+$/.test(w);
-
-    function correctWord(word, isFirstWord, isLastWord) {
-        // 영어 단어가 아니면 그대로 반환
-        if (!isEnglish(word)) return word;
-
-        // 단어 앞뒤의 따옴표 분리
         const leadingQuoteMatch = word.match(/^['"`“‘]+/);
         const trailingQuoteMatch = word.match(/['"`’”]+$/);
         const leadingQuote = leadingQuoteMatch ? leadingQuoteMatch[0] : '';
         const trailingQuote = trailingQuoteMatch ? trailingQuoteMatch[0] : '';
         let strippedWord = word.replace(/^['"`“‘]+|['"`’”]+$/g, '');
 
-        // preserve 규칙 적용 (따옴표를 제거한 단어에 적용)
         for (const { regex, mode } of preservePatterns) {
             if (regex.test(strippedWord)) {
                 switch (mode) {
@@ -1062,37 +1058,32 @@ function nameCorrection(str, preserveText = '') {
             }
         }
 
-        // 대문자/소문자 혼합된 경우(중간 케이스) 보존
         if (/[A-Z]/.test(strippedWord) && /[a-z]/.test(strippedWord) &&
             !/^([A-Z]+|[a-z]+)$/.test(strippedWord) && !/['’‘]/.test(strippedWord)) {
             return word;
         }
 
-        // 전체 대문자 그대로 유지
         if (strippedWord === strippedWord.toUpperCase()) return word;
 
-        // 어포스트로피 기준 분리 후 처리
         const corrected = strippedWord
             .split(/(?<=\p{L})['’‘](?=\p{L})/gu)
             .map((part, i) => {
                 const lower = part.toLowerCase();
-
-                // 어포스트로피 앞부분 처리 (i === 0)
                 if (i === 0) {
-                    // 문장의 첫 단어이거나, 소문자로 만들지 않는 단어라면 첫 글자만 대문자
-                    if (isFirstWord || !lowerCaseWords.has(lower)) {
+                    // isAfterSpecialChar가 true면 항상 소문자로 변환합니다.
+                    if (isAfterSpecialChar) {
+                        return lower;
+                    }
+                    if (isFirstWordOfSentence || !lowerCaseWords.has(lower)) {
                         return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
                     } else {
-                        return lower; // 그 외에는 소문자
+                        return lower;
                     }
                 }
-
-                // 어포스트로피 뒷부분 처리 (i > 0)
-                // 축약어(t, ll 등)가 아니라면 첫 글자를 대문자로
                 if (!contractionParts.includes(lower)) {
                     return part.charAt(0).toUpperCase() + part.slice(1).toLowerCase();
                 } else {
-                    return lower; // 축약어는 소문자
+                    return lower;
                 }
             })
             .join(strippedWord.match(/['’‘]/)?.[0] || '');
@@ -1100,25 +1091,27 @@ function nameCorrection(str, preserveText = '') {
         return leadingQuote + corrected + trailingQuote;
     }
 
-    // 단어/기호/공백 분리 (다국어 지원, \b 제거)
     const words = str.match(/[\p{L}\d'’‘_]+|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
     const firstIdx = words.findIndex(w => /\p{L}/u.test(w));
-    const lastIdx = [...words].reverse().findIndex(w => /\p{L}/u.test(w));
-    const lastWordIdx = lastIdx === -1 ? -1 : words.length - 1 - lastIdx;
-    const delimiters = ['-', '/', ':', '_'];
+
+    // 특수 문자 뒤 단어 처리를 위한 플래그
+    let isAfterSpecialChar = false;
 
     return words.map((word, idx) => {
-        if (/^\s+$/.test(word) || /^[^\w\s]+$/.test(word)) return word;
-
-        const splitRegex = new RegExp(`([${delimiters.map(d => '\\' + d).join('')}])`);
-        if (splitRegex.test(word)) {
-            return word.split(splitRegex).map((part, i) => {
-                if (delimiters.includes(part)) return part;
-                return correctWord(part, idx === firstIdx && i === 0, idx === lastWordIdx && i === 2);
-            }).join('');
+        // 현재 단어가 . 이면 플래그를 true로 설정
+        if (word === '.') {
+            isAfterSpecialChar = true;
+            return word;
         }
 
-        return correctWord(word, idx === firstIdx, idx === lastWordIdx);
+        // isAfterSpecialChar가 true일 경우, 다음 단어에만 영향을 미치도록 플래그를 초기화합니다.
+        const shouldTreatAsSpecial = isAfterSpecialChar;
+        isAfterSpecialChar = false;
+
+        const isFirstWordOfSentence = idx === firstIdx;
+
+        // 수정된 correctWord 함수를 호출합니다.
+        return correctWord(word, isFirstWordOfSentence, shouldTreatAsSpecial);
     }).join('');
 }
 
