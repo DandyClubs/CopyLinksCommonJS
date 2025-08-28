@@ -996,9 +996,47 @@ function addToPreserveList(word, listText, ignoreCase = false) {
     return lines.join('\n');
 }
 
+
+/**
+ * 영문과 숫자만 반각으로 변환
+ * @param {string} inputString - 변환할 원본 문자열.
+ * @returns {string} - 변환된 문자열.
+ */
+function standardizeString(inputString) {
+    if (typeof inputString !== 'string') {
+        console.error("입력값은 문자열이어야 합니다.");
+        return "";
+    }
+
+    let result = '';
+    for (let i = 0; i < inputString.length; i++) {
+        const char = inputString[i];
+        const charCode = char.charCodeAt(0);
+
+        // 전각 영어(Ａ-Ｚ, ａ-ｚ) 및 숫자(０-９) 범위
+        const isFullWidthAlphaNumeric =
+            (charCode >= 65313 && charCode <= 65338) || // Ａ-Ｚ
+            (charCode >= 65345 && charCode <= 65370) || // ａ-ｚ
+            (charCode >= 65296 && charCode <= 65305);   // ０-９
+
+        if (isFullWidthAlphaNumeric) {
+            // 전각 문자를 반각으로 변환 (유니코드 65248 차이)
+            result += String.fromCharCode(charCode - 65248);
+        }
+        // 2단계: 그 외의 모든 문자는 전각으로 변환
+        else {
+            result += char; // 한글, 한자 등은 그대로 유지
+        }
+    }
+
+    return result;
+}
+
 // 수정된 nameCorrection 함수
 function nameCorrection(str, preserveText = '') {
     if (typeof str !== 'string' || !str) return '';
+
+    str = standardizeString(str);
 
     // 보존/변환 규칙은 기존과 동일합니다.
     const preservePatterns = preserveText
@@ -1036,7 +1074,7 @@ function nameCorrection(str, preserveText = '') {
         'that', 'this', 'these', 'those',
         'let', "can't", "i'll", 'be',
     ]);
-    
+
     // isFirstWord 대신 isFirstWordOfSentence를 사용하고 isAfterSpecialChar 매개변수를 추가했습니다.
     function correctWord(word, isFirstWordOfSentence, isAfterSpecialChar) {
         if (!/^[A-Za-z'’‘]+$/.test(word)) return word;
