@@ -220,7 +220,11 @@ function compareSentencesByWordMatch(sentence1, sentence2) {
             return sentence2
         }
     } else {
-        return sentence2
+        if (length1 > length2) {
+            return sentence1
+        } else {
+            return sentence2
+        }
     }
 }
 
