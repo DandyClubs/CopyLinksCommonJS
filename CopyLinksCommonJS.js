@@ -202,18 +202,13 @@ function getWordMatchPercentage(sentence1, sentence2) {
  * @returns {string} - 결과 메시지
  */
 function compareSentencesByWordMatch(sentence1, sentence2) {
-    const matchPercentage1 = getWordMatchPercentage(sentence1, sentence2);
-    const matchPercentage2 = getWordMatchPercentage(sentence2, sentence1);
-
-    // 이중 비교를 통해 더 높은 일치율을 찾습니다.
-    // 이 로직은 `shorterWordCount` 기준으로 계산되므로, 두 문장의 일치율은 항상 동일합니다.
-    const matchPercentage = matchPercentage1;
+    const matchPercentage = getWordMatchPercentage(sentence1, sentence2);
+    
+    const length1 = sentence1.length;
+    const length2 = sentence2.length;
 
     if (matchPercentage > 0) {
-        // 일치율이 0보다 큰 경우에만 길이 비교를 진행합니다.
-        const length1 = sentence1.length;
-        const length2 = sentence2.length;
-
+        // 일치율이 0보다 큰 경우에만 길이 비교를 진행합니다.        
         if (length1 > length2) {
             return sentence1
         } else {
