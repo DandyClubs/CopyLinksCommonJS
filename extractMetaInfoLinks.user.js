@@ -32,7 +32,7 @@ function getStandardResolution(text) {
     return matchedKey;
 }
 
-
+const filterLinksRegex = /katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//;
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {
@@ -52,7 +52,7 @@ function groupResolution(div, siteRule = {}) {
 
                 if (el.nodeType === Node.ELEMENT_NODE) {
                     const linksInNode = Array.from(el.querySelectorAll('a'))
-                        .filter(link => /katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//.test(link.href));
+                        .filter(link => filterLinksRegex.test(link.href));
                     if (linksInNode.length > 0) {
                         linksInNode.forEach(a => {
                             groups[currentRes].push(a);
@@ -78,7 +78,7 @@ function extractMetaInfo(div, siteRule = {}) {
 
         Promise.resolve(groupResolution(div, siteRule)).then(Blocks => {
             const allLinks = Array.from(div.querySelectorAll('a[href]'))
-                .filter(href => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(href));
+                .filter(href => filterLinksRegex.test(href));
 
             let resolutionGroups = {};
             allLinks.forEach(link => {
