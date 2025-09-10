@@ -52,7 +52,7 @@ function groupResolution(div, siteRule = {}) {
 
                 if (el.nodeType === Node.ELEMENT_NODE) {
                     const linksInNode = Array.from(el.querySelectorAll('a'))
-                        .filter(link => /katfile.com|mega.nz\/file|drive\.google\.com\/file\//.test(link.href));
+                        .filter(link => /katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//.test(link.href));
                     if (linksInNode.length > 0) {
                         linksInNode.forEach(a => {
                             groups[currentRes].push(a);
