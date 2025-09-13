@@ -8,8 +8,8 @@ const resolutionMap = {
     'other': []
 };
 
-function GetFileName(url) {
-    let name = url.split('/').pop()?.replace('.html', '');
+function GetFileName(url) {    
+    let name = decodeURIComponent(url).split('/').pop()?.replace('.html', '');
     return name.substring(0, name.lastIndexOf('.'));
 }
 
