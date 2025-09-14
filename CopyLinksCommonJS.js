@@ -1076,6 +1076,7 @@ function nameCorrection(str, preserveText = '') {
 
     // isFirstWord 대신 isFirstWordOfSentence를 사용하고 isAfterSpecialChar 매개변수를 추가했습니다.
     function correctWord(word, isFirstWordOfSentence, isAfterSpecialChar) {
+        // 영어 단어가 아니면 그대로 반환
         if (!/^[A-Za-z'’‘]+$/.test(word)) return word;
 
         const leadingQuoteMatch = word.match(/^['"`“‘]+/);
@@ -1095,11 +1096,13 @@ function nameCorrection(str, preserveText = '') {
             }
         }
 
+        // 대문자/소문자 혼합된 경우(중간 케이스) 보존
         if (/[A-Z]/.test(strippedWord) && /[a-z]/.test(strippedWord) &&
             !/^([A-Z]+|[a-z]+)$/.test(strippedWord) && !/['’‘]/.test(strippedWord)) {
             return word;
         }
 
+        // 전체 대문자 그대로 유지
         if (strippedWord === strippedWord.toUpperCase()) return word;
 
         const corrected = strippedWord
