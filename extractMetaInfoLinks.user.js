@@ -32,7 +32,7 @@ function getStandardResolution(text) {
     return matchedKey;
 }
 
-const filterLinksRegex = /katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//;
+const filterLinksRegex = /filefox\.cc|katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//;
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {
