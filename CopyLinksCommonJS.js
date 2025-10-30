@@ -421,6 +421,7 @@ async function showThenHide(el, { duration = 400, pause = 1000 } = {}) {
 
 
 function updateClipboard(CopyData) {
+    if (!CopyData) throw new Error("updateClipboard CopyData가 없습니다.");
     if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(CopyData).then(() => {
             console.log('navigator.clipboard - Copying to clipboard was successful!');
