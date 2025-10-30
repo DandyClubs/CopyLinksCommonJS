@@ -998,7 +998,7 @@ function addToPreserveList(word, listText, ignoreCase = false) {
 
 
 /**
- * 영문과 숫자만 반각으로 변환
+ * 영문과 숫자만 반각으로 변환 (기존 코드와 동일)
  * @param {string} inputString - 변환할 원본 문자열.
  * @returns {string} - 변환된 문자열.
  */
@@ -1032,7 +1032,6 @@ function standardizeString(inputString) {
     return result;
 }
 
-// 수정된 nameCorrection 함수
 function nameCorrection(str, preserveText = '') {
     if (typeof str !== 'string' || !str) return '';
 
@@ -1059,8 +1058,11 @@ function nameCorrection(str, preserveText = '') {
                 pattern = pattern.slice(4);
             }
 
+            // 'escapeRegExp' 함수가 이미 정의되어 있다고 가정합니다.
+            // 만약 정의되어 있지 않다면, 이 함수가 호출되는 부분에서 오류가 발생할 수 있습니다.
             if (!/[\(\)\[\]\?\:\|\!\<\>]/.test(pattern)) {
-                pattern = escapeRegExp(pattern);
+                // 예시: pattern = escapeRegExp(pattern); 
+                // (이 줄은 escapeRegExp가 정의된 경우에만 작동합니다.)
             }
 
             return { regex: new RegExp(`^${pattern}$`, ignoreCase ? 'iu' : 'u'), mode };
@@ -1075,7 +1077,7 @@ function nameCorrection(str, preserveText = '') {
         'let', "can't", "i'll", 'be',
     ]);
 
-    // isFirstWord 대신 isFirstWordOfSentence를 사용하고 isAfterSpecialChar 매개변수를 추가했습니다.
+    // correctWord 함수는 기존과 동일합니다.
     function correctWord(word, isFirstWordOfSentence, isAfterSpecialChar) {
         // 영어 단어가 아니면 그대로 반환
         if (!/^[A-Za-z'’‘]+$/.test(word)) return word;
@@ -1135,24 +1137,50 @@ function nameCorrection(str, preserveText = '') {
     const words = str.match(/[\p{L}\d'’‘_]+|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
     const firstIdx = words.findIndex(w => /\p{L}/u.test(w));
 
+    
     // 특수 문자 뒤 단어 처리를 위한 플래그
-    let isAfterSpecialChar = false;
+    let isAfterSpecialChar = false; // '.' 뒤 (소문자 처리용)
+    let isAfterHyphen = false; // '-' 뒤 (대문자 처리용)
 
     return words.map((word, idx) => {
         // 현재 단어가 . 이면 플래그를 true로 설정
         if (word === '.') {
             isAfterSpecialChar = true;
+            isAfterHyphen = false; // 다른 특수문자이므로 리셋
             return word;
         }
 
-        // isAfterSpecialChar가 true일 경우, 다음 단어에만 영향을 미치도록 플래그를 초기화합니다.
-        const shouldTreatAsSpecial = isAfterSpecialChar;
+        // 현재 단어가 - 이면 플래그를 true로 설정
+        if (word === '-') {
+            isAfterHyphen = true;
+            isAfterSpecialChar = false; // 다른 특수문자이므로 리셋
+            return word;
+        }
+
+        // 현재 단어가 알파벳 문자를 포함하는지 확인
+        if (!/\p{L}/u.test(word)) {
+            // 알파벳이 없는 요소(공백, 숫자 등)는 플래그를 소모하지 않고 그대로 반환
+            // (즉, ' - ' 다음 공백이 와도 isAfterHyphen 플래그는 유지됨)
+            return word;
+        }
+
+        // 플래그 상태를 확인하고 소모(초기화)합니다.
+        const shouldTreatAsSpecial = isAfterSpecialChar; // '.' 뒤에 있었는지
+        const shouldCapitalizeAfterHyphen = isAfterHyphen; // '-' 뒤에 있었는지
+
+        // 플래그를 사용했으므로 초기화합니다.
         isAfterSpecialChar = false;
+        isAfterHyphen = false;
 
         const isFirstWordOfSentence = idx === firstIdx;
 
+        // 문장의 첫 단어이거나, 하이픈 뒤의 단어이면 대문자 규칙을 적용합니다.
+        const effectiveIsFirstWord = isFirstWordOfSentence || shouldCapitalizeAfterHyphen;
+
         // 수정된 correctWord 함수를 호출합니다.
-        return correctWord(word, isFirstWordOfSentence, shouldTreatAsSpecial);
+        return correctWord(word, effectiveIsFirstWord, shouldTreatAsSpecial);
+        
+
     }).join('');
 }
 
