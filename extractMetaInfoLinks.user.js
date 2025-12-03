@@ -32,7 +32,7 @@ function getStandardResolution(text) {
     return matchedKey;
 }
 
-const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.com|katfile\.cloud|mega\.nz\/file|drive\.google\.com\/file\//;
+const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.(com|cloud)|clicknupload\.click|mega\.nz\/file|drive\.google\.com\/file\/|ddownload\.com|krakenfiles\.com|send\.now|rg\.to/;
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {
@@ -70,7 +70,7 @@ function extractMetaInfo(div, siteRule = {}) {
     return new Promise((resolve) => {
         const text = div.textContent;
         const titleMatch = text.match(siteRule.getTitleRegex);
-        const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : ''
+        const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n')[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
         const passwordMatch = text.match(siteRule.passwordRegex);
         const password = passwordMatch ? passwordMatch.pop().trim() : null;
@@ -124,7 +124,7 @@ function extractMetaInfo(div, siteRule = {}) {
             // fallback 전체 병합
             const mergedLinks = Object.values(resolutionGroups).flat();
             resolve({
-                title: getTitle || text.split('\n')[0], // siteRule.firstLine 
+                title: getTitle,
                 date: dateMatch?.[1] || null,
                 password: password,
                 coverImage: siteRule.coverImage,
