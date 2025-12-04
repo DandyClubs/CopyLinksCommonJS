@@ -32,8 +32,11 @@ function getStandardResolution(text) {
     return matchedKey;
 }
 
+const DOMAIN = extractRootDomain(window.location.href);
+
 const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.(com|cloud)|clicknupload\.click|mega\.nz\/file|drive\.google\.com\/file\/|ddownload\.com|krakenfiles\.com|send\.now|rg\.to/;
-const SKIP_FILTER = /rapidgator\.net\/folder\/|windfiles\.com|mypikpak\.com|pricing\?aff|mega\.nz\/aff|katfile\.(com|cloud)\/(free|users)\/|developershome|md5file\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\/|^(?=.*' + ROOT_DOMAIN + ')(?!.*\?site).*$')/;
+const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud)\\/(free|users)\\/|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + DOMAIN + ')(?!.*\\?site).*$');
+
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {
@@ -53,7 +56,7 @@ function groupResolution(div, siteRule = {}) {
 
                 if (el.nodeType === Node.ELEMENT_NODE) {
                     const linksInNode = Array.from(el.querySelectorAll('a'))
-                        .filter(link => filterLinksRegex.test(link.href) && !SKIP_FILTER.test(link.href));
+                        .filter(link => filterLinksRegex.test(link.href) && !SKIPFILTER.test(link.href));
                     if (linksInNode.length > 0) {
                         linksInNode.forEach(a => {
                             groups[currentRes].push(a);
