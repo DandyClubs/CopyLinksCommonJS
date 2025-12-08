@@ -35,7 +35,7 @@ function getStandardResolution(text) {
 const DOMAIN = extractRootDomain(window.location.href);
 
 const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.(com|cloud)|clicknupload\.click|mega\.nz\/file|drive\.google\.com\/file\/|ddownload\.com|krakenfiles\.com|send\.now|rg\.to/;
-const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud)\\/(free|users)\\/|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + DOMAIN + ').*$');
+const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud|online)\\/(free|users\\/)|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + DOMAIN + ').*$');
 
 // ✅ 해상도 블록 생성
 function groupResolution(div, siteRule = {}) {
