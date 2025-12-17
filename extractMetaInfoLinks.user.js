@@ -13,19 +13,46 @@ function GetFileName(url) {
     return name.substring(0, name.lastIndexOf('.'));
 }
 
+function createResolutionRegex(keywords) {
+    const patterns = keywords.map(k => {
+        if (k.includes('x') && k.endsWith('x')) {
+            // '720x'와 같은 패턴은 뒤에 숫자가 와야 하므로 \b 대신 \d+를 사용합니다.
+            // 예: 720x540을 매칭하기 위해 '720x' -> '720x\d+' 패턴으로 변환
+            // *주의: 이렇게 하면 720x로 시작하는 모든 해상도를 포괄합니다.
+            return `${k}\\d+`;
+        }
+        // 대부분의 키워드 ('4k', 'uhd', '1080p' 등)는 독립된 단어로 매칭되도록 \b 사용
+        return `\\b${k}\\b`;
+    });
+
+    // 패턴들을 |(OR)로 연결하고 대소문자를 무시(i)하는 정규식 객체를 생성
+    const pattern = patterns.join('|');
+    return new RegExp(pattern, 'i');
+}
+
+// 3. resolutionMap을 기반으로 resolutionRegexMap을 동적으로 생성
+const resolutionRegexMap = {};
+
+for (const [key, keywords] of Object.entries(resolutionMap)) {
+    if (keywords.length > 0) {
+        resolutionRegexMap[key] = createResolutionRegex(keywords);
+    }
+}
+
 // ✅ 해상도 정규식 추출
 function getStandardResolution(text) {
     const lowerText = text.toLowerCase();
     let matchedKey = null;
 
-    for (const [key, keywords] of Object.entries(resolutionMap)) {
-        if (keywords.some(k => lowerText.includes(k))) {
+    for (const [key, regex] of Object.entries(resolutionRegexMap)) {
+        if (regex.test(lowerText)) {
             /*
             if (matchedKey && matchedKey !== key) {
                 // 이미 다른 그룹을 매칭한 적이 있으면 null 반환
                 return null;
             }
             */
+            console.log(`[매칭 성공] 입력: ${lowerText}, 키: ${key}`);
             matchedKey = key;
         }
     }
