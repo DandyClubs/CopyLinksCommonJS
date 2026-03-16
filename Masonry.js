@@ -57,6 +57,95 @@ async function preloadImageSizes(wrapper, loaderEl) {
     await Promise.all(imgs.map(loadImage));
 }
 
+function createSectionMasonry(container) {
+
+    const blocks = [...container.querySelectorAll(':scope > .textblock')];
+    const wrappers = [];
+
+    blocks.forEach((block, index) => {
+
+        const nextBlock = blocks[index + 1];
+        let current = block.nextElementSibling;
+
+        const images = [];
+
+        while (current && current !== nextBlock) {
+
+            /* IMG 직접 */
+            if (current.tagName === "IMG") {
+                images.push(current);
+            }
+
+            /* IMG 포함 노드 */
+            else {
+
+                const imgs = current.querySelectorAll?.("img");
+
+                if (imgs && imgs.length) {
+                    imgs.forEach(img => images.push(img));
+                }
+
+            }
+
+            current = current.nextElementSibling;
+        }
+
+        if (!images.length) return;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "image-masonry";
+
+        block.after(wrapper);
+
+        images.forEach(img => {
+
+            const item = document.createElement("div");
+            item.className = "image-masonry-item";
+
+            const cleanImg = document.createElement("img");
+
+            /* 실제 src */
+            const realSrc =
+                img.getAttribute("ess-data") ||
+                img.getAttribute("data-src") ||
+                img.src;
+
+            if (realSrc) cleanImg.src = realSrc;
+
+            /* 속성 복사 */
+            if (img.title) cleanImg.title = img.title;
+
+            const iyl = img.getAttribute("iyl-data");
+            if (iyl) cleanImg.setAttribute("iyl-data", iyl);
+
+            cleanImg.style.maxWidth = "100%";
+            cleanImg.style.cursor = "pointer";
+
+            //cleanImg.loading = "lazy";
+            cleanImg.decoding = "async";
+
+            /* CLS 방지 ratio */
+            const w = img.naturalWidth;
+            const h = img.naturalHeight;
+
+            if (w && h) {
+                item.style.aspectRatio = w + " / " + h;
+            }
+
+            item.appendChild(cleanImg);
+            wrapper.appendChild(item);
+
+        });
+
+        /* 원본 이미지만 제거 */
+        images.forEach(img => img.remove());
+
+        wrappers.push(wrapper);
+
+    });
+
+    return wrappers;
+}
 
 function collectImageData(items) {
     return items.map(item => {
@@ -341,3 +430,4 @@ function findBestPosition(w, h, placed, containerW, gap) {
         if (y > 20000) return { x: 0, y: 0 };
     }
 }
+
