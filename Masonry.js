@@ -1,3 +1,107 @@
+/**
+ * Skyline Masonry Layout Manager
+ */
+class SkylineLayout {
+    constructor(containerWidth, gap, minWidthPercent = 0.8) {
+        this.containerWidth = containerWidth;
+        this.gap = gap;
+        this.minWidthPercent = minWidthPercent;
+        // 초기 상태: 바닥 전체(y=0)가 하나의 구간으로 시작
+        this.skyline = [{ x: 0, y: 0, w: containerWidth }];
+    }
+
+    // 1. 아이템 배치 및 너비 조정 실행
+    placeItem(item) {
+        let bestY = Infinity;
+        let bestX = 0;
+        let bestWidth = item.w;
+        let found = false;
+
+        // 최적의 위치 탐색: 가장 낮은 Y축 구간을 우선 찾음
+        for (let i = 0; i < this.skyline.length; i++) {
+            let currentX = this.skyline[i].x;
+            let currentY = this.skyline[i].y;
+
+            // 현재 위치에서 가용 가능한 최대 너비 계산
+            let availableW = this.containerWidth - currentX;
+            let effectiveGap = (currentX === 0) ? 0 : this.gap;
+            let realAvailableW = availableW - effectiveGap;
+
+            // 가변 너비 조건 확인 (원래 너비의 80% 이상 확보 시)
+            if (realAvailableW >= item.w && realAvailableW >= item.w * this.minWidthPercent) {
+                if (currentY < bestY) {
+                    bestY = currentY;
+                    bestX = currentX + effectiveGap;
+                    bestWidth = Math.min(item.w, item.w * this.minWidthPercent);
+                    found = true;
+                }
+            }
+        }
+
+        if (found) {
+            // DOM 스타일 적용
+            item.element.style.position = 'absolute';
+            item.element.style.width = `${bestWidth}px`;
+            item.element.style.height = `${item.h}px`;
+            item.element.style.left = `${bestX}px`;
+            item.element.style.top = `${bestY}px`;
+
+            // 스카이라인 업데이트 및 병합
+            this.updateAndMerge(bestX, bestY, bestWidth, item.h);
+            return { x: bestX, y: bestY, w: bestWidth, h: item.h };
+        }
+        return null;
+    }
+
+    // 2. 스카이라인 업데이트 및 구간 병합 로직
+    updateAndMerge(x, y, w, h) {
+        const newY = y + h + this.gap;
+        const newX = x;
+        const newW = w;
+
+        // 영역 침범 구간 수정/제거
+        for (let i = 0; i < this.skyline.length; i++) {
+            let s = this.skyline[i];
+            if (s.x < newX + newW && s.x + s.w > newX) {
+                if (s.x >= newX && s.x + s.w <= newX + newW) {
+                    this.skyline.splice(i, 1);
+                    i--;
+                } else if (s.x < newX && s.x + s.w <= newX + newW) {
+                    s.w = newX - s.x;
+                } else if (s.x >= newX && s.x + s.w > newX + newW) {
+                    let rightEdge = s.x + s.w;
+                    s.x = newX + newW;
+                    s.w = rightEdge - s.x;
+                } else {
+                    let rightEdge = s.x + s.w;
+                    s.w = newX - s.x;
+                    this.skyline.splice(i + 1, 0, { x: newX + newW, y: s.y, w: rightEdge - (newX + newW) });
+                }
+            }
+        }
+
+        // 새 구간 추가 및 정렬
+        this.skyline.push({ x: newX, y: newY, w: newW });
+        this.skyline.sort((a, b) => a.x - b.x);
+
+        // 높이가 같은 인접 구간 병합
+        for (let i = 0; i < this.skyline.length - 1; i++) {
+            let curr = this.skyline[i];
+            let next = this.skyline[i + 1];
+            if (Math.abs(curr.y - next.y) < 1 && Math.abs((curr.x + curr.w) - next.x) < 2) {
+                curr.w = (next.x + next.w) - curr.x;
+                this.skyline.splice(i + 1, 1);
+                i--;
+            }
+        }
+    }
+
+    // 컨테이너 전체 높이 반환
+    getMaxHeight() {
+        return Math.max(...this.skyline.map(s => s.y));
+    }
+}
+
 async function preloadImageSizes(wrapper, loaderEl) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
@@ -376,7 +480,9 @@ function optimizeSingleLayout(container) {
     }
     // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
     let placedRects = [];
+    /*    
     allCalculatedItems.forEach(data => {
+        
         //const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
         const pos = findBestPositionWithSmartGap(data, placedRects, containerWidth, gap);
 
@@ -392,6 +498,28 @@ function optimizeSingleLayout(container) {
     });
 
     const totalHeight = Math.max(...placedRects.map(r => r.y + r.h), 0);
+    container.style.height = `${totalHeight}px`;
+    */
+
+    const layout = new SkylineLayout(containerWidth, gap, 0.98);
+
+    allCalculatedItems.forEach(data => {
+        // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.
+        const result = layout.placeItem(data);
+
+        if (result) {
+            // 배치된 정보를 리스트에 저장 (나중에 높이 계산 등에 필요하다면 유지)
+            placedRects.push({
+                x: result.x,
+                y: result.y,
+                w: result.w,
+                h: result.h
+            });
+        }
+    });
+
+    // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
+    const totalHeight = layout.getMaxHeight();
     container.style.height = `${totalHeight}px`;
 }
 
