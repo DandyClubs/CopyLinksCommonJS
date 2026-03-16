@@ -378,7 +378,7 @@ function optimizeSingleLayout(container) {
     let placedRects = [];
     allCalculatedItems.forEach(data => {
         //const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
-        const pos = findBestPositionWithResize(data, placedRects, containerWidth, gap);
+        const pos = findBestPositionWithSmartGap(data, placedRects, containerWidth, gap);
 
         // DOM 반영
         data.element.style.width = `${data.w}px`;
@@ -433,37 +433,43 @@ function findBestPosition(w, h, placed, containerW, gap) {
 
 function findBestPositionWithSmartGap(data, placed, containerW, gap) {
     let step = 2;
-    let minWidthPercent = 0.95;
+    let minWidthPercent = 0.8;
     let originalW = data.w;
 
     for (let y = 0; ; y += step) {
         for (let x = 0; x <= containerW; x += step) {
 
-            // 1. 현재 x 위치에서 사용 가능한 최대 너비 계산
-            // 시작점(x)이 0이 아니라면, 앞에 최소한 하나의 gap이 있어야 함을 고려
+            // 1. 간격(Gap) 계산: 벽에 붙으면 0, 아니면 gap 적용
             let effectiveGap = (x === 0) ? 0 : gap;
-            let availableW = containerW - x;
 
-            // 2. 만약 남은 공간이 최소 너비보다 작으면 다음 줄로
-            if (availableW < originalW * minWidthPercent) break;
+            // 2. 실제 사용 가능한 최대 너비 계산 (중요!)
+            // 컨테이너 전체 너비에서 현재 시작점(x)과 필요한 간격(gap)을 뺍니다.
+            let availableW = containerW - x - effectiveGap;
 
-            // 3. 목표 너비 설정 (원래 너비 vs 남은 공간)
+            // 3. 최소 너비 체크 (남은 공간이 너무 작으면 다음 줄로)
+            if (availableW < originalW * minWidthPercent) {
+                // x가 0인데도 공간이 부족하면 이 줄은 아예 불가능한 것
+                if (x === 0) break;
+                continue;
+            }
+
+            // 4. 목표 너비 결정
             let targetW = Math.min(originalW, availableW);
-            let current = { x, y, w: targetW, h: data.h };
+            let current = { x: x + effectiveGap, y, w: targetW, h: data.h };
 
-            // 4. 충돌 검사 (기존 placedRects와의 물리적 겹침 확인)
+            // 5. 충돌 검사
             const hasOverlap = placed.some(p => {
                 return !(
-                    current.x + current.w + gap <= p.x || // 내 오른쪽 + gap이 남의 왼쪽보다 작음
-                    current.x >= p.x + p.w + gap ||       // 내 왼쪽이 남의 오른쪽 + gap보다 큼
-                    current.y + current.h + gap <= p.y || // 내 아래쪽 + gap이 남의 위쪽보다 작음
-                    current.y >= p.y + p.h + gap          // 내 위쪽이 남의 아래쪽 + gap보다 큼
+                    current.x + current.w + gap <= p.x ||
+                    current.x >= p.x + p.w + gap ||
+                    current.y + current.h + gap <= p.y ||
+                    current.y >= p.y + p.h + gap
                 );
             });
 
-            // 5. 배치 성공 시 x, y 및 조정된 너비 반환
             if (!hasOverlap) {
-                return { x, y, finalW: targetW };
+                // 실제 렌더링될 x 좌표는 gap이 더해진 current.x입니다.
+                return { x: current.x, y: current.y, finalW: targetW };
             }
         }
         if (y > 20000) return { x: 0, y: 0, finalW: originalW };
