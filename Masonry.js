@@ -179,12 +179,12 @@ async function preloadImageSizes(wrapper, loaderEl) {
 
     await Promise.all(imgs.map(loadImage));
 }
-
 function createSectionMasonry(container) {
     const children = [...container.children];
     const wrappers = [];
     let currentImageGroup = [];
     let elementsToRemove = [];
+    let previousWasBr = false; // 연속 BR 체크용
 
     const flushGroup = (targetElement) => {
         if (currentImageGroup.length === 0) return;
@@ -197,11 +197,9 @@ function createSectionMasonry(container) {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
             const cleanImg = document.createElement("img");
-
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
 
-            // 이미지 비율 설정 (CLS 방지)
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
             }
@@ -217,40 +215,51 @@ function createSectionMasonry(container) {
     };
 
     children.forEach((child) => {
-        // 1. 숨겨진 요소(팁 메뉴 등)는 아예 무시
+        // 1. Display: none은 무조건 제거 대상 (이미지 그룹화 여부와 무관하게 청소)
         if (window.getComputedStyle(child).display === 'none') {
-            elementsToRemove.push(child); // 나중에 같이 삭제
+            child.remove();
             return;
         }
 
         const imgsInChild = child.tagName === "IMG" ? [child] : [...child.querySelectorAll("img")];
 
         if (imgsInChild.length > 0) {
-            // 이미지가 발견되면 그룹에 추가
             currentImageGroup.push(...imgsInChild);
             elementsToRemove.push(child);
+            previousWasBr = false; // 이미지 발견 시 BR 연속성 초기화
         } else {
-            // 2. 이미지가 없는 경우, "무시해도 되는 텍스트"인지 검사
             const text = child.textContent.trim();
+            const isBr = child.tagName === "BR";
 
-            // 무시 조건:
-            // - 텍스트가 없거나 (빈 p, br 태그 등)
-            // - 파일 확장자 형태의 링크가 포함되어 있거나 (.jpg, .png 등)
-            // - 특정 클래스(xw1, xg1 등 Discuz 첨부파일 스타일)가 포함된 경우
-            const isIgnorable =
-                text === "" ||
-                /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text) ||
-                child.querySelector('.xw1, .xg1') ||
-                child.tagName === "BR";
-
-            if (isIgnorable) {
-                // 무시하고 삭제 목록에만 추가 (이미지 그룹을 끊지 않음)
-                elementsToRemove.push(child);
-            } else {
-                // 진짜 의미 있는 텍스트를 만났을 때만 그룹 마감
-                if (currentImageGroup.length > 0) {
-                    flushGroup(child);
+            // 2. 연속된 BR 처리 (이미지 그룹 밖에서도 작동)
+            if (isBr) {
+                if (previousWasBr) {
+                    // 이전에 이미 BR이 나왔다면 현재 BR은 삭제
+                    child.remove();
+                    return;
                 }
+                previousWasBr = true; // 첫 번째 BR임을 기록
+            } else {
+                if (text !== "") previousWasBr = false; // 의미 있는 텍스트면 BR 연속성 초기화
+            }
+
+            // 3. 이미지 그룹 진행 중일 때 무시할 요소들 (찌꺼기 제거)
+            if (currentImageGroup.length > 0) {
+                const isAttachmentInfo =
+                    text === "" ||
+                    /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text) ||
+                    child.querySelector('.xw1, .xg1') ||
+                    isBr;
+
+                if (isAttachmentInfo) {
+                    elementsToRemove.push(child);
+                    return;
+                }
+            }
+
+            // 4. 진짜 텍스트를 만나면 그룹 마감
+            if (currentImageGroup.length > 0 && text !== "") {
+                flushGroup(child);
             }
         }
     });
