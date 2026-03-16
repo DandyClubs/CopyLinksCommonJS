@@ -181,91 +181,87 @@ async function preloadImageSizes(wrapper, loaderEl) {
 }
 
 function createSectionMasonry(container) {
-
-    const blocks = [...container.querySelectorAll(':scope > .textblock')];
+    const children = [...container.children];
     const wrappers = [];
+    let currentImageGroup = [];
+    let elementsToRemove = [];
 
-    blocks.forEach((block, index) => {
-
-        const nextBlock = blocks[index + 1];
-        let current = block.nextElementSibling;
-
-        const images = [];
-
-        while (current && current !== nextBlock) {
-
-            /* IMG 직접 */
-            if (current.tagName === "IMG") {
-                images.push(current);
-            }
-
-            /* IMG 포함 노드 */
-            else {
-
-                const imgs = current.querySelectorAll?.("img");
-
-                if (imgs && imgs.length) {
-                    imgs.forEach(img => images.push(img));
-                }
-
-            }
-
-            current = current.nextElementSibling;
-        }
-
-        if (!images.length) return;
+    const flushGroup = (targetElement) => {
+        if (currentImageGroup.length === 0) return;
 
         const wrapper = document.createElement("div");
         wrapper.className = "image-masonry";
+        targetElement.before(wrapper);
 
-        block.after(wrapper);
-
-        images.forEach(img => {
-
+        currentImageGroup.forEach(img => {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
-
             const cleanImg = document.createElement("img");
 
-            /* 실제 src */
-            const realSrc =
-                img.getAttribute("ess-data") ||
-                img.getAttribute("data-src") ||
-                img.src;
-
+            const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
 
-            /* 속성 복사 */
-            if (img.title) cleanImg.title = img.title;
-
-            const iyl = img.getAttribute("iyl-data");
-            if (iyl) cleanImg.setAttribute("iyl-data", iyl);
-
-            cleanImg.style.maxWidth = "100%";
-            cleanImg.style.cursor = "pointer";
-
-            //cleanImg.loading = "lazy";
-            cleanImg.decoding = "async";
-
-            /* CLS 방지 ratio */
-            const w = img.naturalWidth;
-            const h = img.naturalHeight;
-
-            if (w && h) {
-                item.style.aspectRatio = w + " / " + h;
+            // 이미지 비율 설정 (CLS 방지)
+            if (img.naturalWidth) {
+                item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
             }
 
             item.appendChild(cleanImg);
             wrapper.appendChild(item);
-
         });
 
-        /* 원본 이미지만 제거 */
-        images.forEach(img => img.remove());
-
+        elementsToRemove.forEach(el => el.remove());
         wrappers.push(wrapper);
+        currentImageGroup = [];
+        elementsToRemove = [];
+    };
 
+    children.forEach((child) => {
+        // 1. 숨겨진 요소(팁 메뉴 등)는 아예 무시
+        if (window.getComputedStyle(child).display === 'none') {
+            elementsToRemove.push(child); // 나중에 같이 삭제
+            return;
+        }
+
+        const imgsInChild = child.tagName === "IMG" ? [child] : [...child.querySelectorAll("img")];
+
+        if (imgsInChild.length > 0) {
+            // 이미지가 발견되면 그룹에 추가
+            currentImageGroup.push(...imgsInChild);
+            elementsToRemove.push(child);
+        } else {
+            // 2. 이미지가 없는 경우, "무시해도 되는 텍스트"인지 검사
+            const text = child.textContent.trim();
+
+            // 무시 조건:
+            // - 텍스트가 없거나 (빈 p, br 태그 등)
+            // - 파일 확장자 형태의 링크가 포함되어 있거나 (.jpg, .png 등)
+            // - 특정 클래스(xw1, xg1 등 Discuz 첨부파일 스타일)가 포함된 경우
+            const isIgnorable =
+                text === "" ||
+                /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text) ||
+                child.querySelector('.xw1, .xg1') ||
+                child.tagName === "BR";
+
+            if (isIgnorable) {
+                // 무시하고 삭제 목록에만 추가 (이미지 그룹을 끊지 않음)
+                elementsToRemove.push(child);
+            } else {
+                // 진짜 의미 있는 텍스트를 만났을 때만 그룹 마감
+                if (currentImageGroup.length > 0) {
+                    flushGroup(child);
+                }
+            }
+        }
     });
+
+    // 마지막 남은 이미지 처리
+    if (currentImageGroup.length > 0) {
+        const dummy = document.createElement('div');
+        container.appendChild(dummy);
+        flushGroup(dummy);
+        dummy.remove();
+    }
 
     return wrappers;
 }
