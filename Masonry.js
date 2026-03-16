@@ -6,99 +6,107 @@ class SkylineLayout {
         this.containerWidth = containerWidth;
         this.gap = gap;
         this.minWidthPercent = minWidthPercent;
-        // 초기 상태: 바닥 전체(y=0)가 하나의 구간으로 시작
+        // 초기 상태: x=0부터 전체 너비만큼 빈 공간(y=0)이 있음
         this.skyline = [{ x: 0, y: 0, w: containerWidth }];
     }
 
-    // 1. 아이템 배치 및 너비 조정 실행
     placeItem(item) {
         let bestY = Infinity;
-        let bestX = 0;
-        let bestWidth = item.w;
-        let found = false;
+        let targetIdx = -1;
+        let finalX = 0;
+        let finalW = item.w;
 
-        // 최적의 위치 탐색: 가장 낮은 Y축 구간을 우선 찾음
+        // 1. 최적의 위치 찾기 (가장 낮은 Y를 가진 구간 탐색)
         for (let i = 0; i < this.skyline.length; i++) {
-            let currentX = this.skyline[i].x;
-            let currentY = this.skyline[i].y;
+            let seg = this.skyline[i];
+            let effectiveGap = (seg.x === 0) ? 0 : this.gap;
 
-            // 현재 위치에서 가용 가능한 최대 너비 계산
-            let availableW = this.containerWidth - currentX;
-            let effectiveGap = (currentX === 0) ? 0 : this.gap;
-            let realAvailableW = availableW - effectiveGap;
+            // 현재 세그먼트부터 오른쪽으로 가용 너비 계산
+            // (연속된 세그먼트들을 합쳐서 공간이 나오는지 확인해야 합니다)
+            let combinedW = 0;
+            let currentMaxY = 0;
 
-            // 가변 너비 조건 확인 (원래 너비의 80% 이상 확보 시)
-            if (realAvailableW >= item.w && realAvailableW >= item.w * this.minWidthPercent) {
-                if (currentY < bestY) {
-                    bestY = currentY;
-                    bestX = currentX + effectiveGap;
-                    bestWidth = Math.min(item.w, item.w * this.minWidthPercent);
-                    found = true;
+            for (let j = i; j < this.skyline.length; j++) {
+                let nextSeg = this.skyline[j];
+                combinedW = (nextSeg.x + nextSeg.w) - seg.x;
+                currentMaxY = Math.max(currentMaxY, nextSeg.y);
+
+                let realAvailableW = combinedW - effectiveGap;
+
+                // 최소 너비 조건 만족 시
+                if (realAvailableW >= item.w * this.minWidthPercent) {
+                    if (currentMaxY < bestY) {
+                        bestY = currentMaxY;
+                        finalX = seg.x + effectiveGap;
+                        finalW = Math.min(item.w, realAvailableW);
+                        targetIdx = i;
+                    }
+                    break; // 너비 충족했으니 j 루프 중단
                 }
             }
         }
 
-        if (found) {
-            // DOM 스타일 적용
+        if (targetIdx !== -1) {
+            // DOM 반영
             item.element.style.position = 'absolute';
-            item.element.style.width = `${bestWidth}px`;
+            item.element.style.width = `${finalW}px`;
             item.element.style.height = `${item.h}px`;
-            item.element.style.left = `${bestX}px`;
+            item.element.style.left = `${finalX}px`;
             item.element.style.top = `${bestY}px`;
 
-            // 스카이라인 업데이트 및 병합
-            this.updateAndMerge(bestX, bestY, bestWidth, item.h);
-            return { x: bestX, y: bestY, w: bestWidth, h: item.h };
+            // 스카이라인 상태 갱신
+            this.updateSkyline(finalX, bestY, finalW, item.h);
+            return { x: finalX, y: bestY, w: finalW };
         }
         return null;
     }
 
-    // 2. 스카이라인 업데이트 및 구간 병합 로직
-    updateAndMerge(x, y, w, h) {
+    updateSkyline(x, y, w, h) {
         const newY = y + h + this.gap;
         const newX = x;
         const newW = w;
 
-        // 영역 침범 구간 수정/제거
-        for (let i = 0; i < this.skyline.length; i++) {
-            let s = this.skyline[i];
-            if (s.x < newX + newW && s.x + s.w > newX) {
-                if (s.x >= newX && s.x + s.w <= newX + newW) {
-                    this.skyline.splice(i, 1);
-                    i--;
-                } else if (s.x < newX && s.x + s.w <= newX + newW) {
-                    s.w = newX - s.x;
-                } else if (s.x >= newX && s.x + s.w > newX + newW) {
-                    let rightEdge = s.x + s.w;
-                    s.x = newX + newW;
-                    s.w = rightEdge - s.x;
+        // 1. 새로운 구간 삽입 (기존 구간들 사이를 비집고 들어감)
+        // 기존의 단순 splice 대신, 영역을 덮어씌우는 로직
+        let newSegments = [];
+
+        // 새 구간 시작 전의 기존 구간들 유지
+        this.skyline.forEach(s => {
+            if (s.x < newX && s.x + s.w > newX) {
+                newSegments.push({ x: s.x, y: s.y, w: newX - s.x });
+            }
+            if (s.x + s.w > newX + newW && s.x < newX + newW) {
+                newSegments.push({ x: newX + newW, y: s.y, w: (s.x + s.w) - (newX + newW) });
+            }
+            if (s.x + s.w <= newX || s.x >= newX + newW) {
+                newSegments.push(s);
+            }
+        });
+
+        newSegments.push({ x: newX, y: newY, w: newW });
+
+        // 2. X축 기준 정렬
+        newSegments.sort((a, b) => a.x - b.x);
+
+        // 3. 인접 구간 병합 (높이가 같으면 합침)
+        this.skyline = [];
+        if (newSegments.length > 0) {
+            let current = newSegments[0];
+            for (let i = 1; i < newSegments.length; i++) {
+                let next = newSegments[i];
+                if (current.y === next.y) {
+                    current.w += next.w;
                 } else {
-                    let rightEdge = s.x + s.w;
-                    s.w = newX - s.x;
-                    this.skyline.splice(i + 1, 0, { x: newX + newW, y: s.y, w: rightEdge - (newX + newW) });
+                    this.skyline.push(current);
+                    current = next;
                 }
             }
-        }
-
-        // 새 구간 추가 및 정렬
-        this.skyline.push({ x: newX, y: newY, w: newW });
-        this.skyline.sort((a, b) => a.x - b.x);
-
-        // 높이가 같은 인접 구간 병합
-        for (let i = 0; i < this.skyline.length - 1; i++) {
-            let curr = this.skyline[i];
-            let next = this.skyline[i + 1];
-            if (Math.abs(curr.y - next.y) < 1 && Math.abs((curr.x + curr.w) - next.x) < 2) {
-                curr.w = (next.x + next.w) - curr.x;
-                this.skyline.splice(i + 1, 1);
-                i--;
-            }
+            this.skyline.push(current);
         }
     }
 
-    // 컨테이너 전체 높이 반환
     getMaxHeight() {
-        return Math.max(...this.skyline.map(s => s.y));
+        return this.skyline.length > 0 ? Math.max(...this.skyline.map(s => s.y)) : 0;
     }
 }
 
@@ -506,9 +514,9 @@ function optimizeSingleLayout(container) {
 
     allCalculatedItems.forEach(data => {
         // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.
-        data.forEach(item => {
-            layout.placeItem(item);
-        });        
+        
+            layout.placeItem(data);
+        
     });
 
     // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
