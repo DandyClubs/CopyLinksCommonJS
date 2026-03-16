@@ -381,7 +381,8 @@ function optimizeSingleLayout(container) {
         const pos = findBestPositionWithSmartGap(data, placedRects, containerWidth, gap);
 
         // DOM 반영
-        data.element.style.width = `${data.w}px`;
+        //data.element.style.width = `${data.w}px`;
+        data.element.style.width = `${pos.finalW}px`;
         data.element.style.height = `${data.h}px`;
         data.element.style.left = `${pos.x}px`;
         data.element.style.top = `${pos.y}px`;
