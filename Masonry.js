@@ -48,7 +48,7 @@ class SkylineLayout {
                     if (currentMaxY < bestY) {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
-                        finalW = item.w * this.minWidthPercent; // 남은 공간에 맞춰 축소
+                        finalW = realAvailableW; // 남은 공간에 맞춰 축소
                         targetIdx = i;
                     }
                     break;
