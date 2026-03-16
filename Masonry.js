@@ -377,7 +377,8 @@ function optimizeSingleLayout(container) {
     // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
     let placedRects = [];
     allCalculatedItems.forEach(data => {
-        const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
+        //const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
+        const pos = findBestPositionWithResize(data, placedRects, containerWidth, gap);
 
         // DOM 반영
         data.element.style.width = `${data.w}px`;
@@ -404,14 +405,12 @@ function findBestPosition(w, h, placed, containerW, gap) {
     let x = 0;
     const step = 2; // 탐색 정밀도를 높이기 위해 step을 낮춤
 
-    while (true) {
-        // 5. 여유 오차(1px)를 부여하여 미세한 계산 차이로 줄바꿈되는 것 방지
+    while (true) {        
         if (x + w > containerW + step) {
             x = 0;
             y += step;
             continue;
         }
-
         const current = { x, y, w, h };
 
         // 6. 충돌 검사 (Gap 적용)
@@ -431,3 +430,40 @@ function findBestPosition(w, h, placed, containerW, gap) {
     }
 }
 
+
+function findBestPositionWithResize(data, placed, containerW, gap) {
+    let step = 2;
+    let minWidthPercent = 0.95; // 원래 너비의 80%까지는 줄어들 수 있다고 가정
+    let originalW = data.w;
+
+    for (let y = 0; ; y += step) {
+        for (let x = 0; x <= containerW; x += step) {
+
+            // 1. 현재 x 위치에서 사용 가능한 최대 너비 계산
+            let availableW = containerW - x;
+
+            // 2. 만약 남은 공간이 최소 허용 너비보다 작으면 이 줄은 패스
+            if (availableW < originalW * minWidthPercent) break;
+
+            // 3. 목표 너비 설정 (원래 너비 vs 남은 공간 중 작은 값)
+            let targetW = Math.min(originalW, availableW);
+            let current = { x, y, w: targetW, h: data.h };
+
+            // 4. 충돌 검사
+            const hasOverlap = placed.some(p => {
+                return !(
+                    current.x + current.w + gap <= p.x ||
+                    current.x >= p.x + p.w + gap ||
+                    current.y + current.h + gap <= p.y ||
+                    current.y >= p.y + p.h + gap
+                );
+            });
+
+            // 5. 충돌이 없다면 이 위치와 조정된 너비 반환
+            if (!hasOverlap) {
+                return { x, y, finalW: targetW };
+            }
+        }
+        if (y > 20000) return { x: 0, y: 0, finalW: originalW };
+    }
+}
