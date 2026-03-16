@@ -34,11 +34,11 @@ class SkylineLayout {
                 let realAvailableW = combinedW - effectiveGap;
 
                 // 최소 너비 조건 만족 시
-                if (realAvailableW >= item.w * this.minWidthPercent) {
+                if (realAvailableW >= item.w && realAvailableW >= item.w * this.minWidthPercent) {
                     if (currentMaxY < bestY) {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
-                        finalW = Math.min(item.w, realAvailableW);
+                        finalW = Math.min(item.w, item.w * this.minWidthPercent);
                         targetIdx = i;
                     }
                     break; // 너비 충족했으니 j 루프 중단
