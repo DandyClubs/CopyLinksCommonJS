@@ -180,23 +180,29 @@ async function preloadImageSizes(wrapper, loaderEl) {
     await Promise.all(imgs.map(loadImage));
 }
 function createSectionMasonry(container) {
-    const children = [...container.children];
+    const nodes = [...container.childNodes];
     const wrappers = [];
     let currentImageGroup = [];
-    let elementsToRemove = [];
-    let previousWasBr = false; // 연속 BR 체크용
+    let nodesToRemove = [];
+    let previousWasBrOrNewline = false; // 연속 줄바꿈 체크
 
-    const flushGroup = (targetElement) => {
+    const flushGroup = (targetNode) => {
         if (currentImageGroup.length === 0) return;
 
         const wrapper = document.createElement("div");
         wrapper.className = "image-masonry";
-        targetElement.before(wrapper);
+        // targetNode가 없으면 container 끝에 추가
+        if (targetNode) {
+            targetNode.parentNode.insertBefore(wrapper, targetNode);
+        } else {
+            container.appendChild(wrapper);
+        }
 
         currentImageGroup.forEach(img => {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
             const cleanImg = document.createElement("img");
+
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
 
@@ -208,68 +214,92 @@ function createSectionMasonry(container) {
             wrapper.appendChild(item);
         });
 
-        elementsToRemove.forEach(el => el.remove());
+        // 수집된 이미지 노드들과 찌꺼기들 제거
+        nodesToRemove.forEach(node => node.remove());
+
         wrappers.push(wrapper);
         currentImageGroup = [];
-        elementsToRemove = [];
+        nodesToRemove = [];
     };
 
-    children.forEach((child) => {
-        // 1. Display: none은 무조건 제거 대상 (이미지 그룹화 여부와 무관하게 청소)
-        if (window.getComputedStyle(child).display === 'none') {
-            child.remove();
-            return;
-        }
+    nodes.forEach((node) => {
+        // 1. Element 노드인 경우 (태그)
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const style = window.getComputedStyle(node);
+            if (style.display === 'none') {
+                node.remove();
+                return;
+            }
 
-        const imgsInChild = child.tagName === "IMG" ? [child] : [...child.querySelectorAll("img")];
+            const imgs = node.tagName === "IMG" ? [node] : [...node.querySelectorAll("img")];
 
-        if (imgsInChild.length > 0) {
-            currentImageGroup.push(...imgsInChild);
-            elementsToRemove.push(child);
-            previousWasBr = false; // 이미지 발견 시 BR 연속성 초기화
-        } else {
-            const text = child.textContent.trim();
-            const isBr = child.tagName === "BR";
-
-            // 2. 연속된 BR 처리 (이미지 그룹 밖에서도 작동)
-            if (isBr) {
-                if (previousWasBr) {
-                    // 이전에 이미 BR이 나왔다면 현재 BR은 삭제
-                    child.remove();
-                    return;
-                }
-                previousWasBr = true; // 첫 번째 BR임을 기록
+            if (imgs.length > 0) {
+                currentImageGroup.push(...imgs);
+                nodesToRemove.push(node);
+                previousWasBrOrNewline = false;
             } else {
-                if (text !== "") previousWasBr = false; // 의미 있는 텍스트면 BR 연속성 초기화
-            }
+                const text = node.textContent.trim();
+                const isBr = node.tagName === "BR";
 
-            // 3. 이미지 그룹 진행 중일 때 무시할 요소들 (찌꺼기 제거)
-            if (currentImageGroup.length > 0) {
-                const isAttachmentInfo =
-                    text === "" ||
-                    /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text) ||
-                    child.querySelector('.xw1, .xg1') ||
-                    isBr;
+                if (isBr) {
+                    if (previousWasBrOrNewline) {
+                        node.remove(); // 연속된 BR 제거
+                    } else {
+                        previousWasBrOrNewline = true;
+                    }
+                } else {
+                    if (text !== "") previousWasBrOrNewline = false;
+                }
 
-                if (isAttachmentInfo) {
-                    elementsToRemove.push(child);
-                    return;
+                // 이미지 그룹 수집 중 무시할 요소들
+                if (currentImageGroup.length > 0) {
+                    const isAttachmentInfo =
+                        text === "" ||
+                        /\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text) ||
+                        node.querySelector('.xw1, .xg1') ||
+                        isBr;
+
+                    if (isAttachmentInfo) {
+                        nodesToRemove.push(node);
+                        return;
+                    }
+                }
+
+                // 유의미한 텍스트 태그를 만나면 그룹 마감
+                if (currentImageGroup.length > 0 && text !== "") {
+                    flushGroup(node);
                 }
             }
+        }
+        // 2. Text 노드인 경우 (태그 밖의 텍스트)
+        else if (node.nodeType === Node.TEXT_NODE) {
+            const text = node.textContent.trim();
 
-            // 4. 진짜 텍스트를 만나면 그룹 마감
-            if (currentImageGroup.length > 0 && text !== "") {
-                flushGroup(child);
+            if (text === "") {
+                // 단순 공백/줄바꿈 문자열 처리
+                if (currentImageGroup.length > 0) {
+                    nodesToRemove.push(node); // 이미지 사이의 공백은 제거 대상
+                }
+            } else {
+                // 진짜 텍스트가 들어있는 경우
+                if (currentImageGroup.length > 0) {
+                    // 파일명 같은 텍스트인지 한 번 더 체크
+                    if (/\.(jpg|jpeg|png|gif|webp|bmp)/i.test(text)) {
+                        nodesToRemove.push(node);
+                    } else {
+                        flushGroup(node);
+                        previousWasBrOrNewline = false;
+                    }
+                } else {
+                    previousWasBrOrNewline = false;
+                }
             }
         }
     });
 
-    // 마지막 남은 이미지 처리
+    // 마지막 남은 그룹 처리
     if (currentImageGroup.length > 0) {
-        const dummy = document.createElement('div');
-        container.appendChild(dummy);
-        flushGroup(dummy);
-        dummy.remove();
+        flushGroup(null);
     }
 
     return wrappers;
