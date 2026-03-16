@@ -433,7 +433,7 @@ function findBestPosition(w, h, placed, containerW, gap) {
 
 function findBestPositionWithResize(data, placed, containerW, gap) {
     let step = 2;
-    let minWidthPercent = 0.95; // 원래 너비의 80%까지는 줄어들 수 있다고 가정
+    let minWidthPercent = 0.98; // 원래 너비의 80%까지는 줄어들 수 있다고 가정
     let originalW = data.w;
 
     for (let y = 0; ; y += step) {
