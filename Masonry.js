@@ -418,7 +418,7 @@ function optimizeSingleLayout(container) {
         if (overflow > 0) {
 
             const shrinkables =
-                group.filter(v => v.baseW > minShrinkWidth);
+                group.filter(v => v.baseW > minShrinkWidth || v.baseH > minShrinkWidth);
 
             const shrinkSum =
                 shrinkables.reduce((s, v) => s + v.baseW, 0);
