@@ -441,7 +441,7 @@ function findBestPositionWithResize(data, placed, containerW, gap) {
 
             // 1. 현재 x 위치에서 사용 가능한 최대 너비 계산
             let availableW = containerW - x;
-
+            console.log(containerW, availableW, originalW * minWidthPercent);
             // 2. 만약 남은 공간이 최소 허용 너비보다 작으면 이 줄은 패스
             if (availableW < originalW * minWidthPercent) break;
 
