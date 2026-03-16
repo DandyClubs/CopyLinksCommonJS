@@ -498,36 +498,11 @@ function optimizeSingleLayout(container) {
         });
     }
     // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
-
-    /*
-    let placedRects = [];
-    allCalculatedItems.forEach(data => {
-        
-        //const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
-        const pos = findBestPositionWithSmartGap(data, placedRects, containerWidth, gap);
-
-        // DOM 반영
-        //data.element.style.width = `${data.w}px`;
-        data.element.style.width = `${pos.finalW}px`;
-        data.element.style.height = `${data.h}px`;
-        data.element.style.left = `${pos.x}px`;
-        data.element.style.top = `${pos.y}px`;
-
-        // 배치 정보 저장
-        placedRects.push({ x: pos.x, y: pos.y, w: data.w, h: data.h });
-    });
-
-    const totalHeight = Math.max(...placedRects.map(r => r.y + r.h), 0);
-    container.style.height = `${totalHeight}px`;
-    */
-
     const layout = new SkylineLayout(containerWidth, gap, 0.98);
 
     allCalculatedItems.forEach(data => {
-        // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.
-        
-            layout.placeItem(data);
-        
+        // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.        
+            layout.placeItem(data);        
     });
 
     // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
@@ -539,80 +514,4 @@ function getAspectRatio(item, img) {
     if (img && img.naturalWidth) return img.naturalWidth / img.naturalHeight;
     const styleRatio = item.style.aspectRatio.split('/');
     return styleRatio.length === 2 ? parseFloat(styleRatio[0]) / parseFloat(styleRatio[1]) : 1;
-}
-
-function findBestPosition(w, h, placed, containerW, gap) {
-    let y = 0;
-    let x = 0;
-    const step = 2; // 탐색 정밀도를 높이기 위해 step을 낮춤
-
-    while (true) {        
-        if (x + w > containerW + step) {
-            x = 0;
-            y += step;
-            continue;
-        }
-        const current = { x, y, w, h };
-
-        // 6. 충돌 검사 (Gap 적용)
-        const hasOverlap = placed.some(p => {
-            return !(
-                current.x + current.w + gap <= p.x ||
-                current.x >= p.x + p.w + gap ||
-                current.y + current.h + gap <= p.y ||
-                current.y >= p.y + p.h + gap
-            );
-        });
-
-        if (!hasOverlap) return { x, y };
-
-        x += step;
-        if (y > 20000) return { x: 0, y: 0 };
-    }
-}
-
-
-function findBestPositionWithSmartGap(data, placed, containerW, gap) {
-    let step = 2;
-    let minWidthPercent = 0.98;
-    let originalW = data.w;
-
-    for (let y = 0; ; y += step) {
-        for (let x = 0; x <= containerW; x += step) {
-
-            // 1. 간격(Gap) 계산: 벽에 붙으면 0, 아니면 gap 적용
-            let effectiveGap = (x === 0) ? 0 : gap;
-
-            // 2. 실제 사용 가능한 최대 너비 계산 (중요!)
-            // 컨테이너 전체 너비에서 현재 시작점(x)과 필요한 간격(gap)을 뺍니다.
-            let availableW = containerW - x - effectiveGap;
-
-            // 3. 최소 너비 체크 (남은 공간이 너무 작으면 다음 줄로)
-            if (availableW < originalW * minWidthPercent) {
-                // x가 0인데도 공간이 부족하면 이 줄은 아예 불가능한 것
-                if (x === 0) break;
-                continue;
-            }
-
-            // 4. 목표 너비 결정
-            let targetW = availableW < originalW ? Math.min(originalW, originalW * minWidthPercent) : originalW;
-            let current = { x: x + effectiveGap, y, w: targetW, h: data.h };
-            console.log(containerW, availableW, originalW, originalW * minWidthPercent);
-            // 5. 충돌 검사
-            const hasOverlap = placed.some(p => {
-                return !(
-                    current.x + current.w + gap <= p.x ||
-                    current.x >= p.x + p.w + gap ||
-                    current.y + current.h + gap <= p.y ||
-                    current.y >= p.y + p.h + gap
-                );
-            });
-
-            if (!hasOverlap) {
-                // 실제 렌더링될 x 좌표는 gap이 더해진 current.x입니다.
-                return { x: current.x, y: current.y, finalW: targetW };
-            }
-        }
-        if (y > 20000) return { x: 0, y: 0, finalW: originalW };
-    }
 }
