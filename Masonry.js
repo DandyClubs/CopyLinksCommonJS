@@ -431,35 +431,37 @@ function findBestPosition(w, h, placed, containerW, gap) {
 }
 
 
-function findBestPositionWithResize(data, placed, containerW, gap) {
+function findBestPositionWithSmartGap(data, placed, containerW, gap) {
     let step = 2;
-    let minWidthPercent = 0.98; // 원래 너비의 80%까지는 줄어들 수 있다고 가정
+    let minWidthPercent = 0.95;
     let originalW = data.w;
 
     for (let y = 0; ; y += step) {
         for (let x = 0; x <= containerW; x += step) {
 
             // 1. 현재 x 위치에서 사용 가능한 최대 너비 계산
+            // 시작점(x)이 0이 아니라면, 앞에 최소한 하나의 gap이 있어야 함을 고려
+            let effectiveGap = (x === 0) ? 0 : gap;
             let availableW = containerW - x;
-            console.log(containerW, availableW, originalW * minWidthPercent);
-            // 2. 만약 남은 공간이 최소 허용 너비보다 작으면 이 줄은 패스
+
+            // 2. 만약 남은 공간이 최소 너비보다 작으면 다음 줄로
             if (availableW < originalW * minWidthPercent) break;
 
-            // 3. 목표 너비 설정 (원래 너비 vs 남은 공간 중 작은 값)
+            // 3. 목표 너비 설정 (원래 너비 vs 남은 공간)
             let targetW = Math.min(originalW, availableW);
             let current = { x, y, w: targetW, h: data.h };
 
-            // 4. 충돌 검사
+            // 4. 충돌 검사 (기존 placedRects와의 물리적 겹침 확인)
             const hasOverlap = placed.some(p => {
                 return !(
-                    current.x + current.w + gap <= p.x ||
-                    current.x >= p.x + p.w + gap ||
-                    current.y + current.h + gap <= p.y ||
-                    current.y >= p.y + p.h + gap
+                    current.x + current.w + gap <= p.x || // 내 오른쪽 + gap이 남의 왼쪽보다 작음
+                    current.x >= p.x + p.w + gap ||       // 내 왼쪽이 남의 오른쪽 + gap보다 큼
+                    current.y + current.h + gap <= p.y || // 내 아래쪽 + gap이 남의 위쪽보다 작음
+                    current.y >= p.y + p.h + gap          // 내 위쪽이 남의 아래쪽 + gap보다 큼
                 );
             });
 
-            // 5. 충돌이 없다면 이 위치와 조정된 너비 반환
+            // 5. 배치 성공 시 x, y 및 조정된 너비 반환
             if (!hasOverlap) {
                 return { x, y, finalW: targetW };
             }
