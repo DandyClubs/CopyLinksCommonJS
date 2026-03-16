@@ -434,7 +434,7 @@ function findBestPosition(w, h, placed, containerW, gap) {
 
 function findBestPositionWithSmartGap(data, placed, containerW, gap) {
     let step = 2;
-    let minWidthPercent = 0.8;
+    let minWidthPercent = 0.98;
     let originalW = data.w;
 
     for (let y = 0; ; y += step) {
@@ -455,9 +455,9 @@ function findBestPositionWithSmartGap(data, placed, containerW, gap) {
             }
 
             // 4. 목표 너비 결정
-            let targetW = Math.min(originalW, availableW);
+            let targetW = availableW < originalW ? Math.min(originalW, originalW * minWidthPercent) : originalW;
             let current = { x: x + effectiveGap, y, w: targetW, h: data.h };
-
+            console.log(containerW, availableW, originalW, originalW * minWidthPercent);
             // 5. 충돌 검사
             const hasOverlap = placed.some(p => {
                 return !(
