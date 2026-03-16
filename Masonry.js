@@ -58,6 +58,7 @@ class SkylineLayout {
 
         if (targetIdx !== -1) {
             // DOM 반영
+            item.w = finalW;
             item.element.style.position = 'absolute';
             item.element.style.width = `${finalW}px`;
             item.element.style.height = `${item.h}px`;
