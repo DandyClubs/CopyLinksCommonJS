@@ -34,14 +34,24 @@ class SkylineLayout {
                 let realAvailableW = combinedW - effectiveGap;
 
                 // 최소 너비 조건 만족 시
-                if (realAvailableW >= item.w && realAvailableW >= item.w * this.minWidthPercent) {
+                if (realAvailableW >= item.w) {
                     if (currentMaxY < bestY) {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
-                        finalW = Math.min(item.w, item.w * this.minWidthPercent);
+                        finalW = item.w; // 원래 너비 유지
                         targetIdx = i;
                     }
-                    break; // 너비 충족했으니 j 루프 중단
+                    break;
+                }
+                // 2. 원래 너비로는 안 되지만, 줄여서(minWidthPercent) 들어갈 수 있는지 확인
+                else if (realAvailableW >= item.w * this.minWidthPercent) {
+                    if (currentMaxY < bestY) {
+                        bestY = currentMaxY;
+                        finalX = seg.x + effectiveGap;
+                        finalW = item.w * this.minWidthPercent; // 남은 공간에 맞춰 축소
+                        targetIdx = i;
+                    }
+                    break;
                 }
             }
         }
