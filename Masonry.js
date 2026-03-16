@@ -479,8 +479,9 @@ function optimizeSingleLayout(container) {
         });
     }
     // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
+
+    /*
     let placedRects = [];
-    /*    
     allCalculatedItems.forEach(data => {
         
         //const pos = findBestPosition(data.w, data.h, placedRects, containerWidth, gap);
@@ -505,17 +506,9 @@ function optimizeSingleLayout(container) {
 
     allCalculatedItems.forEach(data => {
         // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.
-        const result = layout.placeItem(data);
-
-        if (result) {
-            // 배치된 정보를 리스트에 저장 (나중에 높이 계산 등에 필요하다면 유지)
-            placedRects.push({
-                x: result.x,
-                y: result.y,
-                w: result.w,
-                h: result.h
-            });
-        }
+        data.forEach(item => {
+            layout.placeItem(item);
+        });        
     });
 
     // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
