@@ -363,7 +363,7 @@ function buildAverageHeights(data, threshold = 15) {
     return finalMapping;
 }
 
-function optimizeSingleLayout(container) {
+function optimizeSingleLayout(container, columnCount = 3) {
     const items = Array.from(container.querySelectorAll('.image-masonry-item'));
     const imageData = collectImageData(items);
     const heightProfile = buildAverageHeights(imageData, 15);
@@ -374,7 +374,7 @@ function optimizeSingleLayout(container) {
     const maxHeight = 500;
     const gap = 4;
     const containerWidth = Math.floor(container.getBoundingClientRect().width);
-    const maxWidth = Math.floor((containerWidth - gap) / 3);
+    const maxWidth = Math.floor((containerWidth - gap) / columnCount);
     const shrinkThreshold = 0.85;
     const allCalculatedItems = []; // 모든 이미지의 최종 크기를 담을 배열
 
