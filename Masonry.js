@@ -513,10 +513,10 @@ function optimizeSingleLayout(container, columnCount = 3) {
             const hKey = heightMap.get(usedCache.keyH);
             if (!minHeightMap.has(hKey) || finalH < minHeightMap.get(hKey)) {
                 minHeightMap.set(hKey, finalH);
-            }
-            console.log(heightProfile, hKey, minHeightMap, usedCache.keyH);
+            }            
             groupResults.push({ item, usedCache, hKey });
         });
+        console.log(heightProfile, hKey, minHeightMap, usedCache.keyH);
 
         groupResults.forEach(res => {
             const syncedH = minHeightMap.get(res.hKey);
