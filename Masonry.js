@@ -121,64 +121,122 @@ class SkylineLayout {
     }
 }
 
-async function preloadImageSizes(wrapper, loaderEl) {
+async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
 
     const circle = loaderEl?.querySelector(".progress-circle");
-    let loaded = 0;
+    let loadedCount = 0;
 
     const updateProgress = () => {
-        loaded++;
-        const percent = Math.round((loaded / total) * 100);
+        loadedCount++;
+        const percent = Math.round((loadedCount / total) * 100);
         if (circle) circle.style.setProperty("--p", percent);
     };
 
-    const loadImage = img => new Promise(resolve => {
-        const realSrc =
-            img.getAttribute("ess-data") ||
-            img.getAttribute("data-src") ||
-            img.src;
-
-        if (!realSrc) {
-            updateProgress();
-            return resolve();
-        }
-
-        let done = false;
-        const finish = () => {
-            if (done) return;
-            done = true;
-
-            const w = img.naturalWidth;
-            const h = img.naturalHeight;
-
-            const item = img.closest(".image-masonry-item");
-            if (item && w > 0 && h > 0) {
-                item.style.aspectRatio = `${w}/${h}`;
+    // GM_xmlhttpRequest를 Promise로 래핑한 상태 체크 함수
+    const checkHttpStatus = (url) => {
+        return new Promise((resolve) => {
+            if (typeof GM_xmlhttpRequest === 'undefined') {
+                return resolve(null); // GM 권한이 없는 경우 일반 로직으로 복귀
             }
-            updateProgress();
-            resolve();
-        };
 
-        img.addEventListener('load', (event) => {
-            finish();
-            img.removeEventListener('error', finish);
-        }, { once: true });
-        img.addEventListener('error', (event) => {
-            finish();
-            img.removeEventListener('load', finish);
-        }, { once: true });
-        img.src = realSrc;
+            GM_xmlhttpRequest({
+                method: 'HEAD',
+                url: url,
+                timeout: 5000, // 상태 체크 자체는 5초 내외로 제한
+                onload: (res) => resolve(res.status),
+                onerror: () => resolve(null),
+                ontimeout: () => resolve(null)
+            });
+        });
+    };
 
-        if (img.complete && img.naturalWidth > 16) {
-            finish();
-        }
-    });
+    const processImage = (img) => {
+        return new Promise(async (resolve) => {
+            const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
-    await Promise.all(imgs.map(loadImage));
+            if (!realSrc || realSrc === "" || realSrc === window.location.href) {
+                updateProgress();
+                console.log('Error Src: ', realSrc, img);
+                img.remove();
+                return resolve('skipped');
+            }
+
+            if (img.complete && img.naturalWidth > 16) {
+                applyAspectRatio(img);
+                updateProgress();
+                return resolve('already-loaded');
+            }
+
+            let timer = null;
+            let isChecking = false;
+
+            const cleanup = () => {
+                if (timer) clearTimeout(timer);
+                img.removeEventListener('load', onLoad);
+                img.removeEventListener('error', onError);
+            };
+
+            const onLoad = () => {
+                cleanup();
+                applyAspectRatio(img);
+                updateProgress();
+                resolve('loaded');
+            };
+
+            const onError = async () => {
+                if (isChecking) return;
+                isChecking = true;
+
+                // GM_xmlhttpRequest로 404 체크 (CORS 우회)
+                const status = await checkHttpStatus(realSrc);
+
+                if (status === 404) {
+                    console.error(`[GM_404] 즉시 종료: ${realSrc}`);
+                    handleFailure(img);
+                    return;
+                }
+
+                // 404가 아니거나 상태 확인 불가 시 30초 대기 로직 가동
+                console.warn(`[ImageRetry] 로딩 에러(404 아님), 30초 대기 시작: ${realSrc}`);
+                timer = setTimeout(() => {
+                    console.error(`[Timeout] 30초 초과로 실패 처리: ${realSrc}`);
+                    handleFailure(img);
+                }, timeout);
+
+                // 재시도를 위해 src 재할당
+                img.removeAttribute('loading');
+                img.src = realSrc;
+            };
+
+            const handleFailure = (targetImg) => {
+                cleanup();
+                updateProgress();
+                console.log('Error Src: ', realSrc, targetImg);
+                targetImg.remove();
+                resolve('failed');
+            };
+
+            img.addEventListener('load', onLoad);
+            img.addEventListener('error', onError);
+
+            // 초기 로딩 시도
+            img.removeAttribute('loading');
+        });
+    };
+
+    function applyAspectRatio(img) {
+        const w = img.naturalWidth;
+        const h = img.naturalHeight;
+        const item = img.closest(".image-masonry-item");
+        item.style.aspectRatio = `${w}/${h}`;
+    }
+
+    await Promise.all(imgs.map(processImage));
 }
+
 function createSectionMasonry(container) {
     const nodes = [...container.childNodes];
     const wrappers = [];
@@ -513,9 +571,9 @@ function optimizeSingleLayout(container, columnCount = 3) {
             const hKey = heightMap.get(usedCache.keyH);
             if (!minHeightMap.has(hKey) || finalH < minHeightMap.get(hKey)) {
                 minHeightMap.set(hKey, finalH);
-            }            
+            }
             groupResults.push({ item, usedCache, hKey });
-        });        
+        });
 
         groupResults.forEach(res => {
             const syncedH = minHeightMap.get(res.hKey);
@@ -536,7 +594,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
 
     allCalculatedItems.forEach(data => {
         // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.        
-            layout.placeItem(data);        
+        layout.placeItem(data);
     });
 
     // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
