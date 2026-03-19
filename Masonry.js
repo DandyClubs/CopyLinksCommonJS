@@ -161,13 +161,22 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                 updateProgress();
                 console.log('Error Src: ', realSrc, img);
                 img.remove();
-                return resolve('skipped');
+                resolve('skipped');
             }
 
-            if (img.complete && img.naturalWidth > 16) {
-                applyAspectRatio(img);
-                updateProgress();
-                return resolve('already-loaded');
+            if (img.complete && img.naturalWidth > 16) {   
+                img.decode()
+                    .then(() => {
+                        applyAspectRatio(img);
+                        updateProgress();
+                        resolve('already-loaded');
+                    })
+                    .catch(() => {
+                        console.warn('[ImageRetry] decode 실패 (onLoad 이후)');
+                        img.src = realSrc;
+                        resolve('corrupted');
+                    });  
+                return;                                    
             }
 
             let timer = null;
@@ -180,10 +189,18 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             };
 
             const onLoad = () => {
-                cleanup();
-                applyAspectRatio(img);
-                updateProgress();
-                resolve('loaded');
+                img.decode()
+                    .then(() => {
+                        cleanup();
+                        applyAspectRatio(img);
+                        updateProgress();
+                        resolve('loaded');
+                    })
+                    .catch(() => {
+                        console.warn('[ImageRetry] decode 실패 (onLoad 이후)');
+                        img.src = realSrc;
+                        resolve('corrupted');
+                    });                
             };
 
             const onError = async () => {
