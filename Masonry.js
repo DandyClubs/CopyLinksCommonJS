@@ -126,6 +126,11 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const total = imgs.length;
     if (!total) return;
 
+    imgs.forEach(img => {
+        img.removeAttribute('loading');
+        img.setAttribute('decoding', 'sync');
+    });
+
     const circle = loaderEl?.querySelector(".progress-circle");
     let loadedCount = 0;
 
@@ -155,14 +160,15 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
     const processImage = (img) => {
         return new Promise(async (resolve) => {
-            const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+
+            const realSrc = img.src && /^blob:/.test(img.src) ? img.src : getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
                 console.log('Error Src: ', realSrc, img);
                 img.remove();
                 resolve('skipped');
-            }
+            }           
 
             if (img.complete && img.naturalWidth > 16) {   
                 img.decode()
@@ -238,9 +244,6 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             img.addEventListener('load', onLoad);
             img.addEventListener('error', onError);
-
-            // 초기 로딩 시도
-            img.removeAttribute('loading');
         });
     };
 
