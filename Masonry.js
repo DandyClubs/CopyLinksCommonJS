@@ -143,7 +143,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
 
     const processImage = (img) => {
         return new Promise((resolve) => {
-            const realSrc = img.src && (img.src.startsWith('blob:') || img.src.startsWith('https://images.weserv.nl')) ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+            const realSrc = img.src && (img.src.startsWith('blob:') || img.src.startsWith('https://wsrv.nl')) ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
@@ -170,7 +170,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
 
             const onError = () => {
                 // 한 번도 프록시를 시도하지 않았다면 프록시 서버 경유
-                if (img.src.startsWith('blob:') || img.src.startsWith('https://images.weserv.nl')) {
+                if (img.src.startsWith('blob:') || img.src.startsWith('https://wsrv.nl')) {
                     isProxyTried = true;
                 }
                 if (!isProxyTried) {
@@ -182,7 +182,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
                       * https://wsrv.nl/?url=${encodeURIComponent(realSrc)} (같은 서비스의 짧은 도메인)
                       * https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encodeURIComponent(realSrc)} (구글 프록시)
                     */
-                    img.src = `https://images.weserv.nl/?url=${encodeURIComponent(realSrc)}&default=${encodeURIComponent(realSrc)}`;
+                    img.src = `https://wsrv.nl/?url=${encodeURIComponent(realSrc)}`;
                 } else {
                     // 프록시로도 실패한 경우 처리
                     handleFailure();
