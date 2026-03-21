@@ -200,13 +200,13 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                     console.error(`[GM_404] 즉시 종료: ${realSrc}`);
                     handleFailure(img);
                     return;
+                } else if (status === 200) {
+                    console.warn(`[ImageRetry] 로딩 에러, 30초 대기 시작: ${realSrc}`);
+                    timer = setTimeout(() => {
+                        console.error(`[Timeout] 30초 초과 실패 처리: ${realSrc}`);
+                        handleFailure(img);
+                    }, timeout);
                 }
-
-                console.warn(`[ImageRetry] 로딩 에러, 30초 대기 시작: ${realSrc}`);
-                timer = setTimeout(() => {
-                    console.error(`[Timeout] 30초 초과 실패 처리: ${realSrc}`);
-                    handleFailure(img);
-                }, timeout);
 
                 // 재시도를 위해 src 재할당
                 img.src = realSrc;
