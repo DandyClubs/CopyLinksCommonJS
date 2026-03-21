@@ -161,7 +161,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const processImage = (img) => {
         return new Promise(async (resolve) => {
 
-            const realSrc = img.src && /^blob:/.test(img.src) ? img.src : getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+            const realSrc = img.src && img.src.startsWith('blob:') ? img.src : getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
