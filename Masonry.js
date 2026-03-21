@@ -126,7 +126,6 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const total = imgs.length;
     if (!total) return;
 
-    // 1. 충돌 방지: 모든 이미지의 지연 로딩을 사전에 해제하고 동기적 디코딩으로 강제
     imgs.forEach(img => {
         img.removeAttribute('loading');
         img.setAttribute('decoding', 'sync');
@@ -143,15 +142,13 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
     const checkHttpStatus = (url) => {
         return new Promise((resolve) => {
-            if (typeof GM_xmlhttpRequest === 'undefined') {
-                return resolve(null);
-            }
+            if (typeof GM_xmlhttpRequest === 'undefined') return resolve(null);
             GM_xmlhttpRequest({
-                method: 'HEAD',
+                method: 'GET',
                 url: url,
                 timeout: 5000,
                 onload: (res) => resolve(res.status),
-                onerror: () => resolve(null),
+                onerror: () => resolve(0), // 인증서 에러 등은 0 반환
                 ontimeout: () => resolve(null)
             });
         });
@@ -159,74 +156,88 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
     const processImage = (img) => {
         return new Promise((resolve) => {
-            const realSrc = img.src && img.src.startsWith('blob:') ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+            const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
-                img.closest(".image-masonry-item").remove();
+                img.closest(".image-masonry-item")?.remove();
                 return resolve('skipped');
             }
 
-            // 2. 핵심 수정: decode() 제거. naturalWidth가 있거나 Viewer가 blob으로 바꾼 경우 즉시 통과
+            // 이미 로드된 경우 패스
             if ((img.complete && img.naturalWidth > 0) || realSrc.startsWith('blob:')) {
                 applyAspectRatio(img);
                 updateProgress();
                 return resolve('already-loaded');
             }
 
-            let timer = null;
-            let isChecking = false;
-
-            const cleanup = () => {
-                if (timer) clearTimeout(timer);
-                img.removeEventListener('load', onLoad);
-                img.removeEventListener('error', onError);
-            };
-
-            const onLoad = () => {
-                cleanup();
-                applyAspectRatio(img);
-                updateProgress();
-                resolve('loaded');
-            };
-
-            const onError = async () => {
-                if (isChecking) return;
-                isChecking = true;
-
-                const status = await checkHttpStatus(realSrc);
-
-                if (status === 404) {
-                    console.error(`[GM_404] 즉시 종료: ${realSrc}`);
-                    handleFailure(img);
-                    return;
-                } else if (status === 200) {
-                    console.warn(`[ImageRetry] 로딩 에러, 30초 대기 시작: ${realSrc}`);
-                    timer = setTimeout(() => {
-                        console.error(`[Timeout] 30초 초과 실패 처리: ${realSrc}`);
-                        handleFailure(img);
-                    }, timeout);
+            // [추가] Blob 로드 및 프록시 전환 핵심 함수
+            const fetchAndApplyBlob = (url, useProxy = false) => {
+                let targetUrl = url;
+                if (useProxy) {
+                    const urlObj = new URL(url);
+                    const encodedOrigin = btoa(`${urlObj.protocol}//${urlObj.host}`).replace(/=/g, "");
+                    targetUrl = `https://95.214.55.225${urlObj.pathname}?__cpo=${encodedOrigin}`;
+                    console.warn(`[ProxyMode] 프록시로 전환하여 시도: ${targetUrl}`);
                 }
 
-                // 재시도를 위해 src 재할당
-                img.src = realSrc;
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: targetUrl,
+                    responseType: "blob",
+                    timeout: 30000,
+                    onload: (res) => {
+                        if (res.status === 200) {
+                            const blobUrl = URL.createObjectURL(res.response);
+                            img.src = blobUrl;
+                            img.onload = () => {
+                                applyAspectRatio(img);
+                                updateProgress();
+                                resolve('loaded-as-blob');
+                            };
+                        } else if (res.status === 404) {
+                            handleFailure(img);
+                        } else if (!useProxy) {
+                            fetchAndApplyBlob(url, true); // 0이나 기타 에러 시 프록시 시도
+                        } else {
+                            handleFailure(img);
+                        }
+                    },
+                    onerror: () => !useProxy ? fetchAndApplyBlob(url, true) : handleFailure(img),
+                    ontimeout: () => !useProxy ? fetchAndApplyBlob(url, true) : handleFailure(img)
+                });
             };
 
             const handleFailure = (targetImg) => {
-                cleanup();
                 updateProgress();
-                console.log('Error Src: ', realSrc, targetImg);
-                targetImg.closest(".image-masonry-item").remove();
+                targetImg.closest(".image-masonry-item")?.remove();
                 resolve('failed');
             };
 
-            img.addEventListener('load', onLoad);
+            const onError = async () => {
+                const status = await checkHttpStatus(realSrc);
+
+                if (status === 404) {
+                    handleFailure(img);
+                } else if (status === 200 || status === 0 || status === null) {
+                    // 일반 로딩 실패 시 즉시 Blob/Proxy 모드로 전환
+                    fetchAndApplyBlob(realSrc);
+                } else {
+                    handleFailure(img);
+                }
+            };
+
+            img.addEventListener('load', function onLoad() {
+                img.removeEventListener('load', onLoad);
+                img.removeEventListener('error', onError);
+                applyAspectRatio(img);
+                updateProgress();
+                resolve('loaded');
+            });
+
             img.addEventListener('error', onError);
 
-            // 3. src 할당 로직 정리 (브라우저가 로딩을 시작하도록 트리거)
-            if (img.src !== realSrc) {
-                img.src = realSrc;
-            }
+            if (img.src !== realSrc) img.src = realSrc;
         });
     };
 
@@ -238,7 +249,6 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             item.style.aspectRatio = `${w}/${h}`;
         }
     }
-
     await Promise.all(imgs.map(processImage));
 }
 
