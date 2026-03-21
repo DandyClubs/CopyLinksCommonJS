@@ -126,6 +126,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const total = imgs.length;
     if (!total) return;
 
+    // 1. 충돌 방지: 모든 이미지의 지연 로딩을 사전에 해제하고 동기적 디코딩으로 강제
     imgs.forEach(img => {
         img.removeAttribute('loading');
         img.setAttribute('decoding', 'sync');
@@ -140,17 +141,15 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
         if (circle) circle.style.setProperty("--p", percent);
     };
 
-    // GM_xmlhttpRequest를 Promise로 래핑한 상태 체크 함수
     const checkHttpStatus = (url) => {
         return new Promise((resolve) => {
             if (typeof GM_xmlhttpRequest === 'undefined') {
-                return resolve(null); // GM 권한이 없는 경우 일반 로직으로 복귀
+                return resolve(null);
             }
-
             GM_xmlhttpRequest({
                 method: 'HEAD',
                 url: url,
-                timeout: 5000, // 상태 체크 자체는 5초 내외로 제한
+                timeout: 5000,
                 onload: (res) => resolve(res.status),
                 onerror: () => resolve(null),
                 ontimeout: () => resolve(null)
@@ -159,30 +158,20 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     };
 
     const processImage = (img) => {
-        return new Promise(async (resolve) => {
-
-            const realSrc = img.src && img.src.startsWith('blob:') ? img.src : getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+        return new Promise((resolve) => {
+            const realSrc = img.src && img.src.startsWith('blob:') ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
-                console.log('Error Src: ', realSrc, img);
                 img.remove();
-                resolve('skipped');
-            }           
+                return resolve('skipped');
+            }
 
-            if (img.complete && img.naturalWidth > 16) {   
-                img.decode()
-                    .then(() => {
-                        applyAspectRatio(img);
-                        updateProgress();
-                        resolve('already-loaded');
-                    })
-                    .catch(() => {
-                        console.warn('[ImageRetry] decode 실패 (onLoad 이후)');
-                        img.src = realSrc;
-                        resolve('corrupted');
-                    });  
-                return;                                    
+            // 2. 핵심 수정: decode() 제거. naturalWidth가 있거나 Viewer가 blob으로 바꾼 경우 즉시 통과
+            if ((img.complete && img.naturalWidth > 0) || realSrc.startsWith('blob:')) {
+                applyAspectRatio(img);
+                updateProgress();
+                return resolve('already-loaded');
             }
 
             let timer = null;
@@ -195,25 +184,16 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             };
 
             const onLoad = () => {
-                img.decode()
-                    .then(() => {
-                        cleanup();
-                        applyAspectRatio(img);
-                        updateProgress();
-                        resolve('loaded');
-                    })
-                    .catch(() => {
-                        console.warn('[ImageRetry] decode 실패 (onLoad 이후)');
-                        img.src = realSrc;
-                        resolve('corrupted');
-                    });                
+                cleanup();
+                applyAspectRatio(img);
+                updateProgress();
+                resolve('loaded');
             };
 
             const onError = async () => {
                 if (isChecking) return;
                 isChecking = true;
 
-                // GM_xmlhttpRequest로 404 체크 (CORS 우회)
                 const status = await checkHttpStatus(realSrc);
 
                 if (status === 404) {
@@ -222,15 +202,13 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                     return;
                 }
 
-                // 404가 아니거나 상태 확인 불가 시 30초 대기 로직 가동
-                console.warn(`[ImageRetry] 로딩 에러(404 아님), 30초 대기 시작: ${realSrc}`);
+                console.warn(`[ImageRetry] 로딩 에러, 30초 대기 시작: ${realSrc}`);
                 timer = setTimeout(() => {
-                    console.error(`[Timeout] 30초 초과로 실패 처리: ${realSrc}`);
+                    console.error(`[Timeout] 30초 초과 실패 처리: ${realSrc}`);
                     handleFailure(img);
                 }, timeout);
 
                 // 재시도를 위해 src 재할당
-                img.removeAttribute('loading');
                 img.src = realSrc;
             };
 
@@ -244,6 +222,11 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             img.addEventListener('load', onLoad);
             img.addEventListener('error', onError);
+
+            // 3. src 할당 로직 정리 (브라우저가 로딩을 시작하도록 트리거)
+            if (img.src !== realSrc) {
+                img.src = realSrc;
+            }
         });
     };
 
@@ -251,7 +234,9 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
         const w = img.naturalWidth;
         const h = img.naturalHeight;
         const item = img.closest(".image-masonry-item");
-        item.style.aspectRatio = `${w}/${h}`;
+        if (item && w > 0 && h > 0) {
+            item.style.aspectRatio = `${w}/${h}`;
+        }
     }
 
     await Promise.all(imgs.map(processImage));
