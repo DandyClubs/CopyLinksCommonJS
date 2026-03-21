@@ -147,7 +147,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
-                console.log('에러 이미지 삭제: ', img, realSrc)
+                console.log('에러 이미지 삭제: ', img, realSrc);
                 img.closest(".image-masonry-item")?.remove();
                 return resolve('skipped');
             }
@@ -178,9 +178,10 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                     console.warn(`[Proxy-Redirect] 인증서/로딩 오류 발생, 프록시 사용: ${realSrc}`);
 
                     /**
-                     * weserv.nl 프록시 서비스 사용
-                     * 원본 주소의 'https://' 부분을 자동으로 처리하며 캐싱 성능이 우수함
-                     */
+                      * 만약 weserv.nl이 느리다면 아래 주소로 교체해서 테스트해 보세요:
+                      * https://wsrv.nl/?url=${encodeURIComponent(realSrc)} (같은 서비스의 짧은 도메인)
+                      * https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encodeURIComponent(realSrc)} (구글 프록시)
+                    */
                     img.src = `https://images.weserv.nl/?url=${encodeURIComponent(realSrc)}&default=${encodeURIComponent(realSrc)}`;
                 } else {
                     // 프록시로도 실패한 경우 처리
