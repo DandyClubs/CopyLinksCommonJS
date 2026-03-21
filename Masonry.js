@@ -216,7 +216,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                 cleanup();
                 updateProgress();
                 console.log('Error Src: ', realSrc, targetImg);
-                targetImg.remove();
+                targetImg.closest(".image-masonry-item").remove();
                 resolve('failed');
             };
 
