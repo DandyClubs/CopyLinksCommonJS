@@ -163,7 +163,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
-                img.remove();
+                img.closest(".image-masonry-item").remove();
                 return resolve('skipped');
             }
 
