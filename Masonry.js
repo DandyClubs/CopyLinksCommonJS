@@ -147,6 +147,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
+                console.log('에러 이미지 삭제: ', img, realSrc)
                 img.closest(".image-masonry-item")?.remove();
                 return resolve('skipped');
             }
