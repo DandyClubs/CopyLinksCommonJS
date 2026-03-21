@@ -143,7 +143,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
     const processImage = (img) => {
         return new Promise((resolve) => {
-            const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+            const realSrc = img.src && (img.src.startsWith('blob:') || img.src.startsWith('https://images.weserv.nl')) ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
 
             if (!realSrc || realSrc === "" || realSrc === window.location.href) {
                 updateProgress();
@@ -152,7 +152,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             }
 
             // 이미 로드된 상태 확인
-            if (img.complete && img.naturalWidth > 0) {
+            if ((img.complete && img.naturalWidth > 0) || realSrc.startsWith('blob:')) {
                 applyAspectRatio(img);
                 updateProgress();
                 return resolve('already-loaded');
@@ -169,6 +169,10 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
 
             const onError = () => {
                 // 한 번도 프록시를 시도하지 않았다면 프록시 서버 경유
+                if (img.src.startsWith('blob:') || img.src.startsWith('https://images.weserv.nl')) {
+                    isProxyTried = true;
+                }
+
                 if (!isProxyTried) {
                     isProxyTried = true;
                     console.warn(`[Proxy-Redirect] 인증서/로딩 오류 발생, 프록시 사용: ${realSrc}`);
