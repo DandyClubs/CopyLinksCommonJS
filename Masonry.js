@@ -173,7 +173,6 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
                 if (img.src.startsWith('blob:') || img.src.startsWith('https://images.weserv.nl')) {
                     isProxyTried = true;
                 }
-
                 if (!isProxyTried) {
                     isProxyTried = true;
                     console.warn(`[Proxy-Redirect] 인증서/로딩 오류 발생, 프록시 사용: ${realSrc}`);
