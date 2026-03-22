@@ -442,7 +442,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
         while (i < items.length) {
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = Math.round(getAspectRatio(item, img) * 10) / 10; ;
+            const ratio = Math.round(getAspectRatio(item, img) * 1000) / 1000; ;
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
@@ -461,7 +461,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
             }
 
 
-            tempW = Math.round(tempW / 2) * 2;
+            tempW = Math.round(tempW / 5) * 5;
             tempH = Math.round(tempW / ratio);
 
             const nextWidth = groupBaseWidthSum + tempW + (group.length > 0 ? gap : 0);
@@ -534,8 +534,8 @@ function optimizeSingleLayout(container, columnCount = 3) {
 
             let usedCache = null; // 어떤 캐시 객체를 사용했는지 저장
             const cached = scaleMap.find(s =>
-                (Math.abs(s.keyH - item.baseH) <= 10 || Math.abs(s.keyW - item.baseW) <= 10) &&
-                Math.abs(s.ratio - item.ratio) <= 0.085
+                (Math.abs(s.keyH - item.origH) <= 15 || Math.abs(s.keyW - item.origW) <= 15) &&
+                Math.abs(s.ratio - item.ratio) <= 0.075
             );
 
             let finalW, finalH;
@@ -552,8 +552,8 @@ function optimizeSingleLayout(container, columnCount = 3) {
                     finalW = Math.round(finalH * item.ratio);
                 }
                 const newCache = {
-                    keyW: item.baseW,
-                    keyH: item.baseH,
+                    keyW: item.origW,
+                    keyH: item.origH,
                     ratio: item.ratio,
                     finalW: finalW,
                     finalH: finalH
