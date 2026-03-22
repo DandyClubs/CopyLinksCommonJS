@@ -534,7 +534,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
 
             let usedCache = null; // 어떤 캐시 객체를 사용했는지 저장
             const cached = scaleMap.find(s =>
-                (Math.abs(s.keyH - item.origH) <= 12 || Math.abs(s.keyW - item.origW) <= 12) &&
+                (Math.abs(s.keyH - item.baseH) <= 5 || Math.abs(s.keyW - item.baseW) <= 5) &&
                 Math.abs(s.ratio - item.ratio) <= 0.05
             );
 
@@ -552,8 +552,8 @@ function optimizeSingleLayout(container, columnCount = 3) {
                     finalW = Math.round(finalH * item.ratio);
                 }
                 const newCache = {
-                    keyW: item.origW,
-                    keyH: item.origH,
+                    keyW: item.baseW,
+                    keyH: item.baseH,
                     ratio: item.ratio,
                     finalW: finalW,
                     finalH: finalH
