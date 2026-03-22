@@ -51,7 +51,7 @@ class SkylineLayout {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
                         finalW = realAvailableW; // 남은 공간에 맞춰 축소
-                        finalH = Math.floor(finalW / ratio);
+                        //finalH = Math.floor(finalW / ratio);
                         targetIdx = i;
                     }
                     break;
@@ -134,7 +134,7 @@ function applyAspectRatio(img) {
     }
 }
 
-async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
+async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
@@ -442,7 +442,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
         while (i < items.length) {
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = Math.round(getAspectRatio(item, img) * 100) / 100; ;
+            const ratio = Math.round(getAspectRatio(item, img) * 10) / 10; ;
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
@@ -534,8 +534,8 @@ function optimizeSingleLayout(container, columnCount = 3) {
 
             let usedCache = null; // 어떤 캐시 객체를 사용했는지 저장
             const cached = scaleMap.find(s =>
-                (Math.abs(s.keyH - item.baseH) <= 5 || Math.abs(s.keyW - item.baseW) <= 5) &&
-                Math.abs(s.ratio - item.ratio) <= 0.05
+                (Math.abs(s.keyH - item.baseH) <= 10 || Math.abs(s.keyW - item.baseW) <= 10) &&
+                Math.abs(s.ratio - item.ratio) <= 0.085
             );
 
             let finalW, finalH;
