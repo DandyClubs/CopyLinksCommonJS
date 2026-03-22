@@ -461,7 +461,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
             }
 
 
-            tempW = Math.round(tempW / 5) * 5;
+            tempW = Math.round(tempW / 10) * 10;
             tempH = Math.round(tempW / ratio);
 
             const nextWidth = groupBaseWidthSum + tempW + (group.length > 0 ? gap : 0);
