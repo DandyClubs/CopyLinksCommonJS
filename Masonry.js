@@ -15,6 +15,8 @@ class SkylineLayout {
         let targetIdx = -1;
         let finalX = 0;
         let finalW = item.w;
+        let finalH = item.h;
+        const ratio = finalW / finalH;
 
         // 1. 최적의 위치 찾기 (가장 낮은 Y를 가진 구간 탐색)
         for (let i = 0; i < this.skyline.length; i++) {
@@ -49,6 +51,7 @@ class SkylineLayout {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
                         finalW = realAvailableW; // 남은 공간에 맞춰 축소
+                        finalH = Math.floor(finalW / ratio);
                         targetIdx = i;
                     }
                     break;
@@ -61,7 +64,7 @@ class SkylineLayout {
             item.w = finalW;
             item.element.style.position = 'absolute';
             item.element.style.width = `${finalW}px`;
-            item.element.style.height = `${item.h}px`;
+            item.element.style.height = `${finalH}px`;
             item.element.style.left = `${finalX}px`;
             item.element.style.top = `${bestY}px`;
 
@@ -121,12 +124,22 @@ class SkylineLayout {
     }
 }
 
+
+function applyAspectRatio(img) {
+    const w = img.naturalWidth;
+    const h = img.naturalHeight;
+    const item = img.closest(".image-masonry-item");
+    if (item && w > 0 && h > 0) {
+        item.style.aspectRatio = `${w}/${h}`;
+    }
+}
+
 async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
 
-    // 초기 설정: 지연 로딩 해제
+    // 초기 설정: 레이아웃 계산을 위해 지연 로딩을 해제합니다.
     imgs.forEach(img => {
         img.removeAttribute('loading');
         img.setAttribute('decoding', 'sync');
@@ -143,86 +156,76 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
 
     const processImage = (img) => {
         return new Promise((resolve) => {
-            const realSrc = img.src && (img.src.startsWith('blob:') || img.src.startsWith('https://wsrv.nl')) ? img.src : img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
+            // 이미지 상태를 체크하고 결과가 확인되면 처리하는 헬퍼 함수
+            const checkAndResolve = () => {
+                // 1. Image Retry Loader에서 갱생 불가 판정을 내린 경우
+                if (img.dataset.isBadImage === "true") {
+                    console.log('[Masonry] 에러 이미지 삭제 (isBadImage 감지): ', img.src);
+                    img.closest(".image-masonry-item")?.remove();
+                    updateProgress();
+                    return 'failed';
+                }
+                // 2. 이미지가 성공적으로 완전히 로드된 경우
+                if (img.complete && img.naturalWidth > 0) {
+                    applyAspectRatio(img);
+                    updateProgress();
+                    return 'loaded';
+                }
+                return null; // 아직 진행 중
+            };
 
-            if (!realSrc || realSrc === "" || realSrc === window.location.href) {
-                updateProgress();
-                console.log('에러 이미지 삭제: ', img, realSrc);
-                img.closest(".image-masonry-item")?.remove();
-                return resolve('skipped');
-            }
+            // 초기 상태 즉시 확인 (이미 로드가 끝났거나 캐시된 경우)
+            const initialState = checkAndResolve();
+            if (initialState) return resolve(initialState);
 
-            // 이미 로드된 상태 확인
-            if ((img.complete && img.naturalWidth > 0) || realSrc.startsWith('blob:')) {
-                applyAspectRatio(img);
-                updateProgress();
-                return resolve('already-loaded');
-            }
+            let timeoutId;
 
-            let isProxyTried = false;
+            // 이벤트 및 옵저버 해제용 정리 함수
+            const cleanupAndResolve = (result) => {
+                observer.disconnect();
+                img.removeEventListener('load', onLoad);
+                clearTimeout(timeoutId);
+                resolve(result);
+            };
+
+            // Image Retry Loader에 의해 속성이 변경되는 것을 감시합니다.
+            const observer = new MutationObserver((mutations) => {
+                for (const mutation of mutations) {
+                    if (mutation.type === 'attributes') {
+                        // 만약 Retry Loader가 지연로딩을 다시 활성화하면 강제로 뗌 (레이아웃 계산 방해 방지)
+                        if (mutation.attributeName === 'loading' && img.getAttribute('loading') === 'lazy') {
+                            img.removeAttribute('loading');
+                        }
+
+                        // src가 바뀌거나 data-is-bad-image가 추가될 때마다 상태 체크
+                        const state = checkAndResolve();
+                        if (state) cleanupAndResolve(state);
+                    }
+                }
+            });
+
+            // dataset 속성 변화 감지를 위해 HTML 어트리뷰트를 관찰
+            observer.observe(img, {
+                attributes: true,
+                attributeFilter: ['data-is-bad-image', 'src', 'loading']
+            });
 
             const onLoad = () => {
-                cleanup();
-                applyAspectRatio(img);
-                updateProgress();
-                resolve('loaded');
-            };
-
-            const onError = () => {
-                // 한 번도 프록시를 시도하지 않았다면 프록시 서버 경유
-                if (img.src.startsWith('blob:') || img.src.startsWith('https://wsrv.nl')) {
-                    isProxyTried = true;
-                }
-                if (!isProxyTried) {
-                    isProxyTried = true;
-                    console.warn(`[Proxy-Redirect] 인증서/로딩 오류 발생, 프록시 사용: ${realSrc}`);
-
-                    /**
-                      * 만약 weserv.nl이 느리다면 아래 주소로 교체해서 테스트해 보세요:
-                      * https://wsrv.nl/?url=${encodeURIComponent(realSrc)} (같은 서비스의 짧은 도메인)
-                      * https://images1-focus-opensocial.googleusercontent.com/gadgets/proxy?container=focus&refresh=2592000&url=${encodeURIComponent(realSrc)} (구글 프록시)
-                    */
-                    img.src = `https://wsrv.nl/?url=${encodeURIComponent(realSrc)}`;
-                } else {
-                    // 프록시로도 실패한 경우 처리
-                    handleFailure('proxy-failed');
-                }
-            };
-
-            const cleanup = () => {
-                img.removeEventListener('load', onLoad);
-                img.removeEventListener('error', onError);
-            };
-
-            const handleFailure = (err) => {
-                cleanup();
-                updateProgress();
-                console.error(`[Final-Failure] 이미지 로드 불가: ${realSrc} ${err}`);
-                img.closest(".image-masonry-item")?.remove();
-                resolve('failed');
+                const state = checkAndResolve();
+                if (state) cleanupAndResolve(state);
             };
 
             img.addEventListener('load', onLoad);
-            img.addEventListener('error', onError);
+            // 에러 이벤트는 Retry Loader가 처리하도록 내버려 두고(src가 바뀌면 observer가 감지), 
+            // 여기서는 최종적으로 load되거나 isBadImage가 떨어질 때까지만 기다립니다.
 
-            // 로딩 시작
-            img.src = realSrc;
-
-            // 전체 타임아웃 감시
-            setTimeout(() => {
-                if (!img.complete) handleFailure('timeout');
+            // 무한 대기 방지용 타임아웃
+            timeoutId = setTimeout(() => {
+                console.warn(`[Masonry Timeout] 이미지 로딩 대기 시간 초과: ${img.src}`);
+                cleanupAndResolve('timeout');
             }, timeout);
         });
     };
-
-    function applyAspectRatio(img) {
-        const w = img.naturalWidth;
-        const h = img.naturalHeight;
-        const item = img.closest(".image-masonry-item");
-        if (item && w > 0 && h > 0) {
-            item.style.aspectRatio = `${w}/${h}`;
-        }
-    }
 
     // 모든 이미지 프로세스 실행
     await Promise.all(imgs.map(processImage));
