@@ -185,7 +185,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
                     img.src = `https://wsrv.nl/?url=${encodeURIComponent(realSrc)}`;
                 } else {
                     // 프록시로도 실패한 경우 처리
-                    handleFailure();
+                    handleFailure('proxy-failed');
                 }
             };
 
@@ -194,10 +194,10 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
                 img.removeEventListener('error', onError);
             };
 
-            const handleFailure = () => {
+            const handleFailure = (err) => {
                 cleanup();
                 updateProgress();
-                console.error(`[Final-Failure] 이미지 로드 불가: ${realSrc}`);
+                console.error(`[Final-Failure] 이미지 로드 불가: ${realSrc} ${err}`);
                 img.closest(".image-masonry-item")?.remove();
                 resolve('failed');
             };
@@ -210,7 +210,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
 
             // 전체 타임아웃 감시
             setTimeout(() => {
-                if (!img.complete) handleFailure();
+                if (!img.complete) handleFailure('timeout');
             }, timeout);
         });
     };
