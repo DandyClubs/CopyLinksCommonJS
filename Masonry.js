@@ -442,7 +442,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
         while (i < items.length) {
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = getAspectRatio(item, img);
+            const ratio = Math.round(getAspectRatio(item, img) * 100) / 100; ;
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
