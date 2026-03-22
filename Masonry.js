@@ -442,7 +442,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
         while (i < items.length) {
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = getAspectRatio(item, img);
+            const ratio = applyAspectRatio(img);
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
@@ -594,10 +594,4 @@ function optimizeSingleLayout(container, columnCount = 3) {
     // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
     const totalHeight = layout.getMaxHeight();
     container.style.height = `${totalHeight}px`;
-}
-
-function getAspectRatio(item, img) {
-    if (img && img.naturalWidth) return img.naturalWidth / img.naturalHeight;
-    const styleRatio = item.style.aspectRatio.split('/');
-    return styleRatio.length === 2 ? parseFloat(styleRatio[0]) / parseFloat(styleRatio[1]) : 1;
 }
