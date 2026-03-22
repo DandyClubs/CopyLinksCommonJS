@@ -581,7 +581,7 @@ function optimizeSingleLayout(container, columnCount = 3) {
         });
     }
     // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
-    const layout = new SkylineLayout(containerWidth, gap, 0.98);
+    const layout = new SkylineLayout(containerWidth, gap, 0.95);
 
     allCalculatedItems.forEach(data => {
         // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.        
