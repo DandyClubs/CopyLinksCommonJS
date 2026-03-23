@@ -415,15 +415,13 @@ function buildAverageHeights(data, threshold = 15) {
     return finalMapping;
 }
 
-function optimizeSingleLayout(container, columnCount = 3) {
+function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
     const items = Array.from(container.querySelectorAll('.image-masonry-item'));
     const imageData = collectImageData(items);
     const heightProfile = buildAverageHeights(imageData, 15);
     const heightMap = new Map(heightProfile.map(d => [d.originalHeight, d.averageHeight]));
 
-    if (!items.length) return;
-
-    const maxHeight = 500;
+    if (!items.length) return;    
     const gap = 4;
     const containerWidth = Math.floor(container.getBoundingClientRect().width);
     const maxWidth = Math.floor((containerWidth - gap) / columnCount);
