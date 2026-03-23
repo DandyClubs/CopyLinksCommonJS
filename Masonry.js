@@ -159,14 +159,14 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             // 이미지 상태를 체크하고 결과가 확인되면 처리하는 헬퍼 함수
             const checkAndResolve = () => {
                 // 1. Image Retry Loader에서 갱생 불가 판정을 내린 경우
-                if (img.dataset.isBadImage === "true") {
+                if (img.dataset.isImageState === "false") {
                     console.log('[Masonry] 에러 이미지 삭제 (isBadImage 감지): ', img.src);
                     img.closest(".image-masonry-item")?.remove();
                     updateProgress();
                     return 'failed';
                 }
                 // 2. 이미지가 성공적으로 완전히 로드된 경우
-                if (img.complete && img.naturalWidth > 0) {
+                if (img.dataset.isImageState === "true" || (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0)) {
                     applyAspectRatio(img);
                     updateProgress();
                     return 'loaded';
@@ -207,7 +207,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             // dataset 속성 변화 감지를 위해 HTML 어트리뷰트를 관찰
             observer.observe(img, {
                 attributes: true,
-                attributeFilter: ['data-is-bad-image', 'src', 'loading']
+                attributeFilter: ['data-is-image-state', 'src', 'loading']
             });
 
             const onLoad = () => {
