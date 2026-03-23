@@ -142,7 +142,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
     // 초기 설정: 레이아웃 계산을 위해 지연 로딩을 해제합니다.
     imgs.forEach(img => {
         img.removeAttribute('loading');
-        img.setAttribute('decoding', 'sync');
+        img.setAttribute('decoding', 'async');
     });
 
     const circle = loaderEl?.querySelector(".progress-circle");
