@@ -27,7 +27,7 @@ const DB_PREFIX_RULES = {
     "GVG": ["DMM_MONO", "13", "zero3"], "GG": ["DMM_MONO", "13", "zero3"],
 
     // [ Madonna 계열] - pics.dmm.co.jp (3자리 패딩)
-    "JUR": ["FANZA_DIGITAL", "", "zero5"],
+    "JUR": ["FANZA_DIGITAL", "", "raw"],
 
     // [DIGITAL 계열 - h_, n_] - awsimgsrc.dmm.co.jp (5자리 패딩)
     "AMBI": ["FANZA_DIGITAL", "h_237", "zero5"], "AMBS": ["FANZA_DIGITAL", "h_237", "zero5"],
@@ -125,14 +125,16 @@ async function generateUrlCandidates(code, imageSrc = '') {
 
         if (fileMatch) {
             const extractedExtra = fileMatch[1];
-            const paddedNum = pureNum.padStart(5, '0');
-            const testFile = `${extractedExtra}${prefix.toLowerCase()}${paddedNum}${extraSuffix}`;
-
+            const extractedNumStr = fileMatch[2]; // 파일명에 실제 적힌 숫자 부분
+            // --- 패딩 패턴 판별 ---
+            let detectedFormat = "raw";
+            if (extractedNumStr.length === 5) detectedFormat = "zero5";
+            else if (extractedNumStr.length === 3) detectedFormat = "zero3";
             // 여러 도메인 시도
             ["FANZA_DIGITAL", "FANZA_MONO"].forEach(cat => {
-                const url = `${BASE_URLS[cat]}/${testFile}/${testFile}pl.jpg`;
-                candidates.push(url);
-                metaData[url] = [cat, extractedExtra, "zero5"];
+                const url = `${BASE_URLS[cat]}/${fileNamePart}/${fileNamePart}pl.jpg`;
+                candidates.push(url);                
+                metaData[url] = [cat, extractedExtra, detectedFormat];
             });
         }
     }
