@@ -222,7 +222,12 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             // 무한 대기 방지용 타임아웃
             timeoutId = setTimeout(() => {
                 console.warn(`[Masonry Timeout] 이미지 로딩 대기 시간 초과: ${img.src}`);
-                cleanupAndResolve('timeout');
+                if (!img.src.startsWith('https://wsrv.nl')) {
+                    console.log('wsrv.nl 프록시 서비스 사용', img, img.src);
+                    img.setAttribute('src', `https://wsrv.nl/?url=${encodeURIComponent(img.src)}`);
+                } else {
+                    cleanupAndResolve('timeout');
+                }
             }, timeout);
         });
     };
@@ -421,7 +426,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
     const heightProfile = buildAverageHeights(imageData, 15);
     const heightMap = new Map(heightProfile.map(d => [d.originalHeight, d.averageHeight]));
 
-    if (!items.length) return;    
+    if (!items.length) return;
     const gap = 4;
     const containerWidth = Math.floor(container.getBoundingClientRect().width);
     const maxWidth = Math.floor((containerWidth - gap) / columnCount);
@@ -440,7 +445,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         while (i < items.length) {
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = Math.round(getAspectRatio(item, img) * 1000) / 1000; ;
+            const ratio = Math.round(getAspectRatio(item, img) * 1000) / 1000;;
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
