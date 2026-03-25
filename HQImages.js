@@ -26,6 +26,8 @@ const DB_PREFIX_RULES = {
     "ABY": ["DMM_MONO", "118", "zero3"], "DOM": ["DMM_MONO", "118", "zero3"], "GVH": ["DMM_MONO", "13", "zero3"],
     "GVG": ["DMM_MONO", "13", "zero3"], "GG": ["DMM_MONO", "13", "zero3"],
 
+    //# BGN045~072,CHN156~217,ABP398~999번, ABW001~279번
+
     // [ Madonna 계열] - pics.dmm.co.jp (3자리 패딩)
     "JUR": ["FANZA_DIGITAL", "", "raw"],
 
@@ -115,6 +117,17 @@ async function generateUrlCandidates(code, imageSrc = '') {
         const formattedNum = (format === "zero3") ? pureNum.padStart(3, '0') : pureNum.padStart(5, '0');
         const fileName = `${extraNum}${prefix.toLowerCase()}${formattedNum}${extraSuffix}`;
         candidates.push(`${targetBaseUrl}/${fileName}/${fileName}pl.jpg`);
+    }
+
+    const numInt = parseInt(pureNum, 10);
+    const isPrestigeOld = (
+        (prefix === "BGN" && numInt >= 45 && numInt <= 72) ||
+        (prefix === "CHN" && numInt >= 156 && numInt <= 217) ||
+        (prefix === "ABP" && numInt >= 398 && numInt <= 999) ||
+        (prefix === "ABW" && numInt >= 1 && numInt <= 279)
+    );
+    if (isPrestigeOld) {
+        candidates.push(`${BASE_URLS['PRESTIGE']}${prefix.toLowerCase()}/${pureNum}/pb_${prefix.toLowerCase()}-${pureNum}.jpg`);
     }
 
     // B. 미등록 브랜드 추론
