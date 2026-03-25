@@ -42,24 +42,29 @@ const DB_PREFIX_RULES = {
 
     // S1 NO.1 STYLE
     "SONE": ["FANZA_DIGITAL", "", "zero5"],
+    "SNOS": ["FANZA_DIGITAL", "", "zero5"],    
 
     // [Prestige 계열] - pics.dmm.co.jp (3자리 패딩)
-    "ABS": ["DMM_MONO", "118", "zero3"],
-    "ABP": ["DMM_MONO", "118", "zero3"],
-    "ABW": ["DMM_MONO", "118", "zero3"],
-    "EZD": ["DMM_MONO", "118", "zero3"],
-    "CHN": ["DMM_MONO", "118", "zero3"],
-    "FTN": ["DMM_MONO", "118", "zero3"],
-    "ABY": ["DMM_MONO", "118", "zero3"],
-    "DOM": ["DMM_MONO", "118", "zero3"],
-    "GVH": ["DMM_MONO", "13", "zero3"],
-    "GVG": ["DMM_MONO", "13", "zero3"],
-    "GG": ["DMM_MONO", "13", "zero3"],
+    "ABS": ["DMM_MONO", "118", "raw"],
+    "ABP": ["DMM_MONO", "118", "raw"],
+    "ABW": ["DMM_MONO", "118", "raw"],
+    "EZD": ["DMM_MONO", "118", "raw"],
+    "CHN": ["DMM_MONO", "118", "raw"],
+    "FTN": ["DMM_MONO", "118", "raw"],
+    "ABY": ["DMM_MONO", "118", "raw"],
+    "DOM": ["DMM_MONO", "118", "raw"],
+    "GVH": ["DMM_MONO", "13", "raw"],
+    "GVG": ["DMM_MONO", "13", "raw"],
+    "GG": ["DMM_MONO", "13", "raw"],
 
     //# BGN045~072,CHN156~217,ABP398~999번, ABW001~279번
 
     // [ Madonna 계열] - pics.dmm.co.jp 
     "JUR": ["FANZA_DIGITAL", "", "zero5"],
+
+    // IDEA POCKET
+    "IPZZ": ["FANZA_MONO", "", "raw"],
+    "IPZ": ["FANZA_MONO", "", "raw"],
 
     // [DIGITAL 계열 - h_, n_] - awsimgsrc.dmm.co.jp (5자리 패딩)
     "AMBI": ["FANZA_DIGITAL", "h_237", "zero5"],
@@ -237,44 +242,64 @@ async function generateUrlCandidates(code, imageSrc = '') {
 
     const numInt = parseInt(pureNum, 10);
 
-    // 1. Prestige Old API 체크 (BGN045~, ABP398~ 등)
+    // --- 1. Prestige Old ---
     const isPrestigeOld = (
         (prefix === "BGN" && numInt >= 45 && numInt <= 72) ||
         (prefix === "CHN" && numInt >= 156 && numInt <= 217) ||
         (prefix === "ABP" && numInt >= 398 && numInt <= 999) ||
         (prefix === "ABW" && numInt >= 1 && numInt <= 279)
     );
+
     if (isPrestigeOld) {
-        candidates.push(`${BASE_URLS['PRESTIGE']}${prefix.toLowerCase()}/${pureNum}/pb_${prefix.toLowerCase()}-${pureNum}.jpg`);
+        const url = `${BASE_URLS['PRESTIGE']}${prefix.toLowerCase()}/${pureNum}/pb_${prefix.toLowerCase()}-${pureNum}.jpg`;
+        candidates.push(url);
+        metaData[url] = ["PRESTIGE", "", "raw"];
     }
 
-    // A. 기존 규칙(정적+학습된 개별 규칙) 적용
     if (CURRENT_RULES[prefix]) {
         const [category, extraNum, format] = CURRENT_RULES[prefix];
         const targetBaseUrl = BASE_URLS[category] || BASE_URLS["FANZA_DIGITAL"];
-        const formattedNum = (format === "zero3") ? pureNum.padStart(3, '0') : pureNum.padStart(5, '0');
+        let formattedNum;
+        if (format.startsWith('zero')) {
+            const len = parseInt(format.replace('zero', ''), 10);
+            formattedNum = pureNum.padStart(len, '0');
+        } else {
+            formattedNum = pureNum; // raw
+        }
         const fileName = `${extraNum}${prefix.toLowerCase()}${formattedNum}${extraSuffix}`;
         candidates.push(`${targetBaseUrl}/${fileName}/${fileName}pl.jpg`);
     }   
 
-    // B. 미등록 브랜드 추론
+
     if (imageSrc && imageSrc.includes('dmm')) {
         const fileNamePart = imageSrc.split('/').pop().replace(/\..*$/, '').replace(/p[ls]$|jp$/, '');
         const flexRegex = new RegExp(`(.*?)${prefix}(\\d+)`, 'i');
         const fileMatch = fileNamePart.match(flexRegex);
 
         if (fileMatch) {
-            const extractedExtra = fileMatch[1];
-            const extractedNumStr = fileMatch[2]; // 파일명에 실제 적힌 숫자 부분
-            // --- 패딩 패턴 판별 ---
-            let detectedFormat = "raw";
-            if (extractedNumStr.length === 5) detectedFormat = "zero5";
-            else if (extractedNumStr.length === 3) detectedFormat = "zero3";
-            // 여러 도메인 시도
+            const extra = fileMatch[1];
+            const rawNumStr = fileMatch[2]; // 이미지 경로에서 추출된 실제 숫자 (예: "0003")
+
+            // 시도할 포맷 목록 (우선순위 순)
+            const formatsToTry = [
+                { name: "raw", num: rawNumStr },
+                { name: "zero5", num: pureNum.padStart(5, '0') },                
+            ];
+
             ["FANZA_DIGITAL", "FANZA_MONO"].forEach(cat => {
-                const url = `${BASE_URLS[cat]}/${fileNamePart}/${fileNamePart}pl.jpg`;
-                candidates.push(url);                
-                metaData[url] = [cat, extractedExtra, detectedFormat];
+                const baseUrl = BASE_URLS[cat];
+
+                formatsToTry.forEach(fmt => {
+                    const fName = `${extra}${prefix.toLowerCase()}${fmt.num}${extraSuffix}`;
+                    const url = `${baseUrl}/${fName}/${fName}pl.jpg`;
+
+                    // 중복 방지: 이미 후보에 없는 경우에만 추가
+                    if (!!metaData[url]) {
+                        candidates.push(url);
+                        // 이 URL이 성공하면 저장할 규칙 정보를 메타데이터에 기록
+                        metaData[url] = [cat, extra, fmt.name];
+                    }
+                });
             });
         }
     }
@@ -288,12 +313,43 @@ async function generateUrlCandidates(code, imageSrc = '') {
 function saveRuleFromUrl(url, prefix, pureNum) {
     try {
         const urlObj = new URL(url);
-        const fileName = urlObj.pathname.split('/').pop().replace(/\..*$/, '').replace(/p[ls]$|jp$/, '');
-        const flexRegex = new RegExp(`(.*?)${prefix}0*${pureNum}`, 'i');
-        const match = fileName.match(flexRegex);
-        if (match) {
-            const category = url.includes('digital') ? "FANZA_DIGITAL" : "FANZA_MONO";
-            GM_setValue(prefix, [category, match[1], "zero5"]);
+
+        const fileName = urlObj.pathname
+            .split('/')
+            .pop()
+            .replace(/\..*$/, '')
+            .replace(/p[ls]$/, '');
+
+        const match = fileName.match(new RegExp(`${prefix}(\\d+)`, 'i'));
+        if (!match) return;
+
+        const extractedNumStr = match[1];
+
+        // 🔥 핵심: raw 판별은 "완전 일치"
+        let format;
+        if (extractedNumStr === pureNum) {
+            format = "raw";
+        } else if (extractedNumStr.length === 5) {
+            format = "zero5";
+        } else {
+            const padLen = `zero${extractedNumStr.length}`;
+            format = padLen;
         }
-    } catch (e) { }
+
+        const category = url.includes('digital')
+            ? "FANZA_DIGITAL"
+            : "FANZA_MONO";
+
+        const extra = fileName.split(new RegExp(prefix, 'i'))[0];
+
+        GM_setValue(prefix, [category, extra, format]);
+
+        console.log(
+            `%c[자동 학습 awsimgsrc] ${prefix} → ${format}`,
+            "color: lime;"
+        );
+
+    } catch (e) {
+        console.error("규칙 저장 오류:", e);
+    }
 }
