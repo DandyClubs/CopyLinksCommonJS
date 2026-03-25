@@ -33,8 +33,8 @@ const DB_PREFIX_RULES = {
     "JUR": ["FANZA_DIGITAL", "", "zero5"],
 
     // IDEA POCKET
-    "IPZZ": ["FANZA_MONO", "", "raw"],
-    "IPZ": ["FANZA_MONO", "", "raw"],
+    "IPZZ": ["FANZA_MONO", "", "zero5"],
+    "IPZ": ["FANZA_MONO", "", "zero5"],
 
     // [DIGITAL 계열 - h_, n_] - awsimgsrc.dmm.co.jp (5자리 패딩)
     "AMBI": ["FANZA_DIGITAL", "h_237", "zero5"],
@@ -254,49 +254,31 @@ async function generateUrlCandidates(code, imageSrc = '') {
         if (fileMatch) {
             const extra = fileMatch[1];
             const rawNumStr = fileMatch[2]; // 이미지 경로에서 추출된 실제 숫자 (예: "0003")
+            const zero5 = pureNum.padStart(5, '0'); // 5자리로 맞춘 숫자 (예: "00001")
 
-            const formatsToTry = [];
-            const added = new Set();
+            // 1. FANZA_DIGITAL 시도 (무조건 5자리 포맷 사용)
+            const digitalFName = `${extra}${prefix.toLowerCase()}${zero5}${extraSuffix}`;
+            const digitalUrl = `${BASE_URLS["FANZA_DIGITAL"]}/${digitalFName}/${digitalFName}pl.jpg`;
 
-            // raw
-            if (rawNumStr === pureNum) {
-                formatsToTry.push({ name: "raw", num: rawNumStr });
-                added.add(rawNumStr);
+            if (!metaData[digitalUrl]) {
+                candidates.push(digitalUrl);
+                metaData[digitalUrl] = ["FANZA_DIGITAL", extra, "zero5"];
             }
 
-            // zeroN (이미지 기반)
-            if (!added.has(rawNumStr)) {
-                formatsToTry.push({
-                    name: `zero${rawNumStr.length}`,
-                    num: rawNumStr
-                });
-                added.add(rawNumStr);
+            // 2. FANZA_MONO 시도 조건 체크
+            // 조건: extra가 'h_'로 시작하지 않음 AND (5자리가 아니거나, 5자리라면 0으로 시작하지 않음)
+            const isHPrefix = extra.startsWith('h_');
+            const is5DigitStartingWithZero = (rawNumStr.length === 5 && rawNumStr.startsWith('0'));
+
+            if (!isHPrefix && !is5DigitStartingWithZero) {
+                const monoFName = `${extra}${prefix.toLowerCase()}${rawNumStr}${extraSuffix}`;
+                const monoUrl = `${BASE_URLS["FANZA_MONO"]}/${monoFName}/${monoFName}pl.jpg`;
+
+                if (!metaData[monoUrl]) {
+                    candidates.push(monoUrl);
+                    metaData[monoUrl] = ["FANZA_MONO", extra, "raw"];
+                }
             }
-
-            // fallback zero5
-            const zero5 = pureNum.padStart(5, '0');
-            if (!added.has(zero5)) {
-                formatsToTry.push({ name: "zero5", num: zero5 });
-            }
-
-            const categoriesToTry = extra.startsWith('h_')
-                ? ["FANZA_DIGITAL"]
-                : ["FANZA_DIGITAL", "FANZA_MONO"];
-
-            categoriesToTry.forEach(cat => {
-                const baseUrl = BASE_URLS[cat];
-                formatsToTry.forEach(fmt => {
-                    const fName = `${extra}${prefix.toLowerCase()}${fmt.num}${extraSuffix}`;
-                    const url = `${baseUrl}/${fName}/${fName}pl.jpg`;
-
-                    // 중복 방지: 이미 후보에 없는 경우에만 추가
-                    if (!metaData[url]) {
-                        candidates.push(url);
-                        // 이 URL이 성공하면 저장할 규칙 정보를 메타데이터에 기록
-                        metaData[url] = [cat, extra, fmt.name];
-                    }
-                });
-            });
         }
     }
 
