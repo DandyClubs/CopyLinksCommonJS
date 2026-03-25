@@ -42,7 +42,7 @@ const DB_PREFIX_RULES = {
 
     // S1 NO.1 STYLE
     "SONE": ["FANZA_DIGITAL", "", "zero5"],
-    "SNOS": ["FANZA_DIGITAL", "", "zero5"],    
+    "SNOS": ["FANZA_DIGITAL", "", "zero5"],
 
     // [Prestige 계열] - pics.dmm.co.jp
     "ABS": ["DMM_MONO", "118", "raw"],
@@ -169,20 +169,20 @@ const DB_PREFIX_RULES = {
     "UMSO": ["FANZA_DIGITAL", "", "zero5"],
     "HJBB": ["FANZA_DIGITAL", "", "zero5"],
     "USAG": ["FANZA_DIGITAL", "", "zero5"],
-    "KAM": ["FANZA_DIGITAL", "", "zero5"],    
+    "KAM": ["FANZA_DIGITAL", "", "zero5"],
     "ERDM": ["FANZA_DIGITAL", "", "zero5"],
-    "HEZ": ["FANZA_DIGITAL", "59", "zero5"],    
+    "HEZ": ["FANZA_DIGITAL", "59", "zero5"],
     "VENZ": ["FANZA_DIGITAL", "", "zero5"],
     "UZU": ["FANZA_DIGITAL", "", "zero5"],
     "SQTE": ["FANZA_DIGITAL", "", "zero5"],
     "SABA": ["FANZA_DIGITAL", "", "zero5"],
     "OOWL": ["FANZA_DIGITAL", "", "zero5"],
     "KAGN": ["FANZA_DIGITAL", "", "zero5"],
-    "MADV": ["FANZA_DIGITAL", "", "zero5"],    
+    "MADV": ["FANZA_DIGITAL", "", "zero5"],
     "OAE": ["FANZA_DIGITAL", "", "zero5"],
     "NCYF": ["FANZA_DIGITAL", "", "zero5"],
     "KSBJ": ["FANZA_DIGITAL", "", "zero5"],
-    "LUCY": ["FANZA_DIGITAL", "", "zero5"],    
+    "LUCY": ["FANZA_DIGITAL", "", "zero5"],
     "HUNTA": ["FANZA_DIGITAL", "", "zero5"],
 
     // Serebu No Tomo    
@@ -273,7 +273,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
         }
         const fileName = `${extraNum}${prefix.toLowerCase()}${formattedNum}${extraSuffix}`;
         candidates.push(`${targetBaseUrl}/${fileName}/${fileName}pl.jpg`);
-    }   
+    }
 
 
     if (imageSrc && imageSrc.includes('dmm')) {
@@ -309,9 +309,12 @@ async function generateUrlCandidates(code, imageSrc = '') {
                 formatsToTry.push({ name: "zero5", num: zero5 });
             }
 
-            ["FANZA_DIGITAL", "FANZA_MONO"].forEach(cat => {
-                const baseUrl = BASE_URLS[cat];
+            const categoriesToTry = extra.startsWith('h_')
+                ? ["FANZA_DIGITAL"]
+                : ["FANZA_MONO", "FANZA_DIGITAL"];
 
+            categoriesToTry.forEach(cat => {
+                const baseUrl = BASE_URLS[cat];
                 formatsToTry.forEach(fmt => {
                     const fName = `${extra}${prefix.toLowerCase()}${fmt.num}${extraSuffix}`;
                     const url = `${baseUrl}/${fName}/${fName}pl.jpg`;
