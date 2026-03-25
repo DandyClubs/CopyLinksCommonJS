@@ -286,6 +286,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
 function saveRuleFromUrl(url, prefix) {
     try {
         const urlObj = new URL(url);
+        const host = urlObj.hostname; // 도메인 추출 (예: awsimgsrc.dmm.co.jp)
         const fileName = urlObj.pathname
             .split('/')
             .pop()
@@ -297,9 +298,20 @@ function saveRuleFromUrl(url, prefix) {
         const extraPrefix = fileName.substring(0, prefixIndex);
 
         // URL 포함 키워드로 카테고리만 결정
-        const category = url.includes('awsimgsrc.dmm.co.jp')
-            ? "FANZA_DIGITAL"
-            : "FANZA_MONO";
+        let category;
+        // 🔥 BASE_URLS 도메인에 따른 카테고리 정밀 판별
+        if (host === 'awsimgsrc.dmm.co.jp') {
+            category = "FANZA_DIGITAL";
+        } else if (host === 'awsimgsrc.dmm.com') {
+            category = "FANZA_MONO";
+        } else if (host === 'pics.dmm.co.jp') {
+            category = "DMM_MONO";
+        } else if (host === 'prestige-av.com') {
+            category = "PRESTIGE";
+        } else {
+            // 기본값 설정 (혹시 모를 예외 대비)
+            category = "FANZA_DIGITAL";
+        }
 
         // 설정값 저장 [카테고리, 접두어]
         GM_setValue(prefix, [category, extraPrefix]);
