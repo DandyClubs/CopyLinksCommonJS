@@ -222,12 +222,7 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
             // 무한 대기 방지용 타임아웃
             timeoutId = setTimeout(() => {
                 console.warn(`[Masonry Timeout] 이미지 로딩 대기 시간 초과: ${img.src}`);
-                if (!img.src.startsWith('https://wsrv.nl')) {
-                    console.log('wsrv.nl 프록시 서비스 사용', img, img.src);
-                    img.setAttribute('src', `https://wsrv.nl/?url=${encodeURIComponent(img.src)}`);
-                } else {
-                    cleanupAndResolve('timeout');
-                }
+                cleanupAndResolve('timeout');
             }, timeout);
         });
     };
@@ -503,7 +498,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
             currentWSum - availableW;
 
         // 작은 이미지는 shrink 하지 않음
-        const minShrinkWidth = 200;        
+        const minShrinkWidth = 200;
 
         if (overflow > 0) {
 
