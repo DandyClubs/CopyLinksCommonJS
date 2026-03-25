@@ -503,12 +503,12 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
             currentWSum - availableW;
 
         // 작은 이미지는 shrink 하지 않음
-        const minShrinkWidth = 160;
+        const minShrinkWidth = 200;        
 
         if (overflow > 0) {
 
             const shrinkables =
-                group.filter(v => v.baseW > minShrinkWidth || v.baseH > minShrinkWidth);
+                group.filter(v => v.baseW > minShrinkWidth);
 
             const shrinkSum =
                 shrinkables.reduce((s, v) => s + v.baseW, 0);
