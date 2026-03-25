@@ -44,7 +44,7 @@ const DB_PREFIX_RULES = {
     "SONE": ["FANZA_DIGITAL", "", "zero5"],
     "SNOS": ["FANZA_DIGITAL", "", "zero5"],    
 
-    // [Prestige 계열] - pics.dmm.co.jp (3자리 패딩)
+    // [Prestige 계열] - pics.dmm.co.jp
     "ABS": ["DMM_MONO", "118", "raw"],
     "ABP": ["DMM_MONO", "118", "raw"],
     "ABW": ["DMM_MONO", "118", "raw"],
@@ -261,7 +261,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
         const targetBaseUrl = BASE_URLS[category] || BASE_URLS["FANZA_DIGITAL"];
         let formattedNum;
         if (format.startsWith('zero')) {
-            const len = parseInt(format.replace('zero', ''), 10);
+            const len = parseInt(format.slice(4), 10);
             formattedNum = pureNum.padStart(len, '0');
         } else {
             formattedNum = pureNum; // raw
@@ -294,7 +294,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
                     const url = `${baseUrl}/${fName}/${fName}pl.jpg`;
 
                     // 중복 방지: 이미 후보에 없는 경우에만 추가
-                    if (!!metaData[url]) {
+                    if (!metaData[url]) {
                         candidates.push(url);
                         // 이 URL이 성공하면 저장할 규칙 정보를 메타데이터에 기록
                         metaData[url] = [cat, extra, fmt.name];
