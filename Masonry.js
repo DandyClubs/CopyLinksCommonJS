@@ -134,7 +134,7 @@ function applyAspectRatio(img) {
     }
 }
 
-async function preloadImageSizes(wrapper, loaderEl, timeout = 60000) {
+async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
