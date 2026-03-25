@@ -103,6 +103,7 @@ const DB_PREFIX_RULES = {
     "TENN": ["FANZA_DIGITAL", "h_491", "zero5"],
     "PYM": ["FANZA_DIGITAL", "h_283", "zero5"],
     "MAAN": ["FANZA_DIGITAL", "h_1711", "zero5"],
+    "INSTV": ["FANZA_DIGITAL", "h_1472", "zero5"],
 
     // [기타 숫자형]
     "AD": ["FANZA_DIGITAL", "24", "zero5"],
@@ -183,6 +184,9 @@ const DB_PREFIX_RULES = {
     "KSBJ": ["FANZA_DIGITAL", "", "zero5"],
     "LUCY": ["FANZA_DIGITAL", "", "zero5"],    
     "HUNTA": ["FANZA_DIGITAL", "", "zero5"],
+
+    // Serebu No Tomo    
+    "CEAD": ["FANZA_DIGITAL", "", "zero5"],
 };
 
 
