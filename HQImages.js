@@ -40,6 +40,9 @@ const DB_PREFIX_RULES = {
     "TIGR": ["FANZA_MONO", "1", "raw"],
     "ABF": ["FANZA_MONO", "118", "raw"],
 
+    // S1 NO.1 STYLE
+    "SONE": ["FANZA_DIGITAL", "", "zero5"],
+
     // [Prestige 계열] - pics.dmm.co.jp (3자리 패딩)
     "ABS": ["DMM_MONO", "118", "zero3"],
     "ABP": ["DMM_MONO", "118", "zero3"],
@@ -162,8 +165,7 @@ const DB_PREFIX_RULES = {
     "USAG": ["FANZA_DIGITAL", "", "zero5"],
     "KAM": ["FANZA_DIGITAL", "", "zero5"],    
     "ERDM": ["FANZA_DIGITAL", "", "zero5"],
-    "HEZ": ["FANZA_DIGITAL", "59", "zero5"],
-    "SONE": ["FANZA_DIGITAL", "", "zero5"],
+    "HEZ": ["FANZA_DIGITAL", "59", "zero5"],    
     "VENZ": ["FANZA_DIGITAL", "", "zero5"],
     "UZU": ["FANZA_DIGITAL", "", "zero5"],
     "SQTE": ["FANZA_DIGITAL", "", "zero5"],
