@@ -180,6 +180,32 @@ const DB_PREFIX_RULES = {
     "HUNTA": ["FANZA_DIGITAL", "", "zero5"],
 };
 
+
+function checkImageExistence(link) {
+    return new Promise((resolve) => {
+        GM_xmlhttpRequest({
+            method: 'HEAD',
+            url: link,
+            timeout: 5000,
+            onload: function (response) {
+                const status = response.status;
+                if (status === 200) {
+                    resolve({ exists: true, reason: 'OK', link, status });
+                }
+                else if (status === 403) {
+                    console.warn(`[ImageRetry] 국가제한 (HTTP ${status}): ${link}`);
+                    resolve({ exists: false, reason: 'Region restrictions', link, status });
+                }
+                else {
+                    resolve({ exists: false, reason: 'error', link, status });
+                }
+            },
+            onerror: () => resolve({ exists: false, reason: 'error', link }),
+            ontimeout: () => resolve({ exists: false, reason: 'timeout', link })
+        });
+    });
+}
+
 function getMergedRules() {
     const merged = { ...DB_PREFIX_RULES };
 
@@ -234,7 +260,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
     // B. 미등록 브랜드 추론
     if (imageSrc && imageSrc.includes('dmm')) {
         const fileNamePart = imageSrc.split('/').pop().replace(/\..*$/, '').replace(/p[ls]$|jp$/, '');
-        const flexRegex = new RegExp(`(.*?)${prefix}0*${pureNum}`, 'i');
+        const flexRegex = new RegExp(`(.*?)${prefix}(\\d+)`, 'i');
         const fileMatch = fileNamePart.match(flexRegex);
 
         if (fileMatch) {
