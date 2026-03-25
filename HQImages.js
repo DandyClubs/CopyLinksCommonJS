@@ -187,6 +187,7 @@ const DB_PREFIX_RULES = {
 
     // Serebu No Tomo    
     "CEAD": ["FANZA_DIGITAL", "", "zero5"],
+    "CEMD": ["FANZA_DIGITAL", "", "zero5"],
 };
 
 
