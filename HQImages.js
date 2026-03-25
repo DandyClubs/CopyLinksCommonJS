@@ -280,11 +280,29 @@ async function generateUrlCandidates(code, imageSrc = '') {
             const extra = fileMatch[1];
             const rawNumStr = fileMatch[2]; // 이미지 경로에서 추출된 실제 숫자 (예: "0003")
 
-            // 시도할 포맷 목록 (우선순위 순)
-            const formatsToTry = [
-                { name: "raw", num: rawNumStr },
-                { name: "zero5", num: pureNum.padStart(5, '0') },                
-            ];
+            const formatsToTry = [];
+            const added = new Set();
+
+            // raw
+            if (rawNumStr === pureNum) {
+                formatsToTry.push({ name: "raw", num: rawNumStr });
+                added.add(rawNumStr);
+            }
+
+            // zeroN (이미지 기반)
+            if (!added.has(rawNumStr)) {
+                formatsToTry.push({
+                    name: `zero${rawNumStr.length}`,
+                    num: rawNumStr
+                });
+                added.add(rawNumStr);
+            }
+
+            // fallback zero5
+            const zero5 = pureNum.padStart(5, '0');
+            if (!added.has(zero5)) {
+                formatsToTry.push({ name: "zero5", num: zero5 });
+            }
 
             ["FANZA_DIGITAL", "FANZA_MONO"].forEach(cat => {
                 const baseUrl = BASE_URLS[cat];
