@@ -2,42 +2,12 @@
 const BASE_URLS = {
     "FANZA_DIGITAL": "https://awsimgsrc.dmm.co.jp/pics_dig/digital/video",
     "FANZA_MONO": "https://awsimgsrc.dmm.com/dig/mono/movie",
-    "PRESTIGE": "https://www.prestige-av.com/api/media/goods/prestige/",
+    "PRESTIGE": "https://www.prestige-av.com/api/media/goods/prestige",
     "DMM_MONO": "https://pics.dmm.co.jp/mono/movie/adult",
 };
 
 const DB_PREFIX_RULES = {
     // [SOD 계열] - awsimgsrc.dmm.com
-    "HYPN": ["FANZA_MONO", "1", "raw"],
-    "KIRE": ["FANZA_MONO", "1", "raw"],
-    "KUSE": ["FANZA_MONO", "1", "raw"],
-    "MASD": ["FANZA_MONO", "1", "raw"],
-    "MMGH": ["FANZA_MONO", "1", "raw"],
-    "MOGI": ["FANZA_MONO", "1", "raw"],
-    "SCDA": ["FANZA_MONO", "1", "raw"],
-    "SCDE": ["FANZA_MONO", "1", "raw"],
-    "SDAB": ["FANZA_MONO", "1", "raw"],
-    "SDAM": ["FANZA_MONO", "1", "raw"],
-    "SDDE": ["FANZA_MONO", "1", "raw"],
-    "SDDL": ["FANZA_MONO", "1", "raw"],
-    "SDDM": ["FANZA_MONO", "1", "raw"],
-    "SDEN": ["FANZA_MONO", "1", "raw"],
-    "SDHS": ["FANZA_MONO", "1", "raw"],
-    "SDJS": ["FANZA_MONO", "1", "raw"],
-    "SDMF": ["FANZA_MONO", "1", "raw"],
-    "SDMM": ["FANZA_MONO", "1", "raw"],
-    "SDMS": ["FANZA_MONO", "1", "raw"],
-    "SDMT": ["FANZA_MONO", "1", "raw"],
-    "SDMU": ["FANZA_MONO", "1", "raw"],
-    "SDMUA": ["FANZA_MONO", "1", "raw"],
-    "SDNM": ["FANZA_MONO", "1", "raw"],
-    "SDSI": ["FANZA_MONO", "1", "raw"],
-    "SHYN": ["FANZA_MONO", "1", "raw"],
-    "STAR": ["FANZA_MONO", "1", "raw"],
-    "STARS": ["FANZA_MONO", "1", "raw"],
-    "START": ["FANZA_MONO", "1", "raw"],
-    "STKO": ["FANZA_MONO", "1", "raw"],
-    "TIGR": ["FANZA_MONO", "1", "raw"],
     "ABF": ["FANZA_MONO", "118", "raw"],
 
     // S1 NO.1 STYLE
@@ -256,7 +226,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
     );
 
     if (isPrestigeOld) {
-        const url = `${BASE_URLS['PRESTIGE']}${prefix.toLowerCase()}/${pureNum}/pb_${prefix.toLowerCase()}-${pureNum}.jpg`;
+        const url = `${BASE_URLS['PRESTIGE']}/${prefix.toLowerCase()}/${pureNum}/pb_${prefix.toLowerCase()}-${pureNum}.jpg`;
         candidates.push(url);
         metaData[url] = ["PRESTIGE", "", "raw"];
     }
@@ -311,7 +281,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
 
             const categoriesToTry = extra.startsWith('h_')
                 ? ["FANZA_DIGITAL"]
-                : ["FANZA_MONO", "FANZA_DIGITAL"];
+                : ["FANZA_DIGITAL", "FANZA_MONO"];
 
             categoriesToTry.forEach(cat => {
                 const baseUrl = BASE_URLS[cat];
