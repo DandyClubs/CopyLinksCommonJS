@@ -1,13 +1,12 @@
 
 const BASE_URLS = {
-    "FANZA_DIGITAL": "https://awsimgsrc.dmm.co.jp/pics_dig/digital/video",
-    "FANZA_MONO": "https://awsimgsrc.dmm.com/dig/mono/movie",
-    "PRESTIGE": "https://www.prestige-av.com/api/media/goods/prestige",
-    "DMM_MONO": "https://pics.dmm.co.jp/mono/movie/adult",
+    "FANZA_DIGITAL": "https://awsimgsrc.dmm.co.jp/pics_dig/digital/video", // 00001 
+    "FANZA_MONO": "https://awsimgsrc.dmm.com/dig/mono/movie",              // raw 
+    "PRESTIGE": "https://www.prestige-av.com/api/media/goods/prestige",    // raw
+    "DMM_MONO": "https://pics.dmm.co.jp/mono/movie/adult",                 // raw
 };
 
-const DB_PREFIX_RULES = {
-    // [SOD 계열]
+const DB_PREFIX_RULES = {    
     "ABF": ["FANZA_MONO", "118"],
 
     // S1 NO.1 STYLE
@@ -29,6 +28,9 @@ const DB_PREFIX_RULES = {
 
     // [ Madonna 계열 ]
     "JUR": ["FANZA_DIGITAL", ""],
+
+    //  S級素人
+    "SAMA": ["FANZA_DIGITAL", "h_244"],
 
     // IDEA POCKET (MONO지만 예외적으로 5자리를 쓰신다면 DIGITAL로 변경 권장, 
     // 혹은 MONO 로직대로 raw를 쓰신다면 유지)
@@ -131,31 +133,32 @@ const DB_PREFIX_RULES = {
     "WO": ["FANZA_DIGITAL", "1"],
     "3DSVR": ["FANZA_DIGITAL", "1"],
     "AEGE": ["FANZA_DIGITAL", "1"],
-    "AKDL": ["FANZA_DIGITAL", "1"],
-
-    "UMSO": ["FANZA_DIGITAL", ""],
-    "HJBB": ["FANZA_DIGITAL", ""],
-    "USAG": ["FANZA_DIGITAL", ""],
-    "KAM": ["FANZA_DIGITAL", ""],
-    "ERDM": ["FANZA_DIGITAL", ""],
-    "HEZ": ["FANZA_DIGITAL", "59"],
-    "VENZ": ["FANZA_DIGITAL", ""],
-    "UZU": ["FANZA_DIGITAL", ""],
-    "SQTE": ["FANZA_DIGITAL", ""],
-    "SABA": ["FANZA_DIGITAL", ""],
-    "OOWL": ["FANZA_DIGITAL", ""],
-    "KAGN": ["FANZA_DIGITAL", ""],
-    "MADV": ["FANZA_DIGITAL", ""],
-    "OAE": ["FANZA_DIGITAL", ""],
-    "NCYF": ["FANZA_DIGITAL", ""],
-    "KSBJ": ["FANZA_DIGITAL", ""],
-    "LUCY": ["FANZA_DIGITAL", ""],
-    "HUNTA": ["FANZA_DIGITAL", ""],
-
+    "AKDL": ["FANZA_DIGITAL", "1"],    
+    
     // Serebu No Tomo    
     "CEAD": ["FANZA_DIGITAL", ""],
     "CEMD": ["FANZA_DIGITAL", ""],
 };
+
+
+
+/**
+ [ Prestige / 프레스티지 계열 ]
+AMA, BGN, INU, JBS, JNT, KRV, MAS, MGT, PHX, PPP, PPT, PPX, PRD, RVRSS, SAD, SEI, SNG, THU, VPC, WAT, YRH, YRK, YRZ 
+
+[ MOODYZ / 무디즈 계열 ]
+LOVD, MDED, MDID, MDJD, MDLD, MDPD, MDQD, MDRD, MDUD, MDVR, MDWD, MDXD, MDYD, MEYD, MIAA, MIAB, MIAD, MIAE, MIAS, MIBD, MIDD, MIDE, MIDV, MIFD, MIGD, MIID, MIKR, MIMK, MINT, MIQD, MIRD, MIVD, MIXS, MIZD, MNGS 
+
+[ SOD Create 계열 ]
+DSVR, KIRE, MASD, MMGH, MOGI, SCDA, SCDE, SDDL, SDDM, SDHS, SDMS, SDMT, SDMU, SDNM, SDSI, SHYN, STAR, STKO, TIGR 
+
+[ Attackers / 어택커즈 계열 ]
+ADN, APNS, ATAD, ATID, ATKD, ATVR, JBD, RBD, RBK, SAME, SHKD, SSPD, YUJ 
+
+[ Faleno / 팔레노 계열 ]
+FADSS, FCDSS, FLNO, FLNS, FSVSS
+ */
+
 
 function checkImageExistence(link) {
     return new Promise((resolve) => {
@@ -240,7 +243,7 @@ async function generateUrlCandidates(code, imageSrc = '') {
         const url = `${targetBaseUrl}/${fileName}/${fileName}pl.jpg`;
 
         candidates.push(url);
-        metaData[url] = [category, extraNum];
+        metaData[url] = [category, extraPrefix];
     }
 
     // --- 3. DMM 이미지 경로 기반 후보 생성 ---
@@ -298,20 +301,10 @@ function saveRuleFromUrl(url, prefix) {
         const extraPrefix = fileName.substring(0, prefixIndex);
 
         // URL 포함 키워드로 카테고리만 결정
-        let category;
-        // 🔥 BASE_URLS 도메인에 따른 카테고리 정밀 판별
-        if (host === 'awsimgsrc.dmm.co.jp') {
-            category = "FANZA_DIGITAL";
-        } else if (host === 'awsimgsrc.dmm.com') {
-            category = "FANZA_MONO";
-        } else if (host === 'pics.dmm.co.jp') {
-            category = "DMM_MONO";
-        } else if (host === 'prestige-av.com') {
-            category = "PRESTIGE";
-        } else {
-            // 기본값 설정 (혹시 모를 예외 대비)
-            category = "FANZA_DIGITAL";
-        }
+        let category = "FANZA_DIGITAL";
+        if (host === 'awsimgsrc.dmm.com') category = "FANZA_MONO";
+        else if (host === 'pics.dmm.co.jp') category = "DMM_MONO";
+        else if (host === 'prestige-av.com') category = "PRESTIGE";
 
         // 설정값 저장 [카테고리, 접두어]
         GM_setValue(prefix, [category, extraPrefix]);
