@@ -530,7 +530,7 @@ async function downloadPhotosAttempt(DB, ArchivesFileName, userSignal, isRetry =
             // 사용자 취소 신호와 활동 감지 타임아웃 신호를 결합
             const combinedSignal = AbortSignal.any([userSignal, activityController.signal]);
 
-            modHeader = {
+           const modHeader = {
                 'Referer': location.href,
                 'Origin': new URL(location.href).origin
             };
