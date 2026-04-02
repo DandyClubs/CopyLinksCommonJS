@@ -418,6 +418,10 @@ function activityTimeoutSignal(ms) {
 }
 
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
     // 다운로드 시작 시 새로운 AbortController 생성
     userAbortController = new AbortController();    
