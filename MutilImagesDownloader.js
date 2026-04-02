@@ -420,8 +420,7 @@ function activityTimeoutSignal(ms) {
 
 async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
     // 다운로드 시작 시 새로운 AbortController 생성
-    userAbortController = new AbortController();
-    areadyDownloaded = true;
+    userAbortController = new AbortController();    
     const { signal: userSignal } = userAbortController;
     const maxRetries = 2;
     let errorList = [];
@@ -471,11 +470,10 @@ async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
         errorCount = errorList.length;
         updateStateText(`❌ 최종 실패 ${errorList.length} 항목`);
         showErrorPanel(errorList);
-        UpdateJobQueue(PageURL, 'remove'); // ✅ JobQueue에서 제거
+        
     } else if (userSignal.aborted) {
         if (abortReason === 'user') {
-            console.log("⛔ 사용자 중단");
-            await UpdateJobQueue(PageURL, 'remove');
+            console.log("⛔ 사용자 중단");        
         } else {
             console.log("⚠️ 오류로 중단 → 재시도 대상");
             await sleep(5000);
