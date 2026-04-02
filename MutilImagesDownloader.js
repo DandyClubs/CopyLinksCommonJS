@@ -424,7 +424,7 @@ function sleep(ms) {
 
 async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
     // 다운로드 시작 시 새로운 AbortController 생성
-    userAbortController = new AbortController();    
+    userAbortController = new AbortController();
     const { signal: userSignal } = userAbortController;
     const maxRetries = 2;
     let errorList = [];
@@ -455,7 +455,7 @@ async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
                 console.log("🚫 다운로드가 사용자 요청 또는 타임아웃으로 취소되었습니다.");
                 updateStateText("🚫 다운로드 취소됨");
             } else {
-                console.error("⛔ 치명적 오류:", fatalErr);                
+                console.error("⛔ 치명적 오류:", fatalErr);
             }
             // IndexedDB 임시 데이터 제거 (streamSaver 버퍼 제거)
 
@@ -473,10 +473,10 @@ async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
         errorCount = errorList.length;
         updateStateText(`❌ 최종 실패 ${errorList.length} 항목`);
         showErrorPanel(errorList);
-        
+
     } else if (userSignal.aborted) {
         if (abortReason === 'user') {
-            console.log("⛔ 사용자 중단");        
+            console.log("⛔ 사용자 중단");
         } else {
             console.log("⚠️ 오류로 중단 → 재시도 대상");
             await sleep(5000);
@@ -530,26 +530,11 @@ async function downloadPhotosAttempt(DB, ArchivesFileName, userSignal, isRetry =
             // 사용자 취소 신호와 활동 감지 타임아웃 신호를 결합
             const combinedSignal = AbortSignal.any([userSignal, activityController.signal]);
 
+            modHeader = {
+                'Referer': location.href,
+                'Origin': new URL(location.href).origin
+            };
 
-            const usefoamgirl = 'foamgirl.net' === RootDomain;
-            let modHeader;
-            if ('foamgirl.net' === RootDomain) {
-                modHeader = {
-                    'Referer': PageURL,
-                    //'Origin': new URL(PageURL).origin
-                };
-
-            } else if ('everia.club' === RootDomain) {
-                modHeader = {
-                    'Referer': meta.P,
-                    //'Origin': new URL(meta.P).origin
-                };
-            } else {
-                modHeader = {
-                    'Referer': PageURL,
-                    //'Origin': new URL(PageURL).origin
-                };
-            }
 
             const response = await Xfetch(meta.P,
                 {
@@ -629,5 +614,7 @@ async function generateZIP(DB, ZipFileName) {
     for (const { src, filename } of DB) {
         DownloadImagesDB.push({ P: src, F: filename });  // indexedDB에서 가져온 주소와 메타데이타 조합
     }
-    await downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName);
+    return { DownloadImagesDB, ArchivesFileName };
 }
+
+
