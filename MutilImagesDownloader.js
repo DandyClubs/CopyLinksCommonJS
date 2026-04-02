@@ -368,8 +368,7 @@ async function Xfetch(url, fetchInit = {}) {
 
 
 document.addEventListener('click', (e) => {
-    const stopBtn = e.target.closest('.StopAll');
-    console.log(e.target);
+    const stopBtn = e.target.closest('.StopAll');    
     if (!stopBtn) return;
     console.log('StopAll 버튼 클릭');
     if (stopBtn) {
