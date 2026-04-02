@@ -451,8 +451,7 @@ async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
                 console.log("🚫 다운로드가 사용자 요청 또는 타임아웃으로 취소되었습니다.");
                 updateStateText("🚫 다운로드 취소됨");
             } else {
-                console.error("⛔ 치명적 오류:", fatalErr);
-                AutoClose = false;
+                console.error("⛔ 치명적 오류:", fatalErr);                
             }
             // IndexedDB 임시 데이터 제거 (streamSaver 버퍼 제거)
 
