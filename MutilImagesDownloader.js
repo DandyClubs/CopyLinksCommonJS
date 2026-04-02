@@ -1,23 +1,13 @@
 
-let areadyDownloaded = false;
 // 전역 또는 UI 이벤트 핸들러가 접근 가능한 위치에 선언
 let userAbortController = null;
 let abortReason = null; // 🔥 추가
 
-let ImagesDB = new Set();
-let DownloadImagesDB = [];
-let Images, ZipFileName, ArchivesFileName;
 let AllCount = 0;
 let errorCount = 0;
 let addCount = 0;
 let rs;   // new ReadableStream
 let gmRequest; // GM_xmlhttpRequest의 리턴 객체
-
-
-async function checkAndStartJob() {
-    if (areadyDownloaded) return;
-    await downloadPhotosWithRetry(DownloadImagesDB);
-}
 
 async function retry(fn, max = 5, delay = 1000) {
     for (let i = 0; i < max; i++) {
@@ -376,49 +366,30 @@ async function Xfetch(url, fetchInit = {}) {
     }
 }
 
-async function secondStep() {
-    document.addEventListener('click', (e) => {
-        const stopBtn = e.target.closest('.StopAll');
-        console.log(e.target);
-        if (!stopBtn) return;
-        console.log('StopAll 버튼 클릭');
-        if (stopBtn) {
-            if (userAbortController && !userAbortController.signal.aborted) {
-                console.log("⏹ 다운로드 중지 요청");
-                abortReason = 'user';
-                userAbortController.abort();
-            }
+
+document.addEventListener('click', (e) => {
+    const stopBtn = e.target.closest('.StopAll');
+    console.log(e.target);
+    if (!stopBtn) return;
+    console.log('StopAll 버튼 클릭');
+    if (stopBtn) {
+        if (userAbortController && !userAbortController.signal.aborted) {
+            console.log("⏹ 다운로드 중지 요청");
+            abortReason = 'user';
+            userAbortController.abort();
         }
-        const retryFailedBtn = e.target.closest('.RetryFailed');
-        if (!retryFailedBtn) return;
-        if (retryFailedBtn) {
-            if (errorCount > 0) {
-                console.log("🔄 실패한 이미지 재시도", errorCount);
-                downloadPhotosWithRetry(DownloadImagesDB);
-            } else {
-                console.log("❌ 재시도할 실패 이미지 없음");
-            }
+    }
+    const retryFailedBtn = e.target.closest('.RetryFailed');
+    if (!retryFailedBtn) return;
+    if (retryFailedBtn) {
+        if (errorCount > 0) {
+            console.log("🔄 실패한 이미지 재시도", errorCount);
+            downloadPhotosWithRetry(DownloadImagesDB);
+        } else {
+            console.log("❌ 재시도할 실패 이미지 없음");
         }
-    });
-
-    ZipFileName = byteLengthOf('fileName', 240);
-    checkAndStartJob();
-
-
-    await generateZIP(ImagesDB); // DownloadImagesDB 생성
-
-    console.log('DownloadImagesDB: ', DownloadImagesDB);
-
-    document.querySelector('.DownButton').addEventListener('click', async (e) => {
-        e.preventDefault();
-        await downloadPhotosWithRetry(DownloadImagesDB);
-
-    });
-
-}
-
-const downloadedFiles = new Set();
-
+    }
+});
 
 function activityTimeoutSignal(ms) {
     const controller = new AbortController();
@@ -447,7 +418,7 @@ function activityTimeoutSignal(ms) {
 }
 
 
-async function downloadPhotosWithRetry(DownloadImagesDB) {
+async function downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName) {
     // 다운로드 시작 시 새로운 AbortController 생성
     userAbortController = new AbortController();
     areadyDownloaded = true;
@@ -466,7 +437,7 @@ async function downloadPhotosWithRetry(DownloadImagesDB) {
 
         try {
             // downloadPhotosAttempt에 사용자 취소 신호 전달
-            const result = await downloadPhotosAttempt(DownloadImagesDB, userSignal, attempt > 1);
+            const result = await downloadPhotosAttempt(DownloadImagesDB, ArchivesFileName, userSignal, attempt > 1);
             errorList = result.failed;
 
             if (errorList.length === 0) {
@@ -500,30 +471,25 @@ async function downloadPhotosWithRetry(DownloadImagesDB) {
         errorCount = errorList.length;
         updateStateText(`❌ 최종 실패 ${errorList.length} 항목`);
         showErrorPanel(errorList);
-        AutoClose = false;
-        areadyDownloaded = false;
         UpdateJobQueue(PageURL, 'remove'); // ✅ JobQueue에서 제거
     } else if (userSignal.aborted) {
         if (abortReason === 'user') {
             console.log("⛔ 사용자 중단");
             await UpdateJobQueue(PageURL, 'remove');
         } else {
-            console.log("⚠️ 오류로 중단 → 재시도 대상");            
-            await sleep(5000);            
-            areadyDownloaded = false;
+            console.log("⚠️ 오류로 중단 → 재시도 대상");
+            await sleep(5000);
         }
     } else {
-        updateStateText(`✅ 전체 성공`);        
-        areadyDownloaded = true;
+        updateStateText(`✅ 전체 성공`);
         await sleep(2500);
         hideProgressUI();
     }
-    downloadedFiles.clear();
 }
 
 
 
-async function downloadPhotosAttempt(DB, userSignal, isRetry = false) {
+async function downloadPhotosAttempt(DB, ArchivesFileName, userSignal, isRetry = false) {
     injectGraphicProgressLayer();
     let failed = [];
     const zip = new fflate.Zip();
@@ -555,7 +521,6 @@ async function downloadPhotosAttempt(DB, userSignal, isRetry = false) {
             zip.terminate();
             break;
         }
-        if (downloadedFiles.has(meta.F)) continue;
 
         // 개별 다운로드에 대한 타임아웃 컨트롤러 생성 (30초로 설정)
         const activityController = activityTimeoutSignal(30000);
@@ -598,7 +563,6 @@ async function downloadPhotosAttempt(DB, userSignal, isRetry = false) {
 
             const file = new fflate.ZipPassThrough(`${ArchivesFileName}/${meta.F}`);
             zip.add(file);
-            downloadedFiles.add(meta.F);
 
             const reader = response.body.getReader();
             while (true) {
@@ -658,13 +622,11 @@ async function cleanupStreamSaverTempFiles() {
 }
 
 
-
-function generateZIP() {    
-
-    DownloadImagesDB = [];
-    ArchivesFileName = ZipFileName + ".zip";
-
-    DownloadImagesDB.push({ P: src, F: filename });  // indexedDB에서 가져온 주소와 메타데이타 조합
-
-    return DownloadImagesDB;
+async function generateZIP(DB, ZipFileName) {
+    const DownloadImagesDB = [];
+    const ArchivesFileName = ZipFileName + ".zip";
+    for (const { src, filename } of DB) {
+        DownloadImagesDB.push({ P: src, F: filename });  // indexedDB에서 가져온 주소와 메타데이타 조합
+    }
+    await downloadPhotosWithRetry(DownloadImagesDB, ArchivesFileName);
 }
