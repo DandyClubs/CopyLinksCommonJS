@@ -87,7 +87,7 @@ const DB_PREFIX_RULES = {
     "CPDE": ["FANZA_DIGITAL", "188"],
     "DFDM": ["FANZA_DIGITAL", "2"],
     "DLDSS": ["FANZA_DIGITAL", "1"],
-    "DOCP": ["FANZA_DIGITAL", "188"],
+    "DOCP": ["FANZA_DIGITAL", "118"],
     "ECB": ["FANZA_DIGITAL", "2"],
     "EKDV": ["FANZA_DIGITAL", ""],
     "FNS": ["FANZA_DIGITAL", "1"],
