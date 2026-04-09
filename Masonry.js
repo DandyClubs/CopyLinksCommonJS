@@ -134,19 +134,28 @@ function applyAspectRatio(img) {
     }
 }
 
-async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
+async function smartImageLoader(wrapper, loaderEl, {
+    concurrency = 6,
+    preloadMargin = "1500px",
+    timeout = 120000
+} = {}) {
+
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
 
-    // 초기 설정: 레이아웃 계산을 위해 지연 로딩을 해제합니다.
+    // 🔥 설정 (성능 핵심)
     imgs.forEach(img => {
-        img.removeAttribute('loading');
-        img.setAttribute('decoding', 'sync');
+        img.decoding = "async";   // ❗ sync 금지
+        // lazy는 유지 (중요)
     });
 
     const circle = loaderEl?.querySelector(".progress-circle");
+
     let loadedCount = 0;
+    let startedCount = 0;
+    let queue = [];
+    let active = 0;
 
     const updateProgress = () => {
         loadedCount++;
@@ -154,81 +163,92 @@ async function preloadImageSizes(wrapper, loaderEl, timeout = 120000) {
         if (circle) circle.style.setProperty("--p", percent);
     };
 
-    const processImage = (img) => {
-        return new Promise((resolve) => {
-            // 이미지 상태를 체크하고 결과가 확인되면 처리하는 헬퍼 함수
-            const checkAndResolve = () => {
-                // 1. Image Retry Loader에서 갱생 불가 판정을 내린 경우
-                if (img.dataset.isImageState === "false") {
-                    console.log('[Masonry] 에러 이미지 삭제 (isBadImage 감지): ', img.src);
-                    img.closest(".image-masonry-item")?.remove();
-                    updateProgress();
-                    return 'failed';
-                }
-                // 2. 이미지가 성공적으로 완전히 로드된 경우
-                if (img.dataset.isImageState === "true" || (img.complete && img.naturalWidth > 0 && img.naturalHeight > 0)) {
-                    applyAspectRatio(img);
-                    updateProgress();
-                    return 'loaded';
-                }
-                return null; // 아직 진행 중
+    // ✅ 큐 처리
+    const runQueue = () => {
+        while (active < concurrency && queue.length) {
+            const img = queue.shift();
+            active++;
+
+            const done = () => {
+                active--;
+                updateProgress();
+                runQueue();
             };
 
-            // 초기 상태 즉시 확인 (이미 로드가 끝났거나 캐시된 경우)
-            const initialState = checkAndResolve();
-            if (initialState) return resolve(initialState);
-
-            let timeoutId;
-
-            // 이벤트 및 옵저버 해제용 정리 함수
-            const cleanupAndResolve = (result) => {
-                observer.disconnect();
-                img.removeEventListener('load', onLoad);
-                clearTimeout(timeoutId);
-                resolve(result);
-            };
-
-            // Image Retry Loader에 의해 속성이 변경되는 것을 감시합니다.
-            const observer = new MutationObserver((mutations) => {
-                for (const mutation of mutations) {
-                    if (mutation.type === 'attributes') {
-                        // 만약 Retry Loader가 지연로딩을 다시 활성화하면 강제로 뗌 (레이아웃 계산 방해 방지)
-                        if (mutation.attributeName === 'loading' && img.getAttribute('loading') === 'lazy') {
-                            img.removeAttribute('loading');
-                        }
-
-                        // src가 바뀌거나 data-is-bad-image가 추가될 때마다 상태 체크
-                        const state = checkAndResolve();
-                        if (state) cleanupAndResolve(state);
-                    }
-                }
-            });
-
-            // dataset 속성 변화 감지를 위해 HTML 어트리뷰트를 관찰
-            observer.observe(img, {
-                attributes: true,
-                attributeFilter: ['data-is-image-state', 'src', 'loading']
-            });
+            // 이미 완료된 이미지
+            if (img.complete && img.naturalWidth > 0) {
+                done();
+                continue;
+            }
 
             const onLoad = () => {
-                const state = checkAndResolve();
-                if (state) cleanupAndResolve(state);
+                cleanup();
+                done();
             };
 
-            img.addEventListener('load', onLoad);
-            // 에러 이벤트는 Retry Loader가 처리하도록 내버려 두고(src가 바뀌면 observer가 감지), 
-            // 여기서는 최종적으로 load되거나 isBadImage가 떨어질 때까지만 기다립니다.
+            const onError = () => {
+                cleanup();
+                done(); // ❗ 실패도 진행
+            };
 
-            // 무한 대기 방지용 타임아웃
-            timeoutId = setTimeout(() => {
-                console.warn(`[Masonry Timeout] 이미지 로딩 대기 시간 초과: ${img.src}`);
-                cleanupAndResolve('timeout');
-            }, timeout);
-        });
+            const cleanup = () => {
+                img.removeEventListener("load", onLoad);
+                img.removeEventListener("error", onError);
+            };
+
+            img.addEventListener("load", onLoad, { once: true });
+            img.addEventListener("error", onError, { once: true });
+
+            // 🔥 preload 트리거
+            if (img.loading === "lazy") {
+                img.loading = "eager";
+            }
+
+            // 일부 브라우저에서 필요
+            img.src = img.currentSrc || img.src;
+        }
     };
 
-    // 모든 이미지 프로세스 실행
-    await Promise.all(imgs.map(processImage));
+    // ✅ 스크롤 기반 트리거
+    const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+
+            const img = entry.target;
+            observer.unobserve(img);
+
+            queue.push(img);
+            startedCount++;
+
+            runQueue();
+        }
+    }, {
+        root: null,
+        rootMargin: `0px 0px ${preloadMargin} 0px`,
+        threshold: 0
+    });
+
+    // 초기 등록
+    imgs.forEach(img => observer.observe(img));
+
+    // ✅ 완료 대기
+    const waitAll = new Promise(resolve => {
+        const check = setInterval(() => {
+            if (loadedCount >= total) {
+                clearInterval(check);
+                resolve();
+            }
+        }, 100);
+    });
+
+    // 타임아웃 보호
+    const timeoutPromise = new Promise(resolve =>
+        setTimeout(resolve, timeout)
+    );
+
+    await Promise.race([waitAll, timeoutPromise]);
+
+    observer.disconnect();
 }
 
 function createSectionMasonry(container) {
