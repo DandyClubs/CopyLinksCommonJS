@@ -160,12 +160,126 @@ FADSS, FCDSS, FLNO, FLNS, FSVSS
  */
 
 
+function fetchImageResolution(url) {
+
+    const cleanUrl = url.split('?')[0];
+    const finalUrl = cleanUrl.toLowerCase();
+
+
+    // 1. URL 확장자를 통해 필요한 바이트 크기 미리 계산
+    const getExpectedRange = (finalUrl) => {
+        if (finalUrl.endsWith('.png') || finalUrl.endsWith('.gif')) {
+            return "0-1000"; // PNG/GIF는 1KB면 충분함
+        } else if (finalUrl.endsWith('.jpg') || finalUrl.endsWith('.jpeg')) {
+            return "0-20000"; // JPEG나 알 수 없는 경우 20KB
+        } else if (finalUrl.endsWith('.webp')) {
+            return "0-5000"; // WebP는 약 5KB 정도
+        }
+    };
+
+    const targetRange = getExpectedRange(finalUrl);
+
+    return new Promise((resolve) => {
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: finalUrl,
+            headers: {
+                "Range": `bytes=${targetRange}`,
+                "Referer": finalUrl,
+                "Origin": new URL(finalUrl).origin
+            },
+            responseType: "arraybuffer",            
+            onload: (res) => {
+                const status = res.status;
+                let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
+
+                // 1. HTTP 오류 체크
+                if (status === 0) {
+                    const sameDomain = location.hostname === new URL(finalUrl).hostname;
+                    if (sameDomain) {
+                        console.warn(`[VideoCode] status=0 (같은 도메인) → 네트워크 문제, 재시도 가능: ${finalUrl}`);
+                        resolve({ exists: false, retry: true, reason: 'network_error' });
+                    } else {
+                        console.warn(`[VideoCode] status=0 (외부 도메인) → CORS 가능성, 재시도 허용: ${finalUrl}`);
+                        resolve({ exists: false, retry: true, reason: 'cors_possible' });
+                    }
+                }
+                else if (status >= 200 && status < 300) {
+                    console.log(`[VideoCode] 이미지 존재 확인됨 (HTTP ${status}): ${finalUrl}`);
+                    const bytes = new Uint8Array(res.response);
+
+                    // 2. 포맷 판별 및 해상도 추출
+                    // PNG (89 50 4E 47 ...)
+                    if (bytes[0] === 0x89 && bytes[1] === 0x50) {
+                        result.type = "PNG";
+                        result.width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+                        result.height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+                    }
+                    // GIF (47 49 46 38 ...)
+                    else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+                        result.type = "GIF";
+                        result.width = bytes[6] | (bytes[7] << 8); // Little-endian
+                        result.height = bytes[8] | (bytes[9] << 8);
+                    }
+                    // JPEG (FF D8 ...)
+                    else if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
+                        result.type = "JPEG";
+                        let i = 2;
+                        while (i < bytes.length - 8) {
+                            const marker = (bytes[i] << 8) | bytes[i + 1];
+                            const len = (bytes[i + 2] << 8) | bytes[i + 3];
+                            // SOF 마커 확인 (0xFFC0 ~ 0xFFCF 중 일부 제외)
+                            if (marker >= 0xFFC0 && marker <= 0xFFCF && ![0xFFC4, 0xFFC8, 0xFFCC].includes(marker)) {
+                                result.height = (bytes[i + 5] << 8) | bytes[i + 6];
+                                result.width = (bytes[i + 7] << 8) | bytes[i + 8];
+                                break;
+                            }
+                            i += len + 2;
+                        }
+                    }
+                    // WebP (52 49 46 46 ... 57 45 42 50)
+                    else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+                        result.type = "WebP";
+                        // WebP는 내부 청크(VP8/VP8L/VP8X)에 따라 위치가 달라 더 복잡하지만,
+                        // 간단하게 24-30바이트 사이에서 기초 해상도를 읽을 수 있습니다.
+                        if (bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38) {
+                            result.width = (bytes[26] | (bytes[27] << 8)) & 0x3FFF;
+                            result.height = (bytes[28] | (bytes[29] << 8)) & 0x3FFF;
+                        }
+                    }
+
+                    if (!result.width) result.errorReason = "해상도 정보 추출 불가";
+                    resolve({ exists: true, result });
+                }
+                else if (status >= 300 && status < 400) {
+                    console.warn(`[VideoCode] 리다이렉트 응답 (HTTP ${status}): ${finalUrl}`);
+                    // GM_xmlhttpRequest는 리다이렉트를 따라가므로 이 경우는 거의 없음
+                    resolve({ exists: false, reason: 'redirect' });
+                }
+                else if (status === 403) {
+                    console.warn(`[VideoCode] 국가제한 (HTTP ${status}): ${finalUrl}`);
+                    resolve({ exists: false, reason: 'Region restrictions' });
+                }
+                else if (status >= 400 && status < 500) {
+                    console.warn(`[VideoCode] 클라이언트 오류 (HTTP ${status}) → 이미지 없음: ${finalUrl}`);
+                    resolve({ exists: false, reason: 'client_error' });
+                }
+                else if (status >= 500) {
+                    console.warn(`[VideoCode] 서버 오류 (HTTP ${status}) → 재시도 가능: ${finalUrl}`);
+                    resolve({ exists: false, reason: 'server_error' });
+                }
+            },
+            onerror: () => resolve({ width: 0, height: 0, status: 0, errorReason: "네트워크 오류" }),
+            ontimeout: () => resolve({ width: 0, height: 0, status: 0, errorReason: "시간 초과" })
+        });
+    });
+}
+
 function checkImageExistence(link) {
     return new Promise((resolve) => {
         GM_xmlhttpRequest({
             method: 'HEAD',
-            url: link,
-            timeout: 5000,
+            url: link,            
             onload: function (response) {
                 const status = response.status;
                 if (status === 200) {
