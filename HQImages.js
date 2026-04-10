@@ -202,7 +202,7 @@ function getMergedRules() {
 }
 
 async function generateUrlCandidates(code, imageSrc = '') {
-    const codePattern = /(\d{0,2}[A-Z]{1,6}\d{0,2})-?(\d{3})([a-z]*)/i;
+    const codePattern = /(\d{0,2}[a-zA-Z]{1,6}\d{0,2})-?(\d{3})([a-z]*)/i;
     const match = code.match(codePattern);
     if (!match) return [];
 
