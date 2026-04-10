@@ -6,7 +6,7 @@ const BASE_URLS = {
     "DMM_MONO": "https://pics.dmm.co.jp/mono/movie/adult",                 // raw
 };
 
-const DB_PREFIX_RULES = {    
+const DB_PREFIX_RULES = {
     "ABF": ["FANZA_MONO", "118"],
 
     // S1 NO.1 STYLE
@@ -133,8 +133,8 @@ const DB_PREFIX_RULES = {
     "WO": ["FANZA_DIGITAL", "1"],
     "3DSVR": ["FANZA_DIGITAL", "1"],
     "AEGE": ["FANZA_DIGITAL", "1"],
-    "AKDL": ["FANZA_DIGITAL", "1"],    
-    
+    "AKDL": ["FANZA_DIGITAL", "1"],
+
     // Serebu No Tomo    
     "CEAD": ["FANZA_DIGITAL", ""],
     "CEMD": ["FANZA_DIGITAL", ""],
@@ -202,7 +202,7 @@ function getMergedRules() {
 }
 
 async function generateUrlCandidates(code, imageSrc = '') {
-    const codePattern = /([A-Z]{2,6})-?(\d+)([a-z]*)?/i;
+    const codePattern = /(\d{0,2}[A-Z]{1,6}\d{0,2})-?(\d{3})([a-z]*)/i;
     const match = code.match(codePattern);
     if (!match) return [];
 
@@ -248,14 +248,16 @@ async function generateUrlCandidates(code, imageSrc = '') {
 
     // --- 3. DMM 이미지 경로 기반 후보 생성 ---
     if (imageSrc && imageSrc.includes('dmm')) {
-        const fileNamePart = imageSrc.split('/').pop().replace(/\..*$/, '').replace(/p[ls]$|jp$/, '');
-        const flexRegex = new RegExp(`(.*?)${prefix}(\\d+)`, 'i');
-        const fileMatch = fileNamePart.match(flexRegex);
+
+        const pathSegments = imageSrc.split('/');
+        const contentId = pathSegments[pathSegments.length - 2];
+        const flexRegex = new RegExp(`(.*)${prefix}(\\d+)`, 'i');
+        const fileMatch = contentId.match(flexRegex);
 
         if (fileMatch) {
             const extraPrefix = fileMatch[1];
             const rawNumStr = fileMatch[2];
-            const zero5 = pureNum.padStart(5, '0');
+            const zero5 = pureNum.padStart(5, '0');            
 
             // 1. DIGITAL 시도 (5자리)
             const digitalFName = `${extraPrefix}${prefix.toLowerCase()}${zero5}${extraSuffix}`;
@@ -265,18 +267,14 @@ async function generateUrlCandidates(code, imageSrc = '') {
                 metaData[digitalUrl] = ["FANZA_DIGITAL", extraPrefix];
             }
 
-            // 2. MONO 시도 조건 체크
-            const isHPrefix = extraPrefix.startsWith('h_');
-            const is5DigitStartingWithZero = (rawNumStr.length === 5 && rawNumStr.startsWith('0'));
-
-            if (!isHPrefix && !is5DigitStartingWithZero) {
-                const monoFName = `${extraPrefix}${prefix.toLowerCase()}${rawNumStr}${extraSuffix}`;
-                const monoUrl = `${BASE_URLS["FANZA_MONO"]}/${monoFName}/${monoFName}pl.jpg`;
-                if (!metaData[monoUrl]) {
-                    candidates.push(monoUrl);
-                    metaData[monoUrl] = ["FANZA_MONO", extraPrefix];
-                }
+            // 2. MONO 시도
+            const monoFName = `${extraPrefix}${prefix.toLowerCase()}${rawNumStr}${extraSuffix}`;
+            const monoUrl = `${BASE_URLS["FANZA_MONO"]}/${monoFName}/${monoFName}pl.jpg`;
+            if (!metaData[monoUrl]) {
+                candidates.push(monoUrl);
+                metaData[monoUrl] = ["FANZA_MONO", extraPrefix];
             }
+
         }
     }
 
