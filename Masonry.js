@@ -137,7 +137,7 @@ function applyAspectRatio(img) {
 async function smartImageLoader(wrapper, loaderEl, {
     concurrency = 6,
     preloadMargin = "1500px",
-    timeout = 120000
+    timeout = 360000
 } = {}) {
 
     const imgs = [...wrapper.querySelectorAll("img")];
