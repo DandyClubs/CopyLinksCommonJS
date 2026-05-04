@@ -199,7 +199,7 @@ async function smartImageLoader(wrapper, loaderEl, {
             }
 
             // 일부 브라우저에서 필요
-            img.src = img.currentSrc || img.src;
+            //img.src = img.currentSrc || img.src;
         }
     };
 
