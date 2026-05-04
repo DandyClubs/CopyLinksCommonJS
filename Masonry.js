@@ -144,12 +144,6 @@ async function smartImageLoader(wrapper, loaderEl, {
     const total = imgs.length;
     if (!total) return;
 
-    // 🔥 설정 (성능 핵심)
-    imgs.forEach(img => {
-        img.decoding = "async";   // ❗ sync 금지
-        // lazy는 유지 (중요)
-    });
-
     const circle = loaderEl?.querySelector(".progress-circle");
 
     let loadedCount = 0;
