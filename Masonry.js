@@ -183,9 +183,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     });
 
     
-    await waitAll();
-
-    observer.disconnect();
+    await waitAll();    
 }
 
 function createSectionMasonry(container) {
