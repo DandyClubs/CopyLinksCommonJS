@@ -136,8 +136,7 @@ function applyAspectRatio(img) {
 
 async function smartImageLoader(wrapper, loaderEl, {
     concurrency = 3,
-    preloadMargin = "1500px",
-    timeout = 60000
+    preloadMargin = "1500px",    
 } = {}) {
 
     const imgs = [...wrapper.querySelectorAll("img")];
@@ -158,8 +157,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     // ✅ 스크롤 기반 트리거
     const observer = new IntersectionObserver((entries) => {
         for (const entry of entries) {
-            if (!entry.isIntersecting) continue;
-
+            
             const img = entry.target;
             if (img.complete && img.naturalWidth > 0) {
                 updateProgress();
@@ -185,12 +183,8 @@ async function smartImageLoader(wrapper, loaderEl, {
         }, 100);
     });
 
-    // 타임아웃 보호
-    const timeoutPromise = new Promise(resolve =>
-        setTimeout(resolve, timeout)
-    );
-
-    await Promise.race([waitAll, timeoutPromise]);
+    
+    await Promise.all(waitAll);
 
     observer.disconnect();
 }
