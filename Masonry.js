@@ -157,7 +157,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     // ✅ 스크롤 기반 트리거
     const observer = new IntersectionObserver((entries) => {
         for (const entry of entries) {
-
+            
             const img = entry.target;
             if (img.complete && img.naturalWidth > 0) {
                 updateProgress();
@@ -174,7 +174,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     imgs.forEach(img => observer.observe(img));
 
     // ✅ 완료 대기
-    const waitAll = () => new Promise(resolve => {
+    const waitAll = new Promise(resolve => {
         const check = setInterval(() => {
             if (loadedCount >= total) {
                 clearInterval(check);
@@ -184,7 +184,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     });
 
     
-    await waitAll();
+    await Promise.all([waitAll]);
 
     observer.disconnect();
 }
