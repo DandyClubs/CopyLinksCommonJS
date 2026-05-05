@@ -136,7 +136,7 @@ function applyAspectRatio(img) {
 
 async function smartImageLoader(wrapper, loaderEl, {
     concurrency = 3,
-    preloadMargin = "1500px",    
+    preloadMargin = "1500px",
 } = {}) {
 
     const imgs = [...wrapper.querySelectorAll("img")];
@@ -146,21 +146,33 @@ async function smartImageLoader(wrapper, loaderEl, {
     const circle = loaderEl?.querySelector(".progress-circle");
 
     let loadedCount = 0;
-    let startedCount = imgs.length;        
+    let startedCount = imgs.length;
 
     const updateProgress = () => {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
         if (circle) circle.style.setProperty("--p", percent);
     };
-    
+
     // ✅ 스크롤 기반 트리거
     const observer = new IntersectionObserver((entries, self) => {
-        for (const entry of entries) {            
+        for (const entry of entries) {
             const img = entry.target;
             if (img.complete && img.naturalWidth > 0) {
                 updateProgress();
                 self.unobserve(img);
+            } else {
+                const image = new Image();
+                image.onload = function () {
+                    updateProgress();
+                    self.unobserve(img);
+                };
+                image.onerror = function () {
+                    updateProgress();
+                    self.unobserve(img);
+                };
+                image.src = img.src;
+
             }
         }
     }, {
@@ -175,15 +187,15 @@ async function smartImageLoader(wrapper, loaderEl, {
     // ✅ 완료 대기
     const waitAll = () => new Promise(resolve => {
         const check = setInterval(() => {
-            if (loadedCount === total) {
+            if (loadedCount >= total) {
                 clearInterval(check);
                 resolve();
             }
         }, 100);
     });
 
-    
-    await waitAll();    
+
+    await waitAll();
 }
 
 function createSectionMasonry(container) {
