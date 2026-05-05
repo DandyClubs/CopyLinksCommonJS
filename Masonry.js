@@ -137,7 +137,7 @@ function applyAspectRatio(img) {
 async function smartImageLoader(wrapper, loaderEl, {
     concurrency = 3,
     preloadMargin = "1500px",
-    timeout = 360000
+    timeout = 60000
 } = {}) {
 
     const imgs = [...wrapper.querySelectorAll("img")];
@@ -147,74 +147,24 @@ async function smartImageLoader(wrapper, loaderEl, {
     const circle = loaderEl?.querySelector(".progress-circle");
 
     let loadedCount = 0;
-    let startedCount = 0;
-    let queue = [];
-    let active = 0;
+    let startedCount = imgs.length;        
 
     const updateProgress = () => {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
         if (circle) circle.style.setProperty("--p", percent);
     };
-
-    // ✅ 큐 처리
-    const runQueue = () => {
-        while (active < concurrency && queue.length) {
-            const img = queue.shift();
-            active++;
-
-            const done = () => {
-                active--;
-                updateProgress();
-                runQueue();
-            };
-
-            // 이미 완료된 이미지
-            if (img.complete && img.naturalWidth > 0) {
-                done();
-                continue;
-            }
-
-            const onLoad = () => {
-                cleanup();
-                done();
-            };
-
-            const onError = () => {
-                cleanup();
-                done(); // ❗ 실패도 진행
-            };
-
-            const cleanup = () => {
-                img.removeEventListener("load", onLoad);
-                img.removeEventListener("error", onError);
-            };
-
-            img.addEventListener("load", onLoad, { once: true });
-            img.addEventListener("error", onError, { once: true });
-
-            // 🔥 preload 트리거
-            if (img.loading === "lazy") {
-                img.loading = "eager";
-            }
-
-            // 일부 브라우저에서 필요
-            //img.src = img.currentSrc || img.src;
-        }
-    };
-
+    
     // ✅ 스크롤 기반 트리거
     const observer = new IntersectionObserver((entries) => {
         for (const entry of entries) {
             if (!entry.isIntersecting) continue;
 
             const img = entry.target;
-            observer.unobserve(img);
-
-            queue.push(img);
-            startedCount++;
-
-            runQueue();
+            if (img.complete && img.naturalWidth > 0) {
+                updateProgress();
+                observer.unobserve(img);
+            }
         }
     }, {
         root: null,
