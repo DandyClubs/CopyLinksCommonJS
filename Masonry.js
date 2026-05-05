@@ -174,7 +174,7 @@ async function smartImageLoader(wrapper, loaderEl, {
     imgs.forEach(img => observer.observe(img));
 
     // ✅ 완료 대기
-    const waitAll = new Promise(resolve => {
+    const waitAll = () => new Promise(resolve => {
         const check = setInterval(() => {
             if (loadedCount >= total) {
                 clearInterval(check);
