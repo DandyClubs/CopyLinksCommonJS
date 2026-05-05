@@ -160,7 +160,7 @@ async function smartImageLoader(wrapper, loaderEl, {
             const img = entry.target;
             if (img.complete && img.naturalWidth > 0) {
                 updateProgress();
-                slef.unobserve(img);
+                self.unobserve(img);
             }
         }
     }, {
