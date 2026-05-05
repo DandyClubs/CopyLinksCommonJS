@@ -155,13 +155,12 @@ async function smartImageLoader(wrapper, loaderEl, {
     };
     
     // ✅ 스크롤 기반 트리거
-    const observer = new IntersectionObserver((entries) => {
-        for (const entry of entries) {
-            
+    const observer = new IntersectionObserver((entries, self) => {
+        for (const entry of entries) {            
             const img = entry.target;
             if (img.complete && img.naturalWidth > 0) {
                 updateProgress();
-                observer.unobserve(img);
+                slef.unobserve(img);
             }
         }
     }, {
