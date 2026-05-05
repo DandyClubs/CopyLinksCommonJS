@@ -134,8 +134,7 @@ function applyAspectRatio(img) {
     }
 }
 
-async function smartImageLoader(wrapper, loaderEl, {
-    concurrency = 3,
+async function smartImageLoader(wrapper, loaderEl, {    
     preloadMargin = "1500px",
 } = {}) {
 
