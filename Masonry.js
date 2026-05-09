@@ -148,57 +148,25 @@ async function smartImageLoader(wrapper, loaderEl, { preloadMargin = "1500px" } 
         if (circle) circle.style.setProperty("--p", percent);
     };
 
-    // 이미지 하나하나의 완료 상태를 추적하는 함수
-    const loadImage = (img) => {
-        return new Promise((resolve) => {
-            if (img.complete && img.naturalWidth > 0) {
+    const loadPromises = imgs.map(img => {
+        return new Promise(resolve => {
+            if (img.complete){
                 updateProgress();
                 resolve();
-                return;
             }
-
-            const onDone = () => {
-                img.removeEventListener('load', onDone);
-                img.removeEventListener('error', onDone);
+            img.onload = function () {
                 updateProgress();
                 resolve();
-            };
-
-            img.addEventListener('load', onDone);
-            img.addEventListener('error', onDone);
-
-            // 만약 lazy loading(data-src 등)을 사용 중이라면 여기서 src를 할당
-            // if (img.dataset.src) img.src = img.dataset.src;
+            }            
+            img.onerror = function () {
+                updateProgress();
+                resolve();
+            }            
         });
-    };
-
-    // IntersectionObserver 설정
-    const loadPromises = [];
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                // 관찰 중단
-                observer.unobserve(img);
-                // 해당 이미지 로드 대기열 추가
-                loadPromises.push(loadImage(img));
-            }
-        });
-    }, {
-        rootMargin: `0px 0px ${preloadMargin} 0px`
     });
 
-    imgs.forEach(img => observer.observe(img));
+    await Promise.allSettled(loadPromises);
 
-    // ✅ 핵심: 모든 이미지가 관찰되고 로드될 때까지 대기
-    // 단순히 로딩만 기다리는 것이 아니라, 관찰 대상이 모두 로드될 때까지 루프
-    while (loadedCount < total) {
-        await new Promise(res => setTimeout(res, 100));
-        // 사실상 모든 이미지가 뷰포트에 들어오거나 margin 안에 들어와야 완료됨
-        if (loadedCount >= total) break;
-    }
-
-    observer.disconnect();
 }
 
 function createSectionMasonry(container) {
