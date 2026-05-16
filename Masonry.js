@@ -393,7 +393,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         let groupBaseWidthSum = 0;
 
         // ---------------------------------------------------
-        // 그룹핑
+        // 그룹 생성
         // ---------------------------------------------------
 
         while (i < items.length) {
@@ -404,8 +404,11 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
             const ratio =
                 Math.round(getAspectRatio(item, img) * 1000) / 1000;
 
-            const originalNaturalW = img.naturalWidth;
-            const originalNaturalH = img.naturalHeight;
+            const originalNaturalW =
+                img.naturalWidth;
+
+            const originalNaturalH =
+                img.naturalHeight;
 
             const avH =
                 heightMap.get(originalNaturalH);
@@ -413,21 +416,24 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
             let tempH = avH;
             let tempW = tempH * ratio;
 
-            // max width 제한
+            // 최대 너비 제한
             if (tempW > maxWidth) {
                 tempW = maxWidth;
                 tempH = tempW / ratio;
             }
 
-            // max height 제한
+            // 최대 높이 제한
             if (tempH > maxHeight) {
                 tempH = maxHeight;
                 tempW = tempH * ratio;
             }
 
-            // even pixel 정렬
-            tempW = Math.round(tempW / 2) * 2;
-            tempH = Math.round(tempH / 2) * 2;
+            // even pixel
+            tempW =
+                Math.round(tempW / 2) * 2;
+
+            tempH =
+                Math.round(tempH / 2) * 2;
 
             const nextWidth =
                 groupBaseWidthSum +
@@ -468,7 +474,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         }
 
         // ---------------------------------------------------
-        // Row Width Shrink
+        // Width Shrink
         // ---------------------------------------------------
 
         const totalGaps =
@@ -503,7 +509,6 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
 
                 item.baseW =
                     Math.round(item.baseW - shrink);
-
             });
         }
 
@@ -542,7 +547,8 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
 
             } else {
 
-                finalW = Math.round(item.baseW);
+                finalW =
+                    Math.round(item.baseW);
 
                 if (finalW > maxWidth) {
                     finalW = maxWidth;
@@ -561,8 +567,11 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
                 }
 
                 // even pixel
-                finalW = Math.round(finalW / 2) * 2;
-                finalH = Math.round(finalH / 2) * 2;
+                finalW =
+                    Math.round(finalW / 2) * 2;
+
+                finalH =
+                    Math.round(finalH / 2) * 2;
 
                 const newCache = {
                     keyW: item.origW,
@@ -584,51 +593,81 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         });
 
         // ---------------------------------------------------
-        // Row Height Normalize
+        // Height Cluster Normalize
         // ---------------------------------------------------
 
         const normalizeThreshold = 5;
 
-        const heights =
-            groupResults.map(r => r.usedCache.finalH);
-
-        // 대표 높이 계산
-        const targetHeight =
-            Math.round(
-                heights.reduce((a, b) => a + b, 0) / heights.length
-            );
+        const heightGroups = [];
 
         groupResults.forEach(res => {
 
-            let finalH =
+            const h =
                 res.usedCache.finalH;
 
-            // threshold 이내면 통일
-            if (
-                Math.abs(finalH - targetHeight)
-                <= normalizeThreshold
-            ) {
-                finalH = targetHeight;
+            let found = false;
+
+            for (const group of heightGroups) {
+
+                const avg =
+                    group.reduce(
+                        (s, v) => s + v.usedCache.finalH,
+                        0
+                    ) / group.length;
+
+                // 비슷한 높이 그룹
+                if (Math.abs(h - avg) <= normalizeThreshold) {
+
+                    group.push(res);
+
+                    found = true;
+
+                    break;
+                }
             }
 
-            let finalW =
-                Math.round(finalH * res.item.ratio);
+            if (!found) {
+                heightGroups.push([res]);
+            }
+        });
 
-            // even pixel 강제
-            finalW =
-                Math.round(finalW / 2) * 2;
+        // ---------------------------------------------------
+        // 그룹별 높이 통일
+        // ---------------------------------------------------
 
-            finalH =
-                Math.round(finalH / 2) * 2;
+        heightGroups.forEach(group => {
 
-            // cache 동기화
-            res.usedCache.finalW = finalW;
-            res.usedCache.finalH = finalH;
+            const avgHeight =
+                Math.round(
+                    group.reduce(
+                        (s, v) => s + v.usedCache.finalH,
+                        0
+                    ) / group.length
+                );
 
-            allCalculatedItems.push({
-                element: res.item.element,
-                w: finalW,
-                h: finalH
+            group.forEach(res => {
+
+                let finalH = avgHeight;
+
+                let finalW =
+                    Math.round(finalH * res.item.ratio);
+
+                // even pixel 강제
+                finalW =
+                    Math.round(finalW / 2) * 2;
+
+                finalH =
+                    Math.round(finalH / 2) * 2;
+
+                // cache 동기화
+                res.usedCache.finalW = finalW;
+                res.usedCache.finalH = finalH;
+
+                allCalculatedItems.push({
+                    element: res.item.element,
+                    w: finalW,
+                    h: finalH
+                });
             });
         });
     }
@@ -647,7 +686,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
     });
 
     // ---------------------------------------------------
-    // Container Height
+    // 전체 높이 갱신
     // ---------------------------------------------------
 
     const totalHeight =
