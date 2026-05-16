@@ -593,35 +593,24 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         });
 
         // ---------------------------------------------------
-        // Height Cluster Normalize
+        // Height Cluster Normalize (최빈값 및 빈도수 기준 그룹화로 수정)
         // ---------------------------------------------------
 
         const normalizeThreshold = 5;
-
         const heightGroups = [];
 
         groupResults.forEach(res => {
-
-            const h =
-                res.usedCache.finalH;
-
+            const h = res.usedCache.finalH;
             let found = false;
 
             for (const group of heightGroups) {
+                // 그룹의 대표값(여기서는 첫 번째로 들어온 높이)을 기준으로 비교하거나
+                // 그룹 내 값들의 현재 평균값과 비교합니다.
+                const avg = group.reduce((s, v) => s + v.usedCache.finalH, 0) / group.length;
 
-                const avg =
-                    group.reduce(
-                        (s, v) => s + v.usedCache.finalH,
-                        0
-                    ) / group.length;
-
-                // 비슷한 높이 그룹
                 if (Math.abs(h - avg) <= normalizeThreshold) {
-
                     group.push(res);
-
                     found = true;
-
                     break;
                 }
             }
@@ -632,32 +621,38 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
         });
 
         // ---------------------------------------------------
-        // 그룹별 높이 통일
+        // 그룹별 높이 통일 (가장 많이 등장하는 높이(최빈값)로 통일)
         // ---------------------------------------------------
 
         heightGroups.forEach(group => {
-
-            const avgHeight =
-                Math.round(
-                    group.reduce(
-                        (s, v) => s + v.usedCache.finalH,
-                        0
-                    ) / group.length
-                );
-
+            // 1. 그룹 내에서 각 높이가 몇 번 등장했는지 카운팅 (빈도수 맵 생성)
+            const frequencyMap = new Map();
             group.forEach(res => {
+                const h = res.usedCache.finalH;
+                frequencyMap.set(h, (frequencyMap.get(h) || 0) + 1);
+            });
 
-                let finalH = avgHeight;
+            // 2. 가장 많이 등장한 높이(최빈값) 찾기
+            let targetHeight = group[0].usedCache.finalH; // 기본값 선언
+            let maxCount = 0;
 
-                let finalW =
-                    Math.round(finalH * res.item.ratio);
+            frequencyMap.forEach((count, height) => {
+                if (count > maxCount) {
+                    maxCount = count;
+                    targetHeight = height;
+                }
+                // 만약 빈도수가 같다면(예: 100px 2개, 105px 2개) 원래 먼저 선점된 값을 유지하거나
+                // 필요에 따라 더 작은 값/큰 값을 선택하도록 예외 처리가 가능합니다.
+            });
+
+            // 3. 결정된 targetHeight(최빈값)로 그룹 내 모든 아이템 높이 통일
+            group.forEach(res => {
+                let finalH = targetHeight;
+                let finalW = Math.round(finalH * res.item.ratio);
 
                 // even pixel 강제
-                finalW =
-                    Math.round(finalW / 2) * 2;
-
-                finalH =
-                    Math.round(finalH / 2) * 2;
+                finalW = Math.round(finalW / 2) * 2;
+                finalH = Math.round(finalH / 2) * 2;
 
                 // cache 동기화
                 res.usedCache.finalW = finalW;
