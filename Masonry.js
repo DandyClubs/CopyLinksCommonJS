@@ -61,6 +61,8 @@ class SkylineLayout {
 
         if (targetIdx !== -1) {
             // DOM 반영
+            finalW = Math.round(finalW / 2) * 2;
+            finalH = Math.round(finalH / 2) * 2;
             item.w = finalW;
             item.element.style.position = 'absolute';
             item.element.style.width = `${finalW}px`;
@@ -354,88 +356,133 @@ function buildAverageHeights(data, threshold = 15) {
 }
 
 function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
-    const items = Array.from(container.querySelectorAll('.image-masonry-item'));
-    const imageData = collectImageData(items);
-    const heightProfile = buildAverageHeights(imageData, 15);
-    const heightMap = new Map(heightProfile.map(d => [d.originalHeight, d.averageHeight]));
+
+    const items =
+        Array.from(container.querySelectorAll('.image-masonry-item'));
 
     if (!items.length) return;
+
+    const imageData =
+        collectImageData(items);
+
+    const heightProfile =
+        buildAverageHeights(imageData, 15);
+
+    const heightMap =
+        new Map(heightProfile.map(d => [d.originalHeight, d.averageHeight]));
+
     const gap = 4;
-    const containerWidth = Math.floor(container.getBoundingClientRect().width);
-    const maxWidth = Math.floor((containerWidth - gap) / columnCount);
+
+    const containerWidth =
+        Math.floor(container.getBoundingClientRect().width);
+
+    const maxWidth =
+        Math.floor((containerWidth - gap) / columnCount);
+
     const shrinkThreshold = 0.85;
-    const allCalculatedItems = []; // 모든 이미지의 최종 크기를 담을 배열
 
+    const allCalculatedItems = [];
 
-    let scaleMap = []; // 유사 이미지의 최종 크기 정보를 저장
+    let scaleMap = [];
 
     let i = 0;
+
     while (i < items.length) {
+
         let group = [];
         let groupBaseWidthSum = 0;
 
-        // 1. 그룹핑 로직
+        // ---------------------------------------------------
+        // 그룹핑
+        // ---------------------------------------------------
+
         while (i < items.length) {
+
             const item = items[i];
             const img = item.querySelector('img');
-            const ratio = Math.round(getAspectRatio(item, img) * 1000) / 1000;;
+
+            const ratio =
+                Math.round(getAspectRatio(item, img) * 1000) / 1000;
+
             const originalNaturalW = img.naturalWidth;
             const originalNaturalH = img.naturalHeight;
 
-            const avH = heightMap.get(originalNaturalH);
+            const avH =
+                heightMap.get(originalNaturalH);
 
             let tempH = avH;
             let tempW = tempH * ratio;
 
+            // max width 제한
             if (tempW > maxWidth) {
                 tempW = maxWidth;
                 tempH = tempW / ratio;
             }
+
+            // max height 제한
             if (tempH > maxHeight) {
                 tempH = maxHeight;
                 tempW = tempH * ratio;
             }
 
-
+            // even pixel 정렬
             tempW = Math.round(tempW / 2) * 2;
-            tempH = Math.round(tempW / ratio);
+            tempH = Math.round(tempH / 2) * 2;
 
-            const nextWidth = groupBaseWidthSum + tempW + (group.length > 0 ? gap : 0);
+            const nextWidth =
+                groupBaseWidthSum +
+                tempW +
+                (group.length > 0 ? gap : 0);
+
             if (nextWidth > containerWidth) {
+
                 if (nextWidth * shrinkThreshold <= containerWidth) {
+
                     group.push({
                         element: item,
                         ratio,
                         baseW: tempW,
                         baseH: tempH,
-                        origW: originalNaturalW, // 캐시용 키값
-                        origH: originalNaturalH // 캐시용 키값
+                        origW: originalNaturalW,
+                        origH: originalNaturalH
                     });
+
                     i++;
                 }
+
                 break;
             }
+
             group.push({
                 element: item,
                 ratio,
                 baseW: tempW,
                 baseH: tempH,
-                origW: originalNaturalW, // 캐시용 키값
-                origH: originalNaturalH // 캐시용 키값
+                origW: originalNaturalW,
+                origH: originalNaturalH
             });
+
             groupBaseWidthSum = nextWidth;
+
             i++;
         }
 
-        // 2. Scale 계산
-        const totalGaps = (group.length - 1) * gap;
-        const availableW = containerWidth - totalGaps;
-        const currentWSum = group.reduce((sum, item) => sum + item.baseW, 0);
+        // ---------------------------------------------------
+        // Row Width Shrink
+        // ---------------------------------------------------
+
+        const totalGaps =
+            (group.length - 1) * gap;
+
+        const availableW =
+            containerWidth - totalGaps;
+
+        const currentWSum =
+            group.reduce((sum, item) => sum + item.baseW, 0);
 
         let overflow =
             currentWSum - availableW;
 
-        // 작은 이미지는 shrink 하지 않음
         const minShrinkWidth = 200;
 
         if (overflow > 0) {
@@ -455,81 +502,159 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
                     overflow * ratio;
 
                 item.baseW =
-                    Math.floor(item.baseW - shrink);
+                    Math.round(item.baseW - shrink);
 
             });
-
         }
-        //let rowScale = Math.min(Number((availableW / currentWSum).toFixed(2)), 1);
-        // 3. 배치 및 캐시 적용
-        // 그룹 내 동일 높이 그룹별로 '최소 높이'를 찾기 위한 맵
-        const minHeightMap = new Map();
-        // 가계산된 결과를 잠시 담아둘 배열
+
+        // ---------------------------------------------------
+        // Cache + Size 계산
+        // ---------------------------------------------------
+
         const groupResults = [];
+
         group.forEach(item => {
 
-            let usedCache = null; // 어떤 캐시 객체를 사용했는지 저장
-            const cached = scaleMap.find(s =>
-                (Math.abs(s.keyH - item.origH) <= 15 || Math.abs(s.keyW - item.origW) <= 15) &&
-                Math.abs(s.ratio - item.ratio) <= 0.075
-            );
+            let usedCache = null;
 
-            let finalW, finalH;
+            const cached =
+                scaleMap.find(s =>
+                    (
+                        Math.abs(s.keyH - item.origH) <= 15 ||
+                        Math.abs(s.keyW - item.origW) <= 15
+                    ) &&
+                    Math.abs(s.ratio - item.ratio) <= 0.075
+                );
+
+            let finalW;
+            let finalH;
+
+            // -----------------------------------------
+            // 캐시 사용
+            // -----------------------------------------
+
             if (cached) {
+
                 finalW = cached.finalW;
                 finalH = cached.finalH;
+
                 usedCache = cached;
+
             } else {
-                finalW = Math.floor(item.baseW);
-                if (finalW > maxWidth) finalW = maxWidth;
-                finalH = Math.floor(finalW / item.ratio);
-                if (finalH > maxHeight && Math.abs(finalH - maxHeight) <= 10) {
+
+                finalW = Math.round(item.baseW);
+
+                if (finalW > maxWidth) {
+                    finalW = maxWidth;
+                }
+
+                finalH =
+                    Math.round(finalW / item.ratio);
+
+                // maxHeight 근접 보정
+                if (
+                    finalH > maxHeight &&
+                    Math.abs(finalH - maxHeight) <= 10
+                ) {
                     finalH = maxHeight;
                     finalW = Math.round(finalH * item.ratio);
                 }
+
+                // even pixel
+                finalW = Math.round(finalW / 2) * 2;
+                finalH = Math.round(finalH / 2) * 2;
+
                 const newCache = {
                     keyW: item.origW,
                     keyH: item.origH,
                     ratio: item.ratio,
-                    finalW: finalW,
-                    finalH: finalH
+                    finalW,
+                    finalH
                 };
+
                 scaleMap.push(newCache);
-                usedCache = newCache; // 새로 만든 캐시 참조 보관
+
+                usedCache = newCache;
             }
 
-            const hKey = heightMap.get(usedCache.keyH);
-            if (!minHeightMap.has(hKey) || finalH < minHeightMap.get(hKey)) {
-                minHeightMap.set(hKey, finalH);
-            }
-            groupResults.push({ item, usedCache, hKey });
+            groupResults.push({
+                item,
+                usedCache
+            });
         });
 
-        groupResults.forEach(res => {
-            const syncedH = minHeightMap.get(res.hKey);
-            const syncedW = Math.floor(syncedH * res.item.ratio);
+        // ---------------------------------------------------
+        // Row Height Normalize
+        // ---------------------------------------------------
 
-            res.usedCache.finalW = syncedW;
-            res.usedCache.finalH = syncedH;
+        const normalizeThreshold = 5;
+
+        const heights =
+            groupResults.map(r => r.usedCache.finalH);
+
+        // 대표 높이 계산
+        const targetHeight =
+            Math.round(
+                heights.reduce((a, b) => a + b, 0) / heights.length
+            );
+
+        groupResults.forEach(res => {
+
+            let finalH =
+                res.usedCache.finalH;
+
+            // threshold 이내면 통일
+            if (
+                Math.abs(finalH - targetHeight)
+                <= normalizeThreshold
+            ) {
+                finalH = targetHeight;
+            }
+
+            let finalW =
+                Math.round(finalH * res.item.ratio);
+
+            // even pixel 강제
+            finalW =
+                Math.round(finalW / 2) * 2;
+
+            finalH =
+                Math.round(finalH / 2) * 2;
+
+            // cache 동기화
+            res.usedCache.finalW = finalW;
+            res.usedCache.finalH = finalH;
 
             allCalculatedItems.push({
                 element: res.item.element,
-                w: syncedW,
-                h: syncedH
+                w: finalW,
+                h: finalH
             });
         });
     }
-    // 3단계: [핵심] 모든 크기 계산이 끝난 후 최종 배치 (findBestPosition 실행)
-    const layout = new SkylineLayout(containerWidth, gap, 0.95);
+
+    // ---------------------------------------------------
+    // Skyline 배치
+    // ---------------------------------------------------
+
+    const layout =
+        new SkylineLayout(containerWidth, gap, 0.95);
 
     allCalculatedItems.forEach(data => {
-        // 내부적으로 find + resize + updateAndMerge를 모두 수행합니다.        
+
         layout.placeItem(data);
+
     });
 
-    // 2. 전체 높이 갱신 (가장 높은 skyline 위치 기준)
-    const totalHeight = layout.getMaxHeight();
-    container.style.height = `${totalHeight}px`;
+    // ---------------------------------------------------
+    // Container Height
+    // ---------------------------------------------------
+
+    const totalHeight =
+        layout.getMaxHeight();
+
+    container.style.height =
+        `${totalHeight}px`;
 }
 
 function getAspectRatio(item, img) {
