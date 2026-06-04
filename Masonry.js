@@ -171,7 +171,61 @@ async function smartImageLoader(wrapper, loaderEl, { preloadMargin = "1500px" } 
 
 }
 
+
+
+// [핵심] 혼합 노드를 이미지 경계로 쪼개주는 재귀 함수
+    function splitNodeWithImages(node) {
+        if (node.nodeType === Node.TEXT_NODE || node.tagName === "IMG") {
+            return [node];
+        }
+
+        if (node.nodeType === Node.ELEMENT_NODE && node.querySelector("img")) {
+            const result = [];
+            let currentClone = node.cloneNode(false); // <strong> 태그 틀만 복사
+            const childNodes = [...node.childNodes];
+
+            childNodes.forEach(child => {
+                const processedChildren = splitNodeWithImages(child);
+                processedChildren.forEach(pChild => {
+                    if (pChild.tagName === "IMG") {
+                        // 이미지를 만났을 때, 이전에 쌓인 텍스트가 '실제 글자'를 가지고 있다면 방출
+                        if (currentClone.childNodes.length > 0) {
+                            if (currentClone.textContent.trim() !== "") {
+                                result.push(currentClone);
+                            }
+                            currentClone = node.cloneNode(false); // 새 빈 틀 준비
+                        }
+                        result.push(pChild);
+                    } else {
+                        // 일반 텍스트나 서식은 strong 틀 내부에 계속 축적
+                        currentClone.appendChild(pChild);
+                    }
+                });
+            });
+
+            // 루프가 끝난 후 남은 실제 텍스트가 있다면 최종 방출
+            if (currentClone.childNodes.length > 0 && currentClone.textContent.trim() !== "") {
+                result.push(currentClone);
+            }
+            return result;
+        }
+
+        return [node];
+    }    
+
 function createSectionMasonry(container) {
+    // 1단계: container 자식 중 strong 내부 이미지 구조들 평탄화 분할 수행
+    const initialNodes = [...container.childNodes];
+    initialNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== "IMG" && node.querySelector("img")) {
+            const splitNodes = splitNodeWithImages(node);
+            splitNodes.forEach(sNode => {
+                container.insertBefore(sNode, node); // 쪼개진 노드들을 제자리에 삽입
+            });
+            node.remove(); // 기존의 통짜 strong 태그 제거
+        }
+    });
+    
     const nodes = [...container.childNodes];
     const wrappers = [];
     let currentImageGroup = [];
