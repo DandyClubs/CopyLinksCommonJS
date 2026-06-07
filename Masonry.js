@@ -144,31 +144,63 @@ async function smartImageLoader(wrapper, loaderEl) {
     const circle = loaderEl?.querySelector(".progress-circle");
     let loadedCount = 0;
 
+    // 1. UI 업데이트를 브라우저 렌더링 프레임(60fps)에 맞춰 최적화
     const updateProgress = () => {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
-        if (circle) circle.style.setProperty("--p", percent);
+        if (circle) {
+            requestAnimationFrame(() => {
+                circle.style.setProperty("--p", percent);
+            });
+        }
     };
 
     const loadPromises = imgs.map(img => {
+        // src가 없거나 빈 값인 경우 예외 처리
+        if (!img.src) {
+            updateProgress();
+            return Promise.resolve();
+        }
+
+        // 2. 현대적인 브라우저를 위한 img.decode() 활용 (백그라운드 디코딩)
+        if (typeof img.decode === 'function') {
+            return img.decode()
+                .then(() => {
+                    updateProgress();
+                })
+                .catch(() => {
+                    // 이미지 로드 실패나 에러가 나도 진행률은 올려서 멈추지 않게 처리
+                    updateProgress();
+                });
+        }
+
+        // 3. img.decode()를 지원하지 않는 구형 브라우저용 Fallback (안전장치)
         return new Promise(resolve => {
             if (img.complete) {
                 updateProgress();
                 resolve();
-            }
-            img.onload = function () {
-                updateProgress();
-                resolve();
-            }
-            img.onerror = function () {
-                updateProgress();
-                resolve();
+            } else {
+                // onload와 onerror를 한 번만 실행되도록 안전하게 관리
+                const onImageLoad = () => {
+                    img.removeEventListener('load', onImageLoad);
+                    img.removeEventListener('error', onImageError);
+                    updateProgress();
+                    resolve();
+                };
+                const onImageError = () => {
+                    img.removeEventListener('load', onImageLoad);
+                    img.removeEventListener('error', onImageError);
+                    updateProgress();
+                    resolve();
+                };
+                img.addEventListener('load', onImageLoad);
+                img.addEventListener('error', onImageError);
             }
         });
     });
 
+    // 모든 이미지의 디코딩/로딩이 끝날 때까지 대기
     await Promise.allSettled(loadPromises);
-
 }
 
 
