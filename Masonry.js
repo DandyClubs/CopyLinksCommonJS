@@ -136,7 +136,7 @@ function applyAspectRatio(img) {
     }
 }
 
-async function smartImageLoader(wrapper, loaderEl, { preloadMargin = "1500px" } = {}) {
+async function smartImageLoader(wrapper, loaderEl) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
     if (!total) return;
