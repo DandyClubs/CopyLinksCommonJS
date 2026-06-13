@@ -162,7 +162,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             return Promise.resolve();
         }
 
-        img.setAttribute('loading', 'eager');
+        img.removeAttribute('loading');
 
         // 2. 현대적인 브라우저를 위한 img.decode() 활용 (백그라운드 디코딩)
         if (typeof img.decode === 'function') {
@@ -282,7 +282,7 @@ function createSectionMasonry(container) {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
             const cleanImg = document.createElement("img");
-            cleanImg.setAttribute('loading', 'lazy');            
+            cleanImg.setAttribute('loading', 'lazy');
 
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
