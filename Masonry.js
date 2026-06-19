@@ -444,7 +444,7 @@ function buildAverageHeights(data, threshold = 15) {
     return finalMapping;
 }
 
-function optimizeSingleLayout(container, columnCount = 3, maxHeight = 500) {
+function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
 
     const items =
         Array.from(container.querySelectorAll('.image-masonry-item'));
