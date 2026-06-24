@@ -8,7 +8,7 @@ const resolutionMap = {
     'other': []
 };
 
-function GetFileName(url) {    
+function GetFileName(url) {
     let name = decodeURIComponent(url).split('/').pop()?.replace('.html', '');
     return name.substring(0, name.lastIndexOf('.'));
 }
@@ -64,31 +64,49 @@ const DOMAIN = extractRootDomain(window.location.href);
 const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.|clicknupload\.click|mega\.nz\/file|drive\.google\.com\/file\/|ddownload\.com|krakenfiles\.com|send\.now|rg\.to|rapidgator\.net/;
 const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud|online)\\/(free|users\\/)|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + DOMAIN + ').*$');
 
-// ✅ 해상도 블록 생성
+// ✅ 해상도 블록 생성 (수정본)
 function groupResolution(div, siteRule = {}) {
     return new Promise((resolve) => {
-        const cloneArea = div.cloneNode(true)
+        const cloneArea = div.cloneNode(true);
+        // 링크 텍스트가 해상도 매칭에 방해되지 않도록 비움
         Array.from(cloneArea.querySelectorAll('a')).forEach(link => link.textContent = '');
 
         let groups = {};
         const childrenNodes = Array.from(cloneArea.childNodes);
-        let currentRes = null;
+        let currentRes = null; // 현재 매칭 중인 해상도를 기억하는 변수
 
         for (const el of childrenNodes) {
             const text = el?.textContent || '';
-            const res = getStandardResolution(text)
-            if (res && res !== currentRes) {
+            const res = getStandardResolution(text);
+
+            // 1. 새로운 해상도 키워드를 발견하면 기준 해상도(currentRes)를 갱신합니다.
+            // (연속된 동일 해상도가 들어와도 갱신되거나 유지되도록 단순화)
+            if (res) {
                 currentRes = res;
                 if (!groups[currentRes]) groups[currentRes] = [];
+            }
 
-                if (el.nodeType === Node.ELEMENT_NODE) {
-                    const linksInNode = Array.from(el.querySelectorAll('a'))
-                        .filter(link => filterLinksRegex.test(link.href) && !SKIPFILTER.test(link.href));
-                    if (linksInNode.length > 0) {
-                        linksInNode.forEach(a => {
+            // 2. 현재 기준 해상도가 잡혀있는 상태라면, 엘리먼트 내부에 있는 링크들을 수집하여 누적합니다.
+            if (currentRes && el.nodeType === Node.ELEMENT_NODE) {
+                // 노드 하위에 존재하는 링크 추출
+                const linksInNode = Array.from(el.querySelectorAll('a'))
+                    .filter(link => filterLinksRegex.test(link.href) && !SKIPFILTER.test(link.href));
+
+                // 만약 노드 자체(el)가 <a> 태그인 경우도 처리
+                if (el.tagName === 'A' && filterLinksRegex.test(el.href) && !SKIPFILTER.test(el.href)) {
+                    linksInNode.push(el);
+                }
+
+                if (linksInNode.length > 0) {
+                    linksInNode.forEach(a => {
+                        // 🔍 중복 주소(href) 체크: 이미 같은 링크가 배열에 존재하는지 확인
+                        const isDuplicate = groups[currentRes].some(existingA => existingA.href === a.href);
+
+                        // 중복되지 않은 경우에만 추가
+                        if (!isDuplicate) {
                             groups[currentRes].push(a);
-                        });
-                    }
+                        }
+                    });
                 }
             }
         }
