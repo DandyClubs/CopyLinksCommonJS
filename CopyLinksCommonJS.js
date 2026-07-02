@@ -92,18 +92,11 @@ function compareJapaneseCharacters(sentence1, sentence2) {
     const count2 = countJapaneseCharacters(sentence2);
 
     if (count1 > count2) {
-        return sentence1
+        return sentence1;
     } else if (count2 > count1) {
-        return sentence2
+        return sentence2;
     } else {
-        if (sentence1.length > sentence2.length) {
-            return sentence1
-        }
-        if (sentence1.length > sentence2.length) {
-            return sentence2
-        } else {
-            return sentence2
-        }
+        return null;
     }
 }
 
@@ -203,7 +196,7 @@ function getWordMatchPercentage(sentence1, sentence2) {
  */
 function compareSentencesByWordMatch(sentence1, sentence2) {
     const matchPercentage = getWordMatchPercentage(sentence1, sentence2);
-    
+
     const length1 = sentence1.length;
     const length2 = sentence2.length;
 
@@ -1137,7 +1130,7 @@ function nameCorrection(str, preserveText = '') {
     const words = str.match(/[\p{L}\d'’‘_]+|[^\p{L}\d'’‘\s]+|\s+/gu) || [];
     const firstIdx = words.findIndex(w => /\p{L}/u.test(w));
 
-    
+
     // 특수 문자 뒤 단어 처리를 위한 플래그
     let isAfterSpecialChar = false; // '.' 뒤 (소문자 처리용)
     let isAfterHyphen = false; // '-' 뒤 (대문자 처리용)
@@ -1179,7 +1172,7 @@ function nameCorrection(str, preserveText = '') {
 
         // 수정된 correctWord 함수를 호출합니다.
         return correctWord(word, effectiveIsFirstWord, shouldTreatAsSpecial);
-        
+
 
     }).join('');
 }
