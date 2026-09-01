@@ -118,15 +118,12 @@ function groupResolution(div, siteRule = {}) {
 function extractMetaInfo(div, siteRule = {}) {
     return new Promise((resolve) => {
         const clone = div.cloneNode(true);
-        // <br>, <p>, <div> 태그 뒤/앞에 줄바꿈 문자 추가
-        clone.querySelectorAll('p').forEach(el => {
-            el.append('<br>'); // <p> 뒤에 줄바꿈 추가                
+        clone.querySelectorAll('p').forEach(p => {
+            const br = document.createElement('br');
+            p.appendChild(br); // <p>텍스트</br> 형태가 되어 textContent 추출 시 줄바꿈(\n) 효과가 납니다.
         });
 
-
-        const text = clone.textContent;
-
-        console.log('extractMetaInfo: ', text, clone)
+        
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
