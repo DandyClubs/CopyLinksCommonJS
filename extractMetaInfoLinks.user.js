@@ -122,8 +122,7 @@ function extractMetaInfo(div, siteRule = {}) {
             el.insertAdjacentHTML('afterend', '\n');
         };
 
-        const text = div.textContent;
-        console.log('extractMetaInfo text: ', text, div);
+        const text = div.textContent;        
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
