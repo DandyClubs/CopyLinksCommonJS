@@ -116,14 +116,14 @@ function groupResolution(div, siteRule = {}) {
 
 // ✅ 메타 정보 추출
 function extractMetaInfo(div, siteRule = {}) {
-    return new Promise((resolve) => {
-        const clone = div.cloneNode(true);
-        clone.querySelectorAll('p').forEach(p => {
-            const br = document.createElement('br');
-            p.appendChild(br); // <p>텍스트</br> 형태가 되어 textContent 추출 시 줄바꿈(\n) 효과가 납니다.
-        });
+    return new Promise((resolve) => {        
+        const p = div.querySelectorAll('p');
+        for (const el of p) {
+            el.insertAdjacentHTML('afterend', '\n');
+        };
 
-        
+        const text = div.textContent;
+        console.log('extractMetaInfo text: ', text, div);
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
