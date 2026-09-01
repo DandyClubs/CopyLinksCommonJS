@@ -117,9 +117,15 @@ function groupResolution(div, siteRule = {}) {
 // ✅ 메타 정보 추출
 function extractMetaInfo(div, siteRule = {}) {
     return new Promise((resolve) => {
-        const text = div.textContent;
+        const clone = div.cloneNode(true);
+        // <br>, <p>, <div> 태그 뒤/앞에 줄바꿈 문자 추가
+        clone.querySelectorAll('p').forEach(el => {
+            el.append('<br>'); // <p> 뒤에 줄바꿈 추가                
+        });
+
+        const text = clone.textContent;
         const titleMatch = text.match(siteRule.getTitleRegex);
-        const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n')[0]; // siteRule.firstLine 
+        const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
         const passwordMatch = text.match(siteRule.passwordRegex);
         const password = passwordMatch ? passwordMatch.pop().trim() : null;
