@@ -114,15 +114,36 @@ function groupResolution(div, siteRule = {}) {
     });
 }
 
+
+function ensureNewlines(div) {
+    const clone = div.cloneNode(true);
+
+    // <br>과 <p> 태그 모두 수집
+    const targets = clone.querySelectorAll('br, p');
+
+    for (const el of targets) {
+        // 다음 형제 노드 확인
+        const nextNode = el.nextSibling;
+
+        // 다음 노드가 텍스트 노드이고, 시작 부분에 이미 \n(줄바꿈)이 포함되어 있는지 체크
+        const hasNewlineAlready = nextNode && 
+                                  nextNode.nodeType === Node.TEXT_NODE && 
+                                  /^\s*[\r\n]/.test(nextNode.nodeValue);
+
+        // 이미 줄바꿈이 존재하는 경우가 아니라면 줄바꿈(\n) 강제 삽입
+        if (!hasNewlineAlready) {
+            el.insertAdjacentHTML('afterend', '\n');
+        }
+    }
+
+    return clone.textContent;
+}
+
 // ✅ 메타 정보 추출
 function extractMetaInfo(div, siteRule = {}) {
-    return new Promise((resolve) => {        
-        const p = div.querySelectorAll('p');
-        for (const el of p) {
-            el.insertAdjacentHTML('afterend', '\n');
-        };
+    return new Promise((resolve) => {                
 
-        const text = div.textContent;        
+        const text = ensureNewlines(div);        
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
