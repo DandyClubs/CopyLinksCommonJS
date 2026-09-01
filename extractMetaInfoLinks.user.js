@@ -123,7 +123,10 @@ function extractMetaInfo(div, siteRule = {}) {
             el.append('<br>'); // <p> 뒤에 줄바꿈 추가                
         });
 
+
         const text = clone.textContent;
+
+        console.log('extractMetaInfo: ', text, clone)
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
