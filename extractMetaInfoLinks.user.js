@@ -210,7 +210,8 @@ function extractMetaInfo(div, siteRule = {}) {
     });
 }
 
-// ✅ area 내 그룹 생성
+
+// ✅ area 내 그룹 생성 (텍스트 및 소스코드 기반 breakPoint 대응)
 function createGroupsFromArea(area, siteRule = {}) {
     return new Promise((resolve) => {
         const childrenNodes = Array.from(area.childNodes);
@@ -220,19 +221,28 @@ function createGroupsFromArea(area, siteRule = {}) {
         const separatorText = siteRule.separatorText || [];
         const breakPoint = siteRule.breakPoint || [];
 
+        // 검사 대상 텍스트/HTML을 받아 breakPoint 매칭 여부를 확인하는 헬퍼 함수
+        const checkMatch = (pattern, text, html) => {
+            if (pattern instanceof RegExp) {
+                // 정규식인 경우: 텍스트 또는 HTML 소스코드 중 하나라도 매칭되면 true
+                return pattern.test(text) || pattern.test(html);
+            }
+            // 단순 문자열인 경우: 텍스트 또는 HTML 소스코드에 포함되어 있으면 true
+            return text.includes(pattern) || html.includes(pattern);
+        };
+
         for (const el of childrenNodes) {
-            const text = el?.textContent.trim();
-            const isSeparator = separatorText.some(keyword => text.includes(keyword));
-            const isBreakPoint = breakPoint.some(keyword => text.includes(keyword));
-            //console.log('isBreakPoint: ', isBreakPoint, '\nisSeparator: ', isSeparator, '\ntext: ', text)
+            const textContent = el?.textContent || '';
+            const htmlContent = el?.outerHTML || el?.innerHTML || textContent;
+
+            // 구분자(separatorText) 검사
+            const isSeparator = separatorText.some(pattern => checkMatch(pattern, textContent, htmlContent));
+
+            // 중단점(breakPoint) 검사 - 텍스트 및 소스코드 둘 다 적용
+            const isBreakPoint = breakPoint.some(pattern => checkMatch(pattern, textContent, htmlContent));
+
             if (isBreakPoint) {
-                // 지금까지의 currentGroup이 비어있지 않다면 저장
-                /*
-                if (currentGroup.childNodes.length > 0) {
-                    groups.push(currentGroup);
-                }
-                */
-                break; // 반복 종료
+                break; // 중단점 발견 시 루프 종료
             }
 
             if (isSeparator && currentGroup.childNodes.length > 0) {
@@ -243,16 +253,21 @@ function createGroupsFromArea(area, siteRule = {}) {
             currentGroup.appendChild(el.cloneNode(true));
         }
 
-        // 루프가 정상 종료된 경우 마지막 그룹 추가
-        if (currentGroup.childNodes.length > 0 &&
-            !breakPoint.some(keyword => currentGroup.textContent.includes(keyword))) {
-            groups.push(currentGroup);
+        // 루프가 정상 종료된 경우 마지막 그룹 추가 전 breakPoint 재검증
+        if (currentGroup.childNodes.length > 0) {
+            const lastText = currentGroup.textContent;
+            const lastHtml = currentGroup.innerHTML;
+
+            const hasBreakPoint = breakPoint.some(pattern => checkMatch(pattern, lastText, lastHtml));
+
+            if (!hasBreakPoint) {
+                groups.push(currentGroup);
+            }
         }
 
         resolve(groups);
     });
 }
-
 // ✅ 메인 파이프라인
 function analyzePage(rule) {
     return createGroupsFromArea(rule.area, rule)
