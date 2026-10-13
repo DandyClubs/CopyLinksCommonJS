@@ -144,7 +144,6 @@ async function smartImageLoader(wrapper, loaderEl) {
     const circle = loaderEl?.querySelector(".progress-circle");
     let loadedCount = 0;
 
-    // 1. UI 업데이트를 브라우저 렌더링 프레임(60fps)에 맞춰 최적화
     const updateProgress = () => {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
@@ -155,56 +154,58 @@ async function smartImageLoader(wrapper, loaderEl) {
         }
     };
 
-    const loadPromises = imgs.map(img => {
-        // src가 없거나 빈 값인 경우 예외 처리
-        if (!img.src) {
-            updateProgress();
-            return Promise.resolve();
-        }
-
-        img.removeAttribute('loading');
-
-        // 2. 현대적인 브라우저를 위한 img.decode() 활용 (백그라운드 디코딩)
-        if (typeof img.decode === 'function') {
-            return img.decode()
-                .then(() => {
-                    updateProgress();
-                })
-                .catch(() => {
-                    // 이미지 로드 실패나 에러가 나도 진행률은 올려서 멈추지 않게 처리
-                    updateProgress();
-                });
-        }
-
-        // 3. img.decode()를 지원하지 않는 구형 브라우저용 Fallback (안전장치)
+    // 개별 이미지 로딩 함수
+    const loadImage = (img) => {
         return new Promise(resolve => {
-            if (img.complete) {
+            if (!img.src) {
                 updateProgress();
                 resolve();
+                return;
+            }
+            img.removeAttribute('loading');
+
+            if (typeof img.decode === 'function') {
+                img.decode()
+                    .then(() => { updateProgress(); resolve(); })
+                    .catch(() => { updateProgress(); resolve(); });
             } else {
-                // onload와 onerror를 한 번만 실행되도록 안전하게 관리
-                const onImageLoad = () => {
-                    img.removeEventListener('load', onImageLoad);
-                    img.removeEventListener('error', onImageError);
+                if (img.complete) {
                     updateProgress();
                     resolve();
-                };
-                const onImageError = () => {
-                    img.removeEventListener('load', onImageLoad);
-                    img.removeEventListener('error', onImageError);
-                    updateProgress();
-                    resolve();
-                };
-                img.addEventListener('load', onImageLoad);
-                img.addEventListener('error', onImageError);
+                } else {
+                    const done = () => {
+                        img.removeEventListener('load', done);
+                        img.removeEventListener('error', done);
+                        updateProgress();
+                        resolve();
+                    };
+                    img.addEventListener('load', done);
+                    img.addEventListener('error', done);
+                }
             }
         });
-    });
+    };
 
-    // 모든 이미지의 디코딩/로딩이 끝날 때까지 대기
-    await Promise.allSettled(loadPromises);
+    // ⭐️ 대기열(Queue)과 워커(Worker) 패턴 적용
+    const queue = [...imgs];
+    const concurrencyLimit = 3; // 동시 로딩할 최대 이미지 개수
+
+    const worker = async () => {
+        while (queue.length > 0) {
+            const img = queue.shift();
+            if (img) {
+                await loadImage(img);
+            }
+        }
+    };
+
+    // 지정한 concurrencyLimit만큼의 워커를 동시에 돌려서 큐를 소모합니다.
+    const workers = Array(Math.min(concurrencyLimit, imgs.length))
+        .fill(null)
+        .map(() => worker());
+
+    await Promise.allSettled(workers);
 }
-
 
 
 // [핵심] 혼합 노드를 이미지 경계로 쪼개주는 재귀 함수
