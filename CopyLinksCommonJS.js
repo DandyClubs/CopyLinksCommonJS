@@ -96,7 +96,7 @@ function compareJapaneseCharacters(sentence1, sentence2) {
     } else if (count2 > count1) {
         return sentence2;
     } else {
-        return null;
+        return compareSentencesByWordMatch(sentence1, sentence2);
     }
 }
 
