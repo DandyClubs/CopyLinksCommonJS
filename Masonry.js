@@ -164,25 +164,20 @@ async function smartImageLoader(wrapper, loaderEl) {
             }
             img.removeAttribute('loading');
 
-            if (typeof img.decode === 'function') {
-                img.decode()
-                    .then(() => { updateProgress(); resolve(); })
-                    .catch(() => { updateProgress(); resolve(); });
+            if (img.complete) {
+                updateProgress();
+                resolve();
             } else {
-                if (img.complete) {
+                const done = () => {
+                    img.removeEventListener('load', done);
+                    img.removeEventListener('error', done);
                     updateProgress();
                     resolve();
-                } else {
-                    const done = () => {
-                        img.removeEventListener('load', done);
-                        img.removeEventListener('error', done);
-                        updateProgress();
-                        resolve();
-                    };
-                    img.addEventListener('load', done);
-                    img.addEventListener('error', done);
-                }
+                };
+                img.addEventListener('load', done);
+                img.addEventListener('error', done);
             }
+
         });
     };
 
