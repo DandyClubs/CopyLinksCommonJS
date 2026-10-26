@@ -1163,11 +1163,15 @@ function getMergedRules() {
     // 저장된 모든 키 목록을 가져와 "RULE_"로 시작하는 것만 필터링
     const allKeys = GM_listValues();
     allKeys.forEach(key => {
+        if (key.startsWith('RULE_')) {
+            const prefix = key.replace('RULE_', '');
+            
         if (DB_PREFIX_RULES[key]) {
             GM_deleteValue(key);
         } else {
-            merged[key] = GM_getValue(key);
+            merged[prefix] = GM_getValue(key);
         }
+    }
     });
 
     return merged;
