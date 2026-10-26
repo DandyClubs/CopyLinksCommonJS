@@ -167,17 +167,15 @@ async function smartImageLoader(wrapper, loaderEl) {
             if (img.complete) {
                 updateProgress();
                 resolve();
-            } else {
-                const image = new Image();
+            } else {                
                 const done = () => {
-                    image.removeEventListener('load', done);
-                    image.removeEventListener('error', done);
+                    img.removeEventListener('load', done);
+                    img.removeEventListener('error', done);
                     updateProgress();
                     resolve();
                 };                
-                image.addEventListener('load', done);
-                image.addEventListener('error', done);
-                image.src = img.src;
+                img.addEventListener('load', done);
+                img.addEventListener('error', done);                
             }
         });
     };
