@@ -1281,7 +1281,8 @@ function saveRuleFromUrl(url, prefix) {
         else if (host === 'prestige-av.com') category = "PRESTIGE";
 
         // 설정값 저장 [카테고리, 접두어]
-        GM_setValue(prefix, [category, extraPrefix]);
+        // 'RULE_' 접두사를 붙여서 저장
+        GM_setValue('RULE_' + prefix, [category, extraPrefix]);        
 
         console.log(
             `%c[규칙 학습 완료] ${prefix} → ${category} (접두어: ${extraPrefix})`,
