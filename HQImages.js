@@ -652,7 +652,7 @@ const DB_PREFIX_RULES = {
     "MRPA": ["FANZA_DIGITAL",""],
     "MRSS": ["FANZA_DIGITAL",""],
     "MRXD": ["FANZA_DIGITAL",""],
-    "MSAJ": ["FANZA_DIGITAL",""]
+    "MSAJ": ["FANZA_DIGITAL",""],
     "MSTT": ["FANZA_DIGITAL",""],
     "MTYD": ["FANZA_DIGITAL",""],
     "MUCD": ["FANZA_DIGITAL",""],
