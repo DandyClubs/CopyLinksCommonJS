@@ -276,8 +276,7 @@ function createSectionMasonry(container) {
         currentImageGroup.forEach(img => {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
-            const cleanImg = document.createElement("img");
-            cleanImg.setAttribute('loading', 'lazy');
+            const cleanImg = document.createElement("img");            
 
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
