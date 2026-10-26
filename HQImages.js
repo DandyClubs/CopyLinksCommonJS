@@ -1282,7 +1282,10 @@ function saveRuleFromUrl(url, prefix) {
 
         // 설정값 저장 [카테고리, 접두어]
         // 'RULE_' 접두사를 붙여서 저장
-        GM_setValue('RULE_' + prefix, [category, extraPrefix]);
+        // 이미 저장된 규칙이 없을 때만 안전하게 저장
+        if (!GM_getValue('RULE_' + prefix)) {
+            GM_setValue('RULE_' + prefix, [category, extraPrefix]);
+        }
 
         console.log(
             `%c[규칙 학습 완료] ${prefix} → ${category} (접두어: ${extraPrefix})`,
