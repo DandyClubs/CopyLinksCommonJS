@@ -996,6 +996,8 @@ const DB_PREFIX_RULES = {
     "ZSGD": ["FANZA_DIGITAL", "483"],
     "ZSMX": ["FANZA_MONO", "n_650"],
     "ZUKO": ["FANZA_DIGITAL", ""],
+    "HNMG": ["FANZA_DIGITAL", ""],
+    "SDMF": ["FANZA_DIGITAL", "1"],
 };
 
 
@@ -1160,7 +1162,7 @@ function checkImageExistence(link) {
 function getMergedRules() {
     const merged = { ...DB_PREFIX_RULES };
 
-    // 저장된 모든 키 목록을 가져와 "RULE_"로 시작하는 것만 필터링
+    // 저장된 모든 키 목록을 가져와 "CODE_"로 시작하는 것만 필터링
     const allKeys = GM_listValues();
     allKeys.forEach(key => {
         if (key.startsWith('CODE_')) {
@@ -1280,10 +1282,10 @@ function saveRuleFromUrl(url, prefix) {
         else if (host === 'prestige-av.com') category = "PRESTIGE";
 
         // 설정값 저장 [카테고리, 접두어]
-        // 'RULE_' 접두사를 붙여서 저장
+        // 'CODE_' 접두사를 붙여서 저장
         // 이미 저장된 규칙이 없을 때만 안전하게 저장
-        if (!GM_getValue('RULE_' + prefix)) {
-            GM_setValue('RULE_' + prefix, [category, extraPrefix]);
+        if (!GM_getValue('CODE_' + prefix)) {
+            GM_setValue('CODE_' + prefix, [category, extraPrefix]);
         }
 
         console.log(
