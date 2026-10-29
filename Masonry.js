@@ -7,6 +7,7 @@ class SkylineLayout {
         this.gap = gap;
         this.minWidthPercent = minWidthPercent;
         this.heightTolerance = heightTolerance;
+        this.rows = new Map();
         // 초기 상태: x=0부터 전체 너비만큼 빈 공간(y=0)이 있음
         this.skyline = [{ x: 0, y: 0, w: containerWidth }];
     }
@@ -61,6 +62,10 @@ class SkylineLayout {
         }
 
         if (targetIdx !== -1) {
+            if (this.finalizeRowsBefore(bestY)) {
+                return this.placeItem(item);
+            }
+
             // DOM 반영
             finalW = Math.round(finalW / 2) * 2;
             finalH = Math.round(finalH / 2) * 2;
@@ -72,10 +77,73 @@ class SkylineLayout {
             item.element.style.top = `${bestY}px`;
 
             // 스카이라인 상태 갱신
-            this.updateSkyline(finalX, bestY, finalW, item.h);
+            this.updateSkyline(finalX, bestY, finalW, finalH);
+            const row = this.rows.get(bestY) || { items: [], finalized: false };
+            row.items.push({ x: finalX, w: finalW, h: finalH });
+            this.rows.set(bestY, row);
             return { x: finalX, y: bestY, w: finalW };
         }
         return null;
+    }
+
+    finalizeRowsBefore(y) {
+        let changed = false;
+
+        for (const [rowY, row] of this.rows) {
+            if (row.finalized || rowY >= y) continue;
+            row.finalized = true;
+
+            const heights = row.items.map(item => item.h);
+            const minHeight = Math.min(...heights);
+            const maxHeight = Math.max(...heights);
+            if (maxHeight - minHeight > this.heightTolerance) continue;
+
+            const rowBottom = rowY + maxHeight + this.gap;
+            row.items.forEach(item => {
+                this.raiseSkylineRange(item.x, item.w, rowBottom);
+            });
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    raiseSkylineRange(x, w, y) {
+        const rangeEnd = x + w;
+        const segments = [];
+
+        this.skyline.forEach(segment => {
+            const segmentEnd = segment.x + segment.w;
+            const overlapStart = Math.max(segment.x, x);
+            const overlapEnd = Math.min(segmentEnd, rangeEnd);
+
+            if (overlapStart >= overlapEnd) {
+                segments.push(segment);
+                return;
+            }
+
+            if (segment.x < overlapStart) {
+                segments.push({
+                    x: segment.x,
+                    y: segment.y,
+                    w: overlapStart - segment.x
+                });
+            }
+            segments.push({
+                x: overlapStart,
+                y: Math.max(segment.y, y),
+                w: overlapEnd - overlapStart
+            });
+            if (overlapEnd < segmentEnd) {
+                segments.push({
+                    x: overlapEnd,
+                    y: segment.y,
+                    w: segmentEnd - overlapEnd
+                });
+            }
+        });
+
+        this.mergeSkyline(segments);
     }
 
     updateSkyline(x, y, w, h) {
@@ -105,42 +173,15 @@ class SkylineLayout {
         // 2. X축 기준 정렬
         newSegments.sort((a, b) => a.x - b.x);
 
-        // 3. 인접 이미지 높이가 충분히 비슷하면 다음 줄의 시작 높이를 맞춤
-        for (let i = 0; i < newSegments.length;) {
-            if (newSegments[i].y <= 0) {
-                i++;
-                continue;
-            }
+        this.mergeSkyline(newSegments);
+    }
 
-            let end = i + 1;
-            let minY = newSegments[i].y;
-            let maxY = newSegments[i].y;
-
-            while (end < newSegments.length && newSegments[end].y > 0) {
-                const nextMinY = Math.min(minY, newSegments[end].y);
-                const nextMaxY = Math.max(maxY, newSegments[end].y);
-                if (nextMaxY - nextMinY > this.heightTolerance) break;
-
-                minY = nextMinY;
-                maxY = nextMaxY;
-                end++;
-            }
-
-            if (end > i + 1) {
-                for (let j = i; j < end; j++) {
-                    newSegments[j].y = maxY;
-                }
-            }
-
-            i = end;
-        }
-
-        // 4. 인접 구간 병합 (높이가 같으면 합침)
+    mergeSkyline(segments) {
         this.skyline = [];
-        if (newSegments.length > 0) {
-            let current = newSegments[0];
-            for (let i = 1; i < newSegments.length; i++) {
-                let next = newSegments[i];
+        if (segments.length > 0) {
+            let current = segments[0];
+            for (let i = 1; i < segments.length; i++) {
+                let next = segments[i];
                 if (current.y === next.y) {
                     current.w += next.w;
                 } else {
