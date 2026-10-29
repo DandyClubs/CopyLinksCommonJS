@@ -2,7 +2,7 @@
  * Skyline Masonry Layout Manager
  */
 class SkylineLayout {
-    constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 20) {
+    constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 30) {
         this.containerWidth = containerWidth;
         this.gap = gap;
         this.minWidthPercent = minWidthPercent;
@@ -827,7 +827,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
     // ---------------------------------------------------
 
     const layout =
-        new SkylineLayout(containerWidth, gap, 0.95, 20);
+        new SkylineLayout(containerWidth, gap, 0.95, 30);
 
     allCalculatedItems.forEach(data => {
 
