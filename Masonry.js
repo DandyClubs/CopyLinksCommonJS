@@ -2,10 +2,11 @@
  * Skyline Masonry Layout Manager
  */
 class SkylineLayout {
-    constructor(containerWidth, gap, minWidthPercent = 0.8) {
+    constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 20) {
         this.containerWidth = containerWidth;
         this.gap = gap;
         this.minWidthPercent = minWidthPercent;
+        this.heightTolerance = heightTolerance;
         // 초기 상태: x=0부터 전체 너비만큼 빈 공간(y=0)이 있음
         this.skyline = [{ x: 0, y: 0, w: containerWidth }];
     }
@@ -104,7 +105,37 @@ class SkylineLayout {
         // 2. X축 기준 정렬
         newSegments.sort((a, b) => a.x - b.x);
 
-        // 3. 인접 구간 병합 (높이가 같으면 합침)
+        // 3. 인접 이미지 높이가 충분히 비슷하면 다음 줄의 시작 높이를 맞춤
+        for (let i = 0; i < newSegments.length;) {
+            if (newSegments[i].y <= 0) {
+                i++;
+                continue;
+            }
+
+            let end = i + 1;
+            let minY = newSegments[i].y;
+            let maxY = newSegments[i].y;
+
+            while (end < newSegments.length && newSegments[end].y > 0) {
+                const nextMinY = Math.min(minY, newSegments[end].y);
+                const nextMaxY = Math.max(maxY, newSegments[end].y);
+                if (nextMaxY - nextMinY > this.heightTolerance) break;
+
+                minY = nextMinY;
+                maxY = nextMaxY;
+                end++;
+            }
+
+            if (end > i + 1) {
+                for (let j = i; j < end; j++) {
+                    newSegments[j].y = maxY;
+                }
+            }
+
+            i = end;
+        }
+
+        // 4. 인접 구간 병합 (높이가 같으면 합침)
         this.skyline = [];
         if (newSegments.length > 0) {
             let current = newSegments[0];
@@ -755,7 +786,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
     // ---------------------------------------------------
 
     const layout =
-        new SkylineLayout(containerWidth, gap, 0.95);
+        new SkylineLayout(containerWidth, gap, 0.95, 20);
 
     allCalculatedItems.forEach(data => {
 
