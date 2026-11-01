@@ -998,6 +998,9 @@ const DB_PREFIX_RULES = {
     "ZUKO": ["FANZA_DIGITAL", ""],
     "HNMG": ["FANZA_DIGITAL", ""],
     "SDMF": ["FANZA_DIGITAL", "1"],
+    "GARE": ["FANZA_DIGITAL",""],
+    "IDPC": ["FANZA_DIGITAL",""],
+    "SDHS": ["FANZA_DIGITAL","1"],
 };
 
 
