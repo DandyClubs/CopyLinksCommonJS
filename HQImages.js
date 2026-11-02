@@ -1000,7 +1000,8 @@ const DB_PREFIX_RULES = {
     "SDMF": ["FANZA_DIGITAL", "1"],
     "GARE": ["FANZA_DIGITAL",""],
     "IDPC": ["FANZA_DIGITAL",""],
-    "SDHS": ["FANZA_DIGITAL","1"],
+    "SDHS": ["FANZA_DIGITAL","1"],    
+	"SROB": ["FANZA_DIGITAL",""],
 };
 
 
