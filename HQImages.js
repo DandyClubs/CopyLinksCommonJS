@@ -1171,7 +1171,7 @@ function getMergedRules() {
     allKeys.forEach(key => {
         if (key.startsWith('CODE_')) {
             const prefix = key.replace('CODE_', '');
-            if (DB_PREFIX_RULES[key]) {
+            if (DB_PREFIX_RULES[prefix]) {
                 GM_deleteValue(key);
             } else {
                 merged[prefix] = GM_getValue(key);
