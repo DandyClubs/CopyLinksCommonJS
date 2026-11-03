@@ -234,8 +234,6 @@ async function smartImageLoader(wrapper, loaderEl) {
                 resolve();
                 return;
             }
-            img.removeAttribute('loading');
-
             if (img.complete) {
                 updateProgress();
                 resolve();
@@ -260,6 +258,7 @@ async function smartImageLoader(wrapper, loaderEl) {
         while (queue.length > 0) {
             const img = queue.shift();
             if (img) {
+                img.removeAttribute('loading');
                 await loadImage(img);
             }
         }
