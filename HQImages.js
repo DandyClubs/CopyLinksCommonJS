@@ -1002,6 +1002,7 @@ const DB_PREFIX_RULES = {
     "IDPC": ["FANZA_DIGITAL",""],
     "SDHS": ["FANZA_DIGITAL","1"],    
 	"SROB": ["FANZA_DIGITAL",""],
+    "DCXD": ["FANZA_DIGITAL","h_1711"],
 };
 
 
