@@ -234,19 +234,21 @@ async function smartImageLoader(wrapper, loaderEl) {
                 resolve();
                 return;
             }
-            if (img.complete) {
+            if (img.complete && img.naturalHeight !== 0) {
                 updateProgress();
                 resolve();
-            } else {                
-                const done = () => {
-                    img.removeEventListener('load', done);
-                    img.removeEventListener('error', done);
-                    updateProgress();
-                    resolve();
-                };                
-                img.addEventListener('load', done);
-                img.addEventListener('error', done);                
+                return;
             }
+            
+            const done = () => {
+                img.removeEventListener('load', done);
+                img.removeEventListener('error', done);
+                updateProgress();
+                resolve();
+            };
+            img.addEventListener('load', done);
+            img.addEventListener('error', done);
+
         });
     };
 
@@ -347,14 +349,14 @@ function createSectionMasonry(container) {
         currentImageGroup.forEach(img => {
             const item = document.createElement("div");
             item.className = "image-masonry-item";
-            const cleanImg = document.createElement("img");            
+            const cleanImg = document.createElement("img");
 
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
 
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
-            }            
+            }
             item.appendChild(cleanImg);
             wrapper.appendChild(item);
         });
