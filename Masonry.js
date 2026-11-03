@@ -356,7 +356,7 @@ function createSectionMasonry(container) {
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
             }
-
+            cleanImg.setAttribute('loading', 'lazy');
             item.appendChild(cleanImg);
             wrapper.appendChild(item);
         });
