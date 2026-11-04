@@ -239,6 +239,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             };
             const done = () => {
                 if (settled) return;
+                img.removeAttribute('loading');
                 settled = true;
                 cleanup();
                 updateProgress();
