@@ -246,7 +246,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             };
             function checkImageState() {
                 const state = img.getAttribute('data-is-image-state');
-                if (state === 'true' || state === 'false') done();
+                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth !== 0)) done();
             }
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
