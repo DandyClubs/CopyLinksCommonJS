@@ -229,46 +229,30 @@ async function smartImageLoader(wrapper, loaderEl) {
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
         return new Promise(resolve => {
-            let currentSrc = img.getAttribute('src');
-            if (!currentSrc) {
-                updateProgress();
-                resolve();
-                return;
-            }
-
+            const retryGracePeriod = 60000;
             let settled = false;
+            let timeout;
+            const observer = new MutationObserver(checkImageState);
             const cleanup = () => {
-                img.removeEventListener('load', done);
-                img.removeEventListener('error', done);
+                clearTimeout(timeout);
                 observer.disconnect();
             };
             const done = () => {
-                if (settled || img.getAttribute('src') !== currentSrc) return;
+                if (settled) return;
                 settled = true;
                 cleanup();
                 updateProgress();
                 resolve();
             };
+            function checkImageState() {
+                const state = img.getAttribute('data-is-image-state');
+                if (state === 'true' || state === 'false') done();
+            }
 
-            const observer = new MutationObserver(() => {
-                const nextSrc = img.getAttribute('src');
-                if (nextSrc === currentSrc) return;
-
-                currentSrc = nextSrc;
-                if (!currentSrc) {
-                    done();
-                } else if (img.complete && img.currentSrc === img.src) {
-                    done();
-                }
-            });
-
-            img.addEventListener('load', done);
-            img.addEventListener('error', done);
-            observer.observe(img, { attributes: true, attributeFilter: ['src'] });
-
-            if (img.complete) {
-                done();
-            } else {
+            observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
+            checkImageState();
+            if (!settled) {
+                timeout = setTimeout(done, retryGracePeriod);
                 img.removeAttribute('loading');
             }
         });
