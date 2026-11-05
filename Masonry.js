@@ -238,7 +238,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 observer.disconnect();
             };
             const done = () => {
-                if (settled) return;                
+                if (settled) return;
                 settled = true;
                 cleanup();
                 updateProgress();
@@ -251,13 +251,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
             if (img.complete && img.naturalWidth !== 0) {
-                img.decode()
-                    .then(() => {
-                        done();
-                    })
-                    .catch(() => {
-                        console.warn('decode 실패 → 깨진 이미지 감지:', img.src);
-                    });
+                done();
             }
             checkImageState();
             if (!settled) {
