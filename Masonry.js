@@ -263,7 +263,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
     // ⭐️ 대기열(Queue)과 워커(Worker) 패턴 적용
     const queue = [...imgs];
-    const concurrencyLimit = 2; // 동시 로딩할 최대 이미지 개수
+    const concurrencyLimit = 3; // 동시 로딩할 최대 이미지 개수
 
     const worker = async () => {
         while (queue.length > 0) {
