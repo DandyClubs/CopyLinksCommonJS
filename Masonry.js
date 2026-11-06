@@ -211,9 +211,7 @@ async function smartImageLoader(wrapper, loaderEl) {
         loadedCount++;
         const percent = Math.round((loadedCount / total) * 100);
         if (circle) {
-            requestAnimationFrame(() => {
-                circle.style.setProperty("--p", percent);
-            });
+            circle.style.setProperty("--p", percent);
         }
     };
 
@@ -221,7 +219,7 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
             const retryGracePeriod = 30000;
-            let timeout;            
+            let timeout;
             const cleanup = () => {
                 clearTimeout(timeout);
                 img.removeEventListener('load', done);
