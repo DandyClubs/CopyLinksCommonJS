@@ -222,11 +222,10 @@ async function smartImageLoader(wrapper, loaderEl) {
             let timeout;
             img.removeAttribute('loading');
 
-            const image = new Image();
             const cleanup = () => {
                 clearTimeout(timeout);
-                image.removeEventListener('load', done);
-                image.removeEventListener('error', done);                
+                img.removeEventListener('load', done);
+                img.removeEventListener('error', done);                
             };
             const done = () => {
                 cleanup();
@@ -234,14 +233,12 @@ async function smartImageLoader(wrapper, loaderEl) {
                 resolve();
             };
 
-            image.addEventListener('load', done);
-            image.addEventListener('error', done);
-
             if (img.complete && img.naturalWidth !== 0) {
                 done();
-            } else {
-                image.src = img.src;
             }            
+
+            img.addEventListener('load', done);
+            img.addEventListener('error', done);            
 
             timeout = setTimeout(done, retryGracePeriod);
         });
