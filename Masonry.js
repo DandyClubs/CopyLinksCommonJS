@@ -223,8 +223,10 @@ async function smartImageLoader(wrapper, loaderEl) {
             let settled = false;
             const observer = new MutationObserver(checkImageState);
             const cleanup = () => {
-                clearTimeout(timeout);                
+                clearTimeout(timeout);  
+                observer.disconnect();              
             };
+
             const done = () => {
                 if (settled) return;
                 settled = true;
@@ -232,6 +234,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 updateProgress();
                 resolve();
             };
+
             function checkImageState() {
                 const state = img.getAttribute('data-loaded');
                 if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth !== 0)) done();
