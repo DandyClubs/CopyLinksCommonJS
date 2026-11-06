@@ -219,8 +219,7 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
             const retryGracePeriod = 60000;
-            let timeout;
-            img.removeAttribute('loading');
+            let timeout;           
 
             const cleanup = () => {
                 clearTimeout(timeout);
@@ -239,6 +238,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             img.addEventListener('load', done);
             img.addEventListener('error', done);            
+            img.removeAttribute('loading');
 
             timeout = setTimeout(done, retryGracePeriod);
         });
