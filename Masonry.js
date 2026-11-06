@@ -234,6 +234,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 settled = true;
                 cleanup();
                 updateProgress();
+                img.removeAttribute('loading');
                 resolve();
             };
             function checkImageState() {
@@ -246,6 +247,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             img.addEventListener('load', done);
 
             checkImageState();
+
             if (!settled) {
                 timeout = setTimeout(done, retryGracePeriod);
                 img.removeAttribute('loading');
