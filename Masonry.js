@@ -218,7 +218,7 @@ async function smartImageLoader(wrapper, loaderEl) {
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
         return new Promise(resolve => {
-            const retryGracePeriod = 120000;
+            const retryGracePeriod = 60000;
             let timeout;
             img.removeAttribute('loading');
 
