@@ -364,6 +364,7 @@ function createSectionMasonry(container) {
             if (realSrc) cleanImg.src = realSrc;
             */
             cleanImg.src = img.src;
+            
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
             }
