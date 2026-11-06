@@ -243,7 +243,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
 
-            img.addEventListener('load', done, { once: true });
+            img.addEventListener('load', done);
 
             checkImageState();
             if (!settled) {
