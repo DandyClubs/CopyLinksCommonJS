@@ -227,6 +227,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 clearTimeout(timeout);
                 image.removeEventListener('load', done);
                 image.removeEventListener('error', done);
+                image.remove();
             };
             const done = () => {
                 cleanup();
