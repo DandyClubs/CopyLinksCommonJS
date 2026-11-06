@@ -359,8 +359,10 @@ function createSectionMasonry(container) {
             item.className = "image-masonry-item";
             const cleanImg = document.createElement("img");
 
+            /*
             const realSrc = img.getAttribute("ess-data") || img.getAttribute("data-src") || img.src;
             if (realSrc) cleanImg.src = realSrc;
+            */
 
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
