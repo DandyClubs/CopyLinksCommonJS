@@ -220,38 +220,28 @@ async function smartImageLoader(wrapper, loaderEl) {
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
         return new Promise(resolve => {
-            const retryGracePeriod = 120000;
-            let settled = false;
-            let timeout;
-            const observer = new MutationObserver(checkImageState);
+            const retryGracePeriod = 30000;
+            let timeout;            
             const cleanup = () => {
                 clearTimeout(timeout);
-                observer.disconnect();
                 img.removeEventListener('load', done);
+                img.removeEventListener('error', done);
             };
             const done = () => {
-                if (settled) return;
-                settled = true;
                 cleanup();
                 updateProgress();
-                img.removeAttribute('loading');
                 resolve();
             };
-            function checkImageState() {
-                const state = img.getAttribute('data-is-image-state');
-                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth !== 0)) done();
-            }
-
-            observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
 
             img.addEventListener('load', done);
+            img.addEventListener('error', done);
 
-            checkImageState();
 
-            if (!settled) {
-                timeout = setTimeout(done, retryGracePeriod);
-                img.removeAttribute('loading');
-            }
+            if (img.complete && img.naturalWidth !== 0) done();
+
+            img.removeAttribute('loading');
+
+            timeout = setTimeout(done, retryGracePeriod);
         });
     };
 
