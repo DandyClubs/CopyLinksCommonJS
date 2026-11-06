@@ -250,14 +250,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             }
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
-            if (img.complete && img.naturalWidth !== 0) {
-                const state = img.getAttribute('data-is-image-state');
-                if (state === 'true' || state === 'false'){
-                done();    
-                } else { 
-                done();
-                }
-            }
+                        
             checkImageState();
             if (!settled) {
                 timeout = setTimeout(done, retryGracePeriod);
@@ -369,7 +362,7 @@ function createSectionMasonry(container) {
             if (realSrc) cleanImg.src = realSrc;
             */
             cleanImg.src = img.src;
-            
+
             if (img.naturalWidth) {
                 item.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
             }
