@@ -199,15 +199,6 @@ class SkylineLayout {
 }
 
 
-function applyAspectRatio(img) {
-    const w = img.naturalWidth;
-    const h = img.naturalHeight;
-    const item = img.closest(".image-masonry-item");
-    if (item && w > 0 && h > 0) {
-        item.style.aspectRatio = `${w}/${h}`;
-    }
-}
-
 async function smartImageLoader(wrapper, loaderEl) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
@@ -236,6 +227,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             const cleanup = () => {
                 clearTimeout(timeout);
                 observer.disconnect();
+                img.removeEventListener('load', done);
             };
             const done = () => {
                 if (settled) return;
@@ -250,7 +242,9 @@ async function smartImageLoader(wrapper, loaderEl) {
             }
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-is-image-state'] });
-                        
+
+            img.addEventListener('load', done, { once: true });
+
             checkImageState();
             if (!settled) {
                 timeout = setTimeout(done, retryGracePeriod);
