@@ -220,10 +220,13 @@ async function smartImageLoader(wrapper, loaderEl) {
         return new Promise(resolve => {
             const retryGracePeriod = 120000;
             let timeout;
+            img.removeAttribute('loading');
+
+            const image = new Image();
             const cleanup = () => {
                 clearTimeout(timeout);
-                img.removeEventListener('load', done);
-                img.removeEventListener('error', done);
+                image.removeEventListener('load', done);
+                image.removeEventListener('error', done);
             };
             const done = () => {
                 cleanup();
@@ -231,13 +234,14 @@ async function smartImageLoader(wrapper, loaderEl) {
                 resolve();
             };
 
-            img.addEventListener('load', done);
-            img.addEventListener('error', done);
+            image.addEventListener('load', done);
+            image.addEventListener('error', done);
 
-
-            if (img.complete && img.naturalWidth !== 0) done();
-
-            img.removeAttribute('loading');
+            if (img.complete && img.naturalWidth !== 0) {
+                done();
+            } else {
+                image.src = img.src;
+            }            
 
             timeout = setTimeout(done, retryGracePeriod);
         });
