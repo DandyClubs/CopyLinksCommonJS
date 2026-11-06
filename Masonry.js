@@ -219,28 +219,31 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
             const retryGracePeriod = 60000;
-            let timeout;           
-
+            let timeout;
+            let settled = false;
+            const observer = new MutationObserver(checkImageState);
             const cleanup = () => {
-                clearTimeout(timeout);
-                img.removeEventListener('load', done);
-                img.removeEventListener('error', done);                
+                clearTimeout(timeout);                
             };
             const done = () => {
+                if (settled) return;
+                settled = true;
                 cleanup();
                 updateProgress();
                 resolve();
             };
-
-            if (img.complete && img.naturalWidth !== 0) {
-                done();
-            }            
-
-            img.addEventListener('load', done);
-            img.addEventListener('error', done);            
-            img.removeAttribute('loading');
-
-            timeout = setTimeout(done, retryGracePeriod);
+            function checkImageState() {
+                const state = img.getAttribute('data-loaded');
+                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth !== 0)) done();
+            }
+            
+            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });
+            
+            checkImageState();
+            if (!settled) {
+                timeout = setTimeout(done, retryGracePeriod);
+                img.removeAttribute('loading');
+            }
         });
     };
 
