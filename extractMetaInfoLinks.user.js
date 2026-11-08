@@ -126,9 +126,9 @@ function ensureNewlines(div) {
         const nextNode = el.nextSibling;
 
         // 다음 노드가 텍스트 노드이고, 시작 부분에 이미 \n(줄바꿈)이 포함되어 있는지 체크
-        const hasNewlineAlready = nextNode && 
-                                  nextNode.nodeType === Node.TEXT_NODE && 
-                                  /^\s*[\r\n]/.test(nextNode.nodeValue);
+        const hasNewlineAlready = nextNode &&
+            nextNode.nodeType === Node.TEXT_NODE &&
+            /^\s*[\r\n]/.test(nextNode.nodeValue);
 
         // 이미 줄바꿈이 존재하는 경우가 아니라면 줄바꿈(\n) 강제 삽입
         if (!hasNewlineAlready) {
@@ -141,9 +141,9 @@ function ensureNewlines(div) {
 
 // ✅ 메타 정보 추출
 function extractMetaInfo(div, siteRule = {}) {
-    return new Promise((resolve) => {                
+    return new Promise((resolve) => {
 
-        const text = ensureNewlines(div);        
+        const text = ensureNewlines(div);
         const titleMatch = text.match(siteRule.getTitleRegex);
         const getTitle = titleMatch ? titleMatch[siteRule.getTitleMatchPoint]?.trim() : text.split('\n').map(s => s.trim()).filter(Boolean)[0]; // siteRule.firstLine 
         const dateMatch = text.match(/(20\d{2}[.\-/]\d{1,2}[.\-/]\d{1,2})/);
@@ -185,8 +185,7 @@ function extractMetaInfo(div, siteRule = {}) {
                             title: getTitle || '',
                             date: dateMatch?.[1] || null,
                             password: password,
-                            coverImage: siteRule.coverImage,
-                            //[res]: resolutionGroups[res],
+                            coverImage: siteRule.coverImage,                            
                             links: resolutionGroups[res],
                             priorityResolution: res,
 
@@ -273,14 +272,13 @@ function analyzePage(rule) {
     return createGroupsFromArea(rule.area, rule)
         .then(blocks => Promise.all(blocks.map(block => extractMetaInfo(block, rule))))
         .then(metas => {
-            const results = metas.filter(meta => meta && meta.title);
 
-            console.log('그룹별 결과: ', metas, results);
+            console.log('그룹별 결과: ', metas);
             // 비교를 위해 resolutionMap의 키들을 미리 배열로 만들어 둡니다.
             const resolutionKeys = Object.keys(resolutionMap);
 
             const filteredMetas = metas.filter(meta => Object.keys(meta).some(key => resolutionKeys.includes(key)) || meta.links?.length > 0);
-
+            console.log('그룹별 filter 결과: ', filteredMetas);
 
             console.log('[✅ analyzePage Final Extracted]', filteredMetas);
             return filteredMetas;
