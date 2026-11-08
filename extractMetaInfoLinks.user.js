@@ -275,7 +275,7 @@ function analyzePage(rule) {
         .then(metas => {
             const results = metas.filter(meta => meta && meta.title);
 
-            console.log('그룹별 결과: ', metas)
+            console.log('그룹별 결과: ', metas, results);
             // 비교를 위해 resolutionMap의 키들을 미리 배열로 만들어 둡니다.
             const resolutionKeys = Object.keys(resolutionMap);
 
