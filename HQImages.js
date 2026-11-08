@@ -1004,6 +1004,12 @@ const DB_PREFIX_RULES = {
 	"SROB": ["FANZA_DIGITAL",""],
     "DCXD": ["FANZA_DIGITAL","h_1711"],
     "INSTNA": ["FANZA_DIGITAL","h_1472"],
+    "JQJ": ["FANZA_DIGITAL",""],
+    "SHF": ["FANZA_MONO","118"],
+    "AKBS": ["FANZA_DIGITAL",""],
+    "AMA": ["FANZA_DIGITAL","118"],
+    "AKID": ["FANZA_DIGITAL",""],
+    "TPIN": ["FANZA_DIGITAL",""],
 };
 
 
