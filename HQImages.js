@@ -1010,6 +1010,10 @@ const DB_PREFIX_RULES = {
     "AMA": ["FANZA_DIGITAL","118"],
     "AKID": ["FANZA_DIGITAL",""],
     "TPIN": ["FANZA_DIGITAL",""],
+    "DG": ["FANZA_DIGITAL","h_1596"],
+    "JBZ": ["FANZA_DIGITAL","h_1294"],
+    "RHG": ["FANZA_DIGITAL",""],
+    "HNTD": ["FANZA_DIGITAL",""],
 };
 
 
