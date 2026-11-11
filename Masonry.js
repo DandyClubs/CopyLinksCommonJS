@@ -219,7 +219,7 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
             const retryGracePeriod = 60000;
-            let timeout;
+            //let timeout;
             let settled = false;
             let retryCount = img.getAttribute('data-retry-count');
             const initialSrc = img.src;
@@ -227,9 +227,8 @@ async function smartImageLoader(wrapper, loaderEl) {
             const observer = new MutationObserver(checkImageState);
 
             const cleanup = () => {
-                clearTimeout(timeout);
-                observer.disconnect();
-                img.removeAttribute('loading');
+                //clearTimeout(timeout);
+                observer.disconnect();                
             };
 
             const done = () => {
@@ -245,8 +244,8 @@ async function smartImageLoader(wrapper, loaderEl) {
                 const currentRetryCount = img.getAttribute('data-retry-count');
                 if (currentRetryCount !== retryCount || img.src !== initialSrc) {
                     retryCount = currentRetryCount;
-                    clearTimeout(timeout);
-                    timeout = setTimeout(done, retryGracePeriod);
+                    //clearTimeout(timeout);
+                    //timeout = setTimeout(done, retryGracePeriod);
                 }
                 if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth > 0)) done();
             }
@@ -256,7 +255,7 @@ async function smartImageLoader(wrapper, loaderEl) {
             checkImageState();
 
             if (!settled) {
-                timeout = setTimeout(done, retryGracePeriod);
+                //timeout = setTimeout(done, retryGracePeriod);
                 img.removeAttribute('loading');
             }
         });
@@ -293,7 +292,7 @@ function updateMasonryImageStatus(wrapper) {
         zIndex: '1',
         padding: '1px 1px',
         borderRadius: '4px',
-        background: 'rgba(0, 0, 0, 0.7)',
+        background: 'rgba(0, 0, 0, 0.5)',
         color: '#fff',
         fontSize: '12px',
         lineHeight: '1.4',
