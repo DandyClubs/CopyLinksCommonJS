@@ -220,15 +220,11 @@ async function smartImageLoader(wrapper, loaderEl) {
         return new Promise(resolve => {
 
             const done = () => {
+                img.removeEventListener('load', done);
+                img.removeEventListener('error', done);
                 updateProgress();
                 resolve();
-            };
-
-            function checkImageState() {
-                const state = img.getAttribute('data-loaded');
-
-                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth > 0)) done();
-            }
+            };            
 
             if ((img.complete && img.naturalWidth > 0)) {
                 img.decode().then(() => {
