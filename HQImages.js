@@ -1014,6 +1014,10 @@ const DB_PREFIX_RULES = {
     "JBZ": ["FANZA_DIGITAL","h_1294"],
     "RHG": ["FANZA_DIGITAL",""],
     "HNTD": ["FANZA_DIGITAL",""],
+    "BAZE": ["FANZA_DIGITAL",""],
+    "ZGD": ["FANZA_DIGITAL","h_1100"],
+    "ILLE": ["FANZA_DIGITAL",""],
+    "BDA": ["FANZA_DIGITAL",""],
 };
 
 
