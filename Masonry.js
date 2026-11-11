@@ -219,21 +219,20 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
 
+            const retryGracePeriod = 60000;
+            let timeout;
+
+            const observer = new MutationObserver(checkLoaded);
+
             const done = () => {
+                clearTimeout(timeout);
                 img.removeEventListener('load', done);
                 img.removeEventListener('error', done);
+                observer.disconnect();
                 updateProgress();
                 resolve();
-            };            
+            };
 
-            if ((img.complete && img.naturalWidth > 0)) {
-                img.decode().then(() => {
-                    done();
-                }).catch(() => {
-                    console.warn(`Image failed to decode: ${img.src}`);
-                    done();
-                })
-            }
 
             img.addEventListener('load', done);
             img.addEventListener('error', () => {
@@ -242,6 +241,30 @@ async function smartImageLoader(wrapper, loaderEl) {
             });
 
             img.removeAttribute('loading');
+
+            function checkLoaded() {
+                if ((img.complete && img.naturalWidth > 0)) {
+                    img.decode().then(() => {
+                        return done();
+                    }).catch(() => {
+                        console.warn(`Image failed to decode: ${img.src}`);
+                        return done();
+                    })
+                }
+                const state = img.getAttribute('data-loaded');
+                if (state === 'true') {
+                    img.decode().then(() => {
+                        return done();
+                    }).catch(() => {
+                        console.warn(`Image failed to decode: ${img.src}`);
+                        return done();
+                    })
+                } else if (state === 'false') return done();
+            }
+
+            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });
+            checkLoaded();
+            timeout = setTimeout(done, retryGracePeriod);
 
         });
     };
