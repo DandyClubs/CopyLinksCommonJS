@@ -218,7 +218,7 @@ async function smartImageLoader(wrapper, loaderEl) {
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
         return new Promise(resolve => {
-            const retryGracePeriod = 120000;
+            const retryGracePeriod = 60000;
             let timeout;
             let settled = false;
             let retryCount = img.getAttribute('data-retry-count');
@@ -248,7 +248,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                     clearTimeout(timeout);
                     timeout = setTimeout(done, retryGracePeriod);
                 }
-                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth !== 0)) done();
+                if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth > 0)) done();
             }
             
             observer.observe(img, { attributes: true, attributeFilter: ['src', 'data-loaded', 'data-retry-count'] });
@@ -281,6 +281,37 @@ async function smartImageLoader(wrapper, loaderEl) {
         .map(() => worker());
 
     await Promise.allSettled(workers);
+}
+
+function updateMasonryImageStatus(wrapper) {
+    const status = document.createElement('div');
+    status.className = 'image-masonry-status';
+    Object.assign(status.style, {
+        position: 'absolute',
+        top: '8px',
+        right: '8px',
+        zIndex: '1',
+        padding: '4px 8px',
+        borderRadius: '4px',
+        background: 'rgba(0, 0, 0, 0.7)',
+        color: '#fff',
+        fontSize: '12px',
+        lineHeight: '1.4',
+        pointerEvents: 'none'
+    });
+    wrapper.style.position = 'relative';        
+    
+    const items = [...wrapper.querySelectorAll('.image-masonry-item')];
+    const failedCount = items.filter(item => {
+        const width = Number.parseFloat(item.style.width);
+        return !Number.isFinite(width) || width === 0;
+    }).length;
+    const displayedCount = items.length - failedCount;
+
+    status.textContent =
+        `${displayedCount}/${failedCount}/${items.length}`;
+
+        wrapper.appendChild(status);
 }
 
 
@@ -371,7 +402,7 @@ function createSectionMasonry(container) {
             }
             item.appendChild(cleanImg);
             wrapper.appendChild(item);
-        });
+        });        
 
         // 수집된 이미지 노드들과 찌꺼기들 제거
         nodesToRemove.forEach(node => node.remove());
@@ -856,6 +887,8 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
 
     container.style.height =
         `${totalHeight}px`;
+
+    updateMasonryImageStatus(container);
 }
 
 function getAspectRatio(item, img) {
