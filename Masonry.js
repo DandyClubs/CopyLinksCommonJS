@@ -250,9 +250,9 @@ async function smartImageLoader(wrapper, loaderEl) {
                 }
                 if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth > 0)) done();
             }
-            
+
             observer.observe(img, { attributes: true, attributeFilter: ['src', 'data-loaded', 'data-retry-count'] });
-            
+
             checkImageState();
 
             if (!settled) {
@@ -289,7 +289,7 @@ function updateMasonryImageStatus(wrapper) {
     Object.assign(status.style, {
         position: 'absolute',
         top: '1px',
-        right: '1px',
+        left: '1px',
         zIndex: '1',
         padding: '1px 1px',
         borderRadius: '4px',
@@ -299,8 +299,8 @@ function updateMasonryImageStatus(wrapper) {
         lineHeight: '1.4',
         pointerEvents: 'none'
     });
-    wrapper.style.position = 'relative';        
-    
+    wrapper.style.position = 'relative';
+
     const items = [...wrapper.querySelectorAll('.image-masonry-item')];
     const failedCount = items.filter(item => {
         const width = Number.parseFloat(item.style.width);
@@ -311,7 +311,7 @@ function updateMasonryImageStatus(wrapper) {
     status.textContent =
         `${displayedCount} / ${failedCount} / ${items.length}`;
 
-        wrapper.appendChild(status);
+    wrapper.appendChild(status);
 }
 
 
@@ -402,7 +402,7 @@ function createSectionMasonry(container) {
             }
             item.appendChild(cleanImg);
             wrapper.appendChild(item);
-        });        
+        });
 
         // 수집된 이미지 노드들과 찌꺼기들 제거
         nodesToRemove.forEach(node => node.remove());
