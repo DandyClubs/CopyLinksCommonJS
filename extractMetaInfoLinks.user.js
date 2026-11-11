@@ -59,10 +59,8 @@ function getStandardResolution(text) {
     return matchedKey;
 }
 
-const DOMAIN = extractRootDomain(window.location.href);
-
 const filterLinksRegex = /frdl\.(io|my)\/|filefox\.cc|katfile\.|clicknupload\.click|mega\.nz\/file|drive\.google\.com\/file\/|ddownload\.com|krakenfiles\.com|send\.now|rg\.to|rapidgator\.net|uploadgig\.com/;
-const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud|online)\\/(free|users\\/)|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + DOMAIN + ').*$');
+const SKIPFILTER = new RegExp('rapidgator\\.net\\/folder\\/|windfiles\\.com|mypikpak\\.com|pricing\\?aff|mega\\.nz\\/aff|katfile\\.(com|cloud|online)\\/(free|users\\/)|developershome|md5file\\.com|attachment|premium|upgrade|javascript|search|SKIP|#$|^\\/|^(?=.*' + ROOT_DOMAIN + ').*$');
 
 // ✅ 해상도 블록 생성 (수정본)
 function groupResolution(div, siteRule = {}) {
