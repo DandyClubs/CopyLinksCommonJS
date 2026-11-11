@@ -218,46 +218,35 @@ async function smartImageLoader(wrapper, loaderEl) {
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
         return new Promise(resolve => {
-            const retryGracePeriod = 60000;
-            //let timeout;
-            let settled = false;
-            let retryCount = img.getAttribute('data-retry-count');
-            const initialSrc = img.src;
-
-            const observer = new MutationObserver(checkImageState);
-
-            const cleanup = () => {
-                //clearTimeout(timeout);
-                observer.disconnect();                
-            };
 
             const done = () => {
-                if (settled) return;
-                settled = true;
-                cleanup();
                 updateProgress();
                 resolve();
             };
 
             function checkImageState() {
                 const state = img.getAttribute('data-loaded');
-                const currentRetryCount = img.getAttribute('data-retry-count');
-                if (currentRetryCount !== retryCount || img.src !== initialSrc) {
-                    retryCount = currentRetryCount;
-                    //clearTimeout(timeout);
-                    //timeout = setTimeout(done, retryGracePeriod);
-                }
+
                 if (state === 'true' || state === 'false' || (img.complete && img.naturalWidth > 0)) done();
             }
 
-            observer.observe(img, { attributes: true, attributeFilter: ['src', 'data-loaded', 'data-retry-count'] });
-
-            checkImageState();
-
-            if (!settled) {
-                //timeout = setTimeout(done, retryGracePeriod);
-                img.removeAttribute('loading');
+            if ((img.complete && img.naturalWidth > 0)) {
+                img.decode().then(() => {
+                    done();
+                }).catch(() => {
+                    console.warn(`Image failed to decode: ${img.src}`);
+                    done();
+                })
             }
+
+            img.addEventListener('load', done);
+            img.addEventListener('error', () => {
+                console.warn(`Image failed to load: ${img.src}`);
+                done();
+            });
+
+            img.removeAttribute('loading');
+
         });
     };
 
