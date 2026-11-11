@@ -221,6 +221,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             const retryGracePeriod = 60000;
             let timeout;
+            let retryCount = img.getAttribute('data-retry-count');
 
             const observer = new MutationObserver(checkLoaded);
 
@@ -260,9 +261,18 @@ async function smartImageLoader(wrapper, loaderEl) {
                         return done();
                     })
                 } else if (state === 'false') return done();
+
+                const currentRetryCount = img.getAttribute('data-retry-count');
+                
+                if (currentRetryCount !== retryCount) {
+                    retryCount = currentRetryCount;
+                    clearTimeout(timeout);
+                    timeout = setTimeout(done, retryGracePeriod);
+                }
+
             }
 
-            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });
+            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded', 'data-retry-count'] });
             checkLoaded();
             timeout = setTimeout(done, retryGracePeriod);
 
