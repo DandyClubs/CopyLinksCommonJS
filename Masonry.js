@@ -263,7 +263,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 } else if (state === 'false') return done();
 
                 const currentRetryCount = img.getAttribute('data-retry-count');
-                
+
                 if (currentRetryCount !== retryCount) {
                     retryCount = currentRetryCount;
                     clearTimeout(timeout);
@@ -312,7 +312,7 @@ function updateMasonryImageStatus(wrapper) {
         borderRadius: '4px',
         background: 'rgba(0, 0, 0, 0.5)',
         color: '#fff',
-        fontSize: '12px',
+        fontSize: '10px',
         lineHeight: '1.4',
         pointerEvents: 'none'
     });
