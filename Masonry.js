@@ -267,6 +267,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 if (currentRetryCount !== retryCount) {
                     retryCount = currentRetryCount;
                     clearTimeout(timeout);
+                    console.log(`Retry count changed for ${img.src}, resetting timeout.`);
                     timeout = setTimeout(done, retryGracePeriod);
                 }
 
