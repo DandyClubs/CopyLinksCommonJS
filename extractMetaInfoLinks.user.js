@@ -85,10 +85,10 @@ function groupResolution(div, siteRule = {}) {
             if (currentRes && el.nodeType === Node.ELEMENT_NODE) {
                 // 노드 하위에 존재하는 링크 추출
                 const linksInNode = Array.from(el.querySelectorAll('a'))
-                    .filter(link => filterLinksRegex.test(link.href) && !SKIPFILTER.test(link.href));
+                    .filter(link => siteRule.filterLinksRegex.test(link.href) && !siteRule.SKIPFILTER.test(link.href));
 
                 // 만약 노드 자체(el)가 <a> 태그인 경우도 처리
-                if (el.tagName === 'A' && filterLinksRegex.test(el.href) && !SKIPFILTER.test(el.href)) {
+                if (el.tagName === 'A' && siteRule.filterLinksRegex.test(el.href) && !SKIPFILTER.test(el.href)) {
                     linksInNode.push(el);
                 }
 
@@ -148,7 +148,7 @@ function extractMetaInfo(div, siteRule = {}) {
 
         Promise.resolve(groupResolution(div, siteRule)).then(Blocks => {
             const allLinks = Array.from(div.querySelectorAll('a[href]'))
-                .filter(href => filterLinksRegex.test(href));
+                .filter(href => siteRule.filterLinksRegex.test(href));
 
             let resolutionGroups = {};
             allLinks.forEach(link => {
