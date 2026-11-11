@@ -288,10 +288,10 @@ function updateMasonryImageStatus(wrapper) {
     status.className = 'image-masonry-status';
     Object.assign(status.style, {
         position: 'absolute',
-        top: '8px',
-        right: '8px',
+        top: '1px',
+        right: '1px',
         zIndex: '1',
-        padding: '4px 8px',
+        padding: '1px 1px',
         borderRadius: '4px',
         background: 'rgba(0, 0, 0, 0.7)',
         color: '#fff',
@@ -309,7 +309,7 @@ function updateMasonryImageStatus(wrapper) {
     const displayedCount = items.length - failedCount;
 
     status.textContent =
-        `${displayedCount}/${failedCount}/${items.length}`;
+        `${displayedCount} / ${failedCount} / ${items.length}`;
 
         wrapper.appendChild(status);
 }
