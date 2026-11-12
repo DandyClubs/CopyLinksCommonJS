@@ -221,14 +221,14 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
 
-            const retryGracePeriod = 60000;
-            let timeout;
+            //const retryGracePeriod = 60000;
+            //let timeout;
             let retryCount = img.getAttribute('data-retry-count');
 
             const observer = new MutationObserver(checkLoaded);
 
             const done = () => {
-                clearTimeout(timeout);
+                //clearTimeout(timeout);
                 img.removeEventListener('load', done);
                 img.removeEventListener('error', done);
                 observer.disconnect();
@@ -245,7 +245,8 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             img.removeAttribute('loading');
 
-            function checkLoaded() {                
+            function checkLoaded() {  
+                console.log(`Checking load state for ${img.src}: complete=${img.complete}, naturalWidth=${img.naturalWidth}, data-loaded=${img.getAttribute('data-loaded')}, data-retry-count=${img.getAttribute('data-retry-count')}`);              
                 if ((img.complete && img.naturalWidth > 0)) {
                     img.decode().then(() => {
                         return done();
@@ -263,7 +264,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                         return done();
                     })
                 } else if (state === 'pending') {
-                    clearTimeout(timeout);                    
+                    //clearTimeout(timeout);                    
                 } else if (state === 'false') {
                     return done();
                 }
@@ -272,16 +273,16 @@ async function smartImageLoader(wrapper, loaderEl) {
 
                 if (currentRetryCount !== retryCount) {
                     retryCount = currentRetryCount;
-                    clearTimeout(timeout);
+                    //clearTimeout(timeout);
                     console.log(`Retry count changed for ${img.src}, resetting timeout.`);
-                    timeout = setTimeout(done, retryGracePeriod);
+                    //timeout = setTimeout(done, retryGracePeriod);
                 }
 
             }
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-loaded', 'data-retry-count'] });
             checkLoaded();
-            timeout = setTimeout(done, retryGracePeriod);
+            //timeout = setTimeout(done, retryGracePeriod);
 
         });
     };
@@ -321,6 +322,7 @@ function updateMasonryImageStatus(wrapper) {
     const status = document.createElement('div');
     status.className = 'image-masonry-status';
     Object.assign(status.style, {
+        
         position: 'absolute',
         top: '1px',
         left: '1px',
