@@ -233,8 +233,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             img.removeAttribute('loading');
 
-            function checkLoaded() {  
-                console.log(`Checking load state for ${img.src}: complete=${img.complete}, naturalWidth=${img.naturalWidth}, data-loaded=${img.getAttribute('data-loaded')}, data-retry-count=${img.getAttribute('data-retry-count')}`);              
+            function checkLoaded() {                  
                 if ((img.complete && img.naturalWidth > 0)) {
                     img.decode().then(() => {
                         return done();
