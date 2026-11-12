@@ -286,11 +286,20 @@ async function smartImageLoader(wrapper, loaderEl) {
         });
     };
 
-    // ⭐️ 대기열(Queue)과 워커(Worker) 패턴 적용
-    const queue = [...imgs];
-    const concurrencyLimit = 4; // 동시 로딩할 최대 이미지 개수
+    // 도메인별 대기열을 만들어 다른 도메인의 이미지가 함께 대기하지 않도록 합니다.
+    const queuesByDomain = new Map();
+    imgs.forEach(img => {
+        const url = new URL(img.currentSrc || img.src, document.baseURI);
+        const domain = url.hostname || url.protocol;
+        if (!queuesByDomain.has(domain)) {
+            queuesByDomain.set(domain, []);
+        }
+        queuesByDomain.get(domain).push(img);
+    });
 
-    const worker = async () => {
+    const concurrencyLimit = 4; // 도메인별 동시 로딩할 최대 이미지 개수
+
+    const worker = async (queue) => {
         while (queue.length > 0) {
             const img = queue.shift();
             if (img) {
@@ -299,10 +308,11 @@ async function smartImageLoader(wrapper, loaderEl) {
         }
     };
 
-    // 지정한 concurrencyLimit만큼의 워커를 동시에 돌려서 큐를 소모합니다.
-    const workers = Array(Math.min(concurrencyLimit, imgs.length))
-        .fill(null)
-        .map(() => worker());
+    const workers = [...queuesByDomain.values()].flatMap(queue =>
+        Array(Math.min(concurrencyLimit, queue.length))
+            .fill(null)
+            .map(() => worker(queue))
+    );
 
     await Promise.allSettled(workers);
 }
