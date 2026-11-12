@@ -1,6 +1,8 @@
 /**
  * Skyline Masonry Layout Manager
  */
+
+
 class SkylineLayout {
     constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 30) {
         this.containerWidth = containerWidth;
@@ -243,7 +245,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             img.removeAttribute('loading');
 
-            function checkLoaded() {
+            function checkLoaded() {                
                 if ((img.complete && img.naturalWidth > 0)) {
                     img.decode().then(() => {
                         return done();
@@ -260,7 +262,11 @@ async function smartImageLoader(wrapper, loaderEl) {
                         console.warn(`Image failed to decode: ${img.src}`);
                         return done();
                     })
-                } else if (state === 'false') return done();
+                } else if (state === 'pending') {
+                    clearTimeout(timeout);                    
+                } else if (state === 'false') {
+                    return done();
+                }
 
                 const currentRetryCount = img.getAttribute('data-retry-count');
 
