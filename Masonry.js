@@ -221,27 +221,15 @@ async function smartImageLoader(wrapper, loaderEl) {
     const loadImage = (img) => {
         return new Promise(resolve => {
 
-            //const retryGracePeriod = 60000;
-            //let timeout;
             let retryCount = img.getAttribute('data-retry-count');
 
             const observer = new MutationObserver(checkLoaded);
 
             const done = () => {
-                //clearTimeout(timeout);
-                img.removeEventListener('load', done);
-                img.removeEventListener('error', done);
                 observer.disconnect();
                 updateProgress();
                 resolve();
             };
-
-
-            img.addEventListener('load', done);
-            img.addEventListener('error', () => {
-                console.warn(`Image failed to load: ${img.src}`);
-                done();
-            });
 
             img.removeAttribute('loading');
 
@@ -273,16 +261,13 @@ async function smartImageLoader(wrapper, loaderEl) {
 
                 if (currentRetryCount !== retryCount) {
                     retryCount = currentRetryCount;
-                    //clearTimeout(timeout);
-                    console.log(`Retry count changed for ${img.src}, resetting timeout.`);
-                    //timeout = setTimeout(done, retryGracePeriod);
+                    console.log(`Retry count changed for ${img.src}, resetting timeout.`);                    
                 }
 
             }
 
             observer.observe(img, { attributes: true, attributeFilter: ['data-loaded', 'data-retry-count'] });
-            checkLoaded();
-            //timeout = setTimeout(done, retryGracePeriod);
+            checkLoaded();            
 
         });
     };
