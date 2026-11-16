@@ -226,9 +226,9 @@ async function smartImageLoader(wrapper, loaderEl) {
                 updateProgress();
                 resolve();
             };
-            
+
             if (img.complete && img.naturalWidth > 0) {
-                done();
+                return done();
             }
 
             img.addEventListener('load', done);
