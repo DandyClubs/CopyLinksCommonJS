@@ -216,12 +216,10 @@ async function smartImageLoader(wrapper, loaderEl) {
             circle.style.setProperty("--p", percent);
         }
     };
-
+    
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
-        return new Promise(resolve => {
-
-            let retryCount = img.getAttribute('data-retry-count');
+        return new Promise(resolve => {            
 
             const observer = new MutationObserver(checkLoaded);
 
@@ -233,40 +231,18 @@ async function smartImageLoader(wrapper, loaderEl) {
 
             img.removeAttribute('loading');
 
-            function checkLoaded() {                  
-                if ((img.complete && img.naturalWidth > 0)) {
-                    img.decode().then(() => {
-                        return done();
-                    }).catch(() => {
-                        console.warn(`Image failed to decode: ${img.src}`);
-                        return done();
-                    })
-                }
+            function checkLoaded() {
                 const state = img.getAttribute('data-loaded');
                 if (state === 'true') {
-                    img.decode().then(() => {
-                        return done();
-                    }).catch(() => {
-                        console.warn(`Image failed to decode: ${img.src}`);
-                        return done();
-                    })
-                } else if (state === 'pending') {
-                    //clearTimeout(timeout);                    
+                    return done();
                 } else if (state === 'false') {
                     return done();
                 }
-
-                const currentRetryCount = img.getAttribute('data-retry-count');
-
-                if (currentRetryCount !== retryCount) {
-                    retryCount = currentRetryCount;
-                    console.log(`Retry count changed for ${img.src}, resetting timeout.`);                    
-                }
-
             }
 
-            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded', 'data-retry-count'] });
-            checkLoaded();            
+            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });
+
+            checkLoaded();
 
         });
     };
@@ -306,7 +282,7 @@ function updateMasonryImageStatus(wrapper) {
     const status = document.createElement('div');
     status.className = 'image-masonry-status';
     Object.assign(status.style, {
-        
+
         position: 'absolute',
         top: '1px',
         left: '1px',
