@@ -216,32 +216,21 @@ async function smartImageLoader(wrapper, loaderEl) {
             circle.style.setProperty("--p", percent);
         }
     };
-    
+
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
-        return new Promise(resolve => {      
+        return new Promise(resolve => {
 
-            const observer = new MutationObserver(checkLoaded);
-
-            const done = () => {                
+            const done = () => {
+                img.removeEventListener('load', done);
+                img.removeEventListener('error', done);
                 updateProgress();
                 resolve();
             };
 
+            img.addEventListener('load', done);
+            img.addEventListener('error', done);
             img.removeAttribute('loading');
-
-            function checkLoaded() {
-                const state = img.getAttribute('data-loaded');
-                if (state === 'true') {
-                    return done();
-                } else if (state === 'false') {
-                    return done();
-                }
-            }
-            
-            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });            
-            checkLoaded();
-            
 
         });
     };
