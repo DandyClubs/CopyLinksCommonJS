@@ -238,10 +238,10 @@ async function smartImageLoader(wrapper, loaderEl) {
                     return done();
                 }
             }
-
-            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });
-
+            
+            observer.observe(img, { attributes: true, attributeFilter: ['data-loaded'] });            
             checkLoaded();
+            
 
         });
     };
