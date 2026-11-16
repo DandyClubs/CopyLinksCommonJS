@@ -219,12 +219,11 @@ async function smartImageLoader(wrapper, loaderEl) {
     
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
-        return new Promise(resolve => {            
+        return new Promise(resolve => {      
 
             const observer = new MutationObserver(checkLoaded);
 
-            const done = () => {
-                observer.disconnect();
+            const done = () => {                
                 updateProgress();
                 resolve();
             };
