@@ -228,12 +228,13 @@ async function smartImageLoader(wrapper, loaderEl) {
             };
 
             if (img.complete && img.naturalWidth > 0) {
-                return done();
+                updateProgress();
+                resolve();
+            } else {
+                img.addEventListener('load', done);
+                img.addEventListener('error', done);
+                img.removeAttribute('loading');
             }
-
-            img.addEventListener('load', done);
-            img.addEventListener('error', done);
-            img.removeAttribute('loading');
 
         });
     };
