@@ -217,11 +217,14 @@ async function smartImageLoader(wrapper, loaderEl) {
     };
 
     const countedImages = new Set();
+    const imageWaiters = new Map();
+    const isImageHandled = img =>
+        img.dataset.loaded === "true" || img.dataset.loaded === "false";
 
     const checkAndHandleImage = (img) => {
         if (countedImages.has(img)) return;
 
-        if (img.dataset.loaded === "true" || img.dataset.loaded === "false") {
+        if (isImageHandled(img)) {
             countedImages.add(img);
             updateProgress();
         }
@@ -237,7 +240,12 @@ async function smartImageLoader(wrapper, loaderEl) {
                 mutation.type === "attributes" &&
                 mutation.attributeName === "data-loaded"
             ) {
-                checkAndHandleImage(mutation.target);
+                const img = mutation.target;
+                checkAndHandleImage(img);
+                if (isImageHandled(img)) {
+                    imageWaiters.get(img)?.();
+                    imageWaiters.delete(img);
+                }
             }
         });
     });
@@ -267,9 +275,11 @@ async function smartImageLoader(wrapper, loaderEl) {
             const img = queue.shift();
             if (img) {
                 await new Promise(resolve => {
-                    if (img.dataset.loaded === "true" || img.dataset.loaded === "false") {
+                    if (isImageHandled(img)) {
                         resolve();
-                    } 
+                    } else {
+                        imageWaiters.set(img, resolve);
+                    }
                 });
             }
         }
