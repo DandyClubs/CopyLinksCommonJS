@@ -219,7 +219,7 @@ async function smartImageLoader(wrapper, loaderEl) {
 
     // 개별 이미지 로딩 함수
     const loadImage = (img) => {
-        return new Promise(resolve => {
+        return new Promise(resolve => {            
             const done = () => {
                 img.removeEventListener('load', done);
                 img.removeEventListener('error', done);
@@ -231,6 +231,7 @@ async function smartImageLoader(wrapper, loaderEl) {
                 updateProgress();
                 resolve();
             } else {
+                console.log(img.src);
                 img.addEventListener('load', done);
                 img.addEventListener('error', done);
                 img.removeAttribute('loading');
