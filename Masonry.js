@@ -200,7 +200,6 @@ class SkylineLayout {
     }
 }
 
-
 async function smartImageLoader(wrapper, loaderEl) {
     const imgs = [...wrapper.querySelectorAll("img")];
     const total = imgs.length;
@@ -217,30 +216,40 @@ async function smartImageLoader(wrapper, loaderEl) {
         }
     };
 
-    // 개별 이미지 로딩 함수
-    const loadImage = (img) => {
-        return new Promise(resolve => {            
-            const done = () => {
-                img.removeEventListener('load', done);
-                img.removeEventListener('error', done);
-                updateProgress();
-                resolve();
-            };
+    const countedImages = new Set();
 
-            if (img.complete && img.naturalWidth > 0) {
-                updateProgress();
-                resolve();
-            } else {
-                console.log(img.src);
-                img.addEventListener('load', done);
-                img.addEventListener('error', done);
-                img.removeAttribute('loading');
-            }
+    const checkAndHandleImage = (img) => {
+        if (countedImages.has(img)) return;
 
-        });
+        if (img.dataset.loaded === "true" || img.dataset.loaded === "false") {
+            countedImages.add(img);
+            updateProgress();
+        }
     };
 
-    // 도메인별 대기열을 만들어 다른 도메인의 이미지가 함께 대기하지 않도록 합니다.
+    // 초기 상태 검사
+    imgs.forEach(img => checkAndHandleImage(img));
+
+    // 래퍼별 독립된 MutationObserver 생성 (변수명 명확화)
+    const wrapperObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (
+                mutation.type === "attributes" &&
+                mutation.attributeName === "data-loaded"
+            ) {
+                checkAndHandleImage(mutation.target);
+            }
+        });
+    });
+
+    // 현재 wrapper 내부의 이미지들만 감지
+    imgs.forEach(img => {
+        wrapperObserver.observe(img, {
+            attributes: true,
+            attributeFilter: ["data-loaded"]
+        });
+    });
+
     const queuesByDomain = new Map();
     imgs.forEach(img => {
         const url = new URL(img.currentSrc || img.src, document.baseURI);
@@ -251,13 +260,17 @@ async function smartImageLoader(wrapper, loaderEl) {
         queuesByDomain.get(domain).push(img);
     });
 
-    const concurrencyLimit = 4; // 도메인별 동시 로딩할 최대 이미지 개수
+    const concurrencyLimit = 4;
 
     const worker = async (queue) => {
         while (queue.length > 0) {
             const img = queue.shift();
             if (img) {
-                await loadImage(img);
+                await new Promise(resolve => {
+                    if (img.dataset.loaded === "true" || img.dataset.loaded === "false") {
+                        resolve();
+                    } 
+                });
             }
         }
     };
@@ -269,6 +282,9 @@ async function smartImageLoader(wrapper, loaderEl) {
     );
 
     await Promise.allSettled(workers);
+    
+    // 이 래퍼 전용 옵저버만 안전하게 해제
+    wrapperObserver.disconnect();
 }
 
 function updateMasonryImageStatus(wrapper) {
