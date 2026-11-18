@@ -88,7 +88,7 @@ function groupResolution(div, siteRule = {}) {
                     .filter(link => siteRule.filterLinksRegex.test(link.href) && !siteRule.SKIPFILTER.test(link.href));
 
                 // 만약 노드 자체(el)가 <a> 태그인 경우도 처리
-                if (el.tagName === 'A' && siteRule.filterLinksRegex.test(el.href) && !SKIPFILTER.test(el.href)) {
+                if (el.tagName === 'A' && siteRule.filterLinksRegex.test(el.href) && !siteRule.SKIPFILTER.test(el.href)) {
                     linksInNode.push(el);
                 }
 
