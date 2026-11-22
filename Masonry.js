@@ -602,6 +602,13 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
 
     const applyHeightLimit = (width, height, ratio) => {
         if (height <= maxHeight) {
+            if (width < normalizedMinWidth) {
+                return {
+                    width: normalizedMinWidth,
+                    height: normalizedMinWidth / ratio
+                };
+            }
+
             return { width, height };
         }
 
@@ -609,7 +616,10 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
             Math.round(maxHeight * ratio);
 
         if (limitedWidth < normalizedMinWidth) {
-            return { width, height };
+            return {
+                width: normalizedMinWidth,
+                height: normalizedMinWidth / ratio
+            };
         }
 
         return {
