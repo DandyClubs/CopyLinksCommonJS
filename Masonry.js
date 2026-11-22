@@ -568,7 +568,7 @@ function buildAverageHeights(data, threshold = 15) {
     return finalMapping;
 }
 
-function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
+function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWidth = 200) {
 
     const items =
         Array.from(container.querySelectorAll('.image-masonry-item'));
@@ -593,6 +593,26 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
         Math.floor((containerWidth - gap) / columnCount);
 
     const shrinkThreshold = 0.85;
+    const normalizedMinWidth =
+        Number.isFinite(minWidth) ? Math.max(0, minWidth) : 200;
+
+    const applyHeightLimit = (width, height, ratio) => {
+        if (height <= maxHeight) {
+            return { width, height };
+        }
+
+        const limitedWidth =
+            Math.round(maxHeight * ratio);
+
+        if (limitedWidth < normalizedMinWidth) {
+            return { width, height };
+        }
+
+        return {
+            width: limitedWidth,
+            height: maxHeight
+        };
+    };
 
     const allCalculatedItems = [];
 
@@ -635,11 +655,12 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
                 tempH = tempW / ratio;
             }
 
-            // 최대 높이 제한
-            if (tempH > maxHeight) {
-                tempH = maxHeight;
-                tempW = tempH * ratio;
-            }
+            // 최대 높이 제한 (minWidth를 확보할 수 있는 경우에만 적용)
+            const limitedSize =
+                applyHeightLimit(tempW, tempH, ratio);
+
+            tempW = limitedSize.width;
+            tempH = limitedSize.height;
 
             // even pixel
             tempW =
@@ -702,7 +723,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
         let overflow =
             currentWSum - availableW;
 
-        const minShrinkWidth = 200;
+        const minShrinkWidth = normalizedMinWidth;
 
         if (overflow > 0) {
 
@@ -770,14 +791,12 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
                 finalH =
                     Math.round(finalW / item.ratio);
 
-                // maxHeight 근접 보정
-                if (
-                    finalH > maxHeight &&
-                    Math.abs(finalH - maxHeight) <= 10
-                ) {
-                    finalH = maxHeight;
-                    finalW = Math.round(finalH * item.ratio);
-                }
+                // 최대 높이 제한 (minWidth를 확보할 수 있는 경우에만 적용)
+                const limitedSize =
+                    applyHeightLimit(finalW, finalH, item.ratio);
+
+                finalW = limitedSize.width;
+                finalH = limitedSize.height;
 
                 // even pixel
                 finalW =
@@ -860,8 +879,15 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600) {
 
             // 3. 결정된 targetHeight(최빈값)로 그룹 내 모든 아이템 높이 통일
             group.forEach(res => {
-                let finalH = targetHeight;
-                let finalW = Math.round(finalH * res.item.ratio);
+                const limitedSize =
+                    applyHeightLimit(
+                        Math.round(targetHeight * res.item.ratio),
+                        targetHeight,
+                        res.item.ratio
+                    );
+
+                let finalW = limitedSize.width;
+                let finalH = limitedSize.height;
 
                 // even pixel 강제
                 finalW = Math.round(finalW / 2) * 2;
