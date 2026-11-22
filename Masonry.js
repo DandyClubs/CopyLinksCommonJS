@@ -4,11 +4,12 @@
 
 
 class SkylineLayout {
-    constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 30) {
+    constructor(containerWidth, gap, minWidthPercent = 0.8, heightTolerance = 30, minWidth = 0) {
         this.containerWidth = containerWidth;
         this.gap = gap;
         this.minWidthPercent = minWidthPercent;
         this.heightTolerance = heightTolerance;
+        this.minWidth = minWidth;
         this.rows = new Map();
         // 초기 상태: x=0부터 전체 너비만큼 빈 공간(y=0)이 있음
         this.skyline = [{ x: 0, y: 0, w: containerWidth }];
@@ -50,12 +51,15 @@ class SkylineLayout {
                     break;
                 }
                 // 2. 원래 너비로는 안 되지만, 줄여서(minWidthPercent) 들어갈 수 있는지 확인
-                else if (realAvailableW >= item.w * this.minWidthPercent) {
+                else if (
+                    realAvailableW >= item.w * this.minWidthPercent &&
+                    realAvailableW >= this.minWidth
+                ) {
                     if (currentMaxY < bestY) {
                         bestY = currentMaxY;
                         finalX = seg.x + effectiveGap;
                         finalW = realAvailableW; // 남은 공간에 맞춰 축소
-                        //finalH = Math.floor(finalW / ratio);
+                        finalH = Math.round(finalW / ratio);
                         targetIdx = i;
                     }
                     break;
@@ -742,7 +746,10 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                     overflow * ratio;
 
                 item.baseW =
-                    Math.round(item.baseW - shrink);
+                    Math.max(
+                        minShrinkWidth,
+                        Math.round(item.baseW - shrink)
+                    );
             });
         }
 
@@ -784,8 +791,12 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                 finalW =
                     Math.round(item.baseW);
 
+                if (finalW < normalizedMinWidth) {
+                    finalW = normalizedMinWidth;
+                }
+
                 if (finalW > maxWidth) {
-                    finalW = maxWidth;
+                    finalW = Math.max(normalizedMinWidth, maxWidth);
                 }
 
                 finalH =
@@ -816,6 +827,20 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                 scaleMap.push(newCache);
 
                 usedCache = newCache;
+            }
+
+            if (finalW < normalizedMinWidth) {
+                finalW = normalizedMinWidth;
+                finalH =
+                    Math.round(finalW / item.ratio);
+
+                const limitedSize =
+                    applyHeightLimit(finalW, finalH, item.ratio);
+
+                finalW = limitedSize.width;
+                finalH = limitedSize.height;
+                usedCache.finalW = finalW;
+                usedCache.finalH = finalH;
             }
 
             groupResults.push({
@@ -911,7 +936,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
     // ---------------------------------------------------
 
     const layout =
-        new SkylineLayout(containerWidth, gap, 0.95, 30);
+        new SkylineLayout(containerWidth, gap, 0.95, 30, normalizedMinWidth);
 
     allCalculatedItems.forEach(data => {
 
