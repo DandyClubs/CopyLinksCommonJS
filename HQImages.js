@@ -1025,6 +1025,9 @@ const DB_PREFIX_RULES = {
     "ZSGD": ["FANZA_DIGITAL", "483"],
     "ZSMX": ["FANZA_MONO", "n_650"],
     "ZUKO": ["FANZA_DIGITAL", ""],    	
+    "SPJQJ": ["FANZA_DIGITAL",""],
+    "MURIKURI": ["FANZA_DIGITAL","1mu"],
+    "HXAD": ["FANZA_DIGITAL","29"],
 };
 
 
