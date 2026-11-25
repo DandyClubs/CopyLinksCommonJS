@@ -1078,7 +1078,15 @@ function fetchImageResolution(url) {
             responseType: "arraybuffer",
             onload: (res) => {                
                 const status = res.status;
+                const responseUrl =
+                    (res.finalUrl || finalUrl).split('?')[0].toLowerCase();
                 let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
+
+                if (responseUrl.endsWith('/mono/noimage/now_printing.jpg')) {
+                    console.warn(`[VideoCode] 대체 이미지로 리다이렉트됨 → 이미지 없음: ${responseUrl}`);
+                    resolve({ exists: false, reason: 'no_image' });
+                    return;
+                }
 
                 // 1. HTTP 오류 체크
                 if (status === 0) {
