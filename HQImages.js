@@ -1051,6 +1051,7 @@ function fetchImageResolution(url) {
 
     const cleanUrl = url.split('?')[0];
     const finalUrl = cleanUrl.toLowerCase();
+    const tryProxy = ['https://wsrv.nl/?url=', 'https://proxy.duckduckgo.com/iu/?u='];
 
 
     // 1. URL 확장자를 통해 필요한 바이트 크기 미리 계산
@@ -1067,19 +1068,33 @@ function fetchImageResolution(url) {
     const targetRange = getExpectedRange(finalUrl);
 
     return new Promise((resolve) => {
-        GM_xmlhttpRequest({
-            method: "GET",
-            url: finalUrl,
-            headers: {
-                "Range": `bytes=${targetRange}`,
-                "Referer": finalUrl,
-                "Origin": new URL(finalUrl).origin
-            },
-            responseType: "arraybuffer",
-            onload: (res) => {                
+        const requestImage = (requestUrl, proxyIndex = 0) => {
+            const headers = {
+                "Range": `bytes=${targetRange}`
+            };
+
+            if (proxyIndex === 0) {
+                headers.Referer = finalUrl;
+                headers.Origin = new URL(finalUrl).origin;
+            }
+
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: requestUrl,
+                headers,
+                responseType: "arraybuffer",
+                onload: (res) => {
                 const status = res.status;
+                if (status === 403 && proxyIndex < tryProxy.length) {
+                    const proxyUrl =
+                        `${tryProxy[proxyIndex]}${encodeURIComponent(finalUrl)}`;
+                    console.warn(`[VideoCode] HTTP 403 → 프록시 재시도 ${proxyIndex + 1}/${tryProxy.length}: ${finalUrl}`);
+                    requestImage(proxyUrl, proxyIndex + 1);
+                    return;
+                }
+
                 const responseUrl =
-                    (res.finalUrl || finalUrl).split('?')[0].toLowerCase();
+                    (res.finalUrl || requestUrl).split('?')[0].toLowerCase();
                 let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
 
                 if (responseUrl.endsWith('/mono/noimage/now_printing.jpg')) {
@@ -1152,7 +1167,7 @@ function fetchImageResolution(url) {
                     resolve({ exists: false, reason: 'redirect' });
                 }
                 else if (status === 403) {
-                    console.warn(`[VideoCode] 국가제한 (HTTP ${status}): ${finalUrl}`);
+                    console.warn(`[VideoCode] 프록시 재시도 후에도 국가제한 (HTTP ${status}): ${finalUrl}`);
                     resolve({ exists: false, reason: 'Region restrictions' });
                 }
                 else if (status === 400 || status === 404) {
@@ -1162,11 +1177,16 @@ function fetchImageResolution(url) {
                 else if (status >= 500) {
                     console.warn(`[VideoCode] 서버 오류 (HTTP ${status}) → 재시도 가능: ${finalUrl}`);
                     resolve({ exists: false, reason: 'server_error' });
+                } else {
+                    resolve({ exists: false, reason: status });
                 }
             },
             onerror: () => resolve({ width: 0, height: 0, status: 0, errorReason: "네트워크 오류" }),
             ontimeout: () => resolve({ width: 0, height: 0, status: 0, errorReason: "시간 초과" })
-        });
+            });
+        };
+
+        requestImage(finalUrl);
     });
 }
 
