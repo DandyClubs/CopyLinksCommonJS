@@ -608,7 +608,6 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                     height: normalizedMinWidth / ratio
                 };
             }
-
             return { width, height };
         }
 
@@ -801,11 +800,9 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                 finalW =
                     Math.round(item.baseW);
 
-                if (finalW < normalizedMinWidth) {
+                if (finalW > 0 && finalW < normalizedMinWidth) {
                     finalW = normalizedMinWidth;
-                }
-
-                if (finalW > maxWidth) {
+                }else if (finalW > maxWidth) {
                     finalW = Math.max(normalizedMinWidth, maxWidth);
                 }
 
@@ -839,7 +836,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
                 usedCache = newCache;
             }
 
-            if (finalW < normalizedMinWidth) {
+            if (finalW > 0 && finalW < normalizedMinWidth) {
                 finalW = normalizedMinWidth;
                 finalH =
                     Math.round(finalW / item.ratio);
