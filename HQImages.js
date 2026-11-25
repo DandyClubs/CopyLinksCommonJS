@@ -22,10 +22,7 @@ const DB_PREFIX_RULES = {
     "FTN": ["DMM_MONO", "118"],
     "ABY": ["DMM_MONO", "118"],
     "DOM": ["DMM_MONO", "118"],
-    "GVH": ["DMM_MONO", "13"],
-    "GVG": ["DMM_MONO", "13"],
-    "GG": ["DMM_MONO", "13"],
-
+    
     // [ Madonna 계열 ]
     "JUR": ["FANZA_DIGITAL", ""],
 
@@ -1079,7 +1076,7 @@ function fetchImageResolution(url) {
                 "Origin": new URL(finalUrl).origin
             },
             responseType: "arraybuffer",
-            onload: (res) => {
+            onload: (res) => {                
                 const status = res.status;
                 let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
 
