@@ -575,7 +575,8 @@ function buildAverageHeights(data, threshold = 15) {
 function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWidth = 140) {
 
     const items =
-        Array.from(container.querySelectorAll('.image-masonry-item'));
+        Array.from(container.querySelectorAll('.image-masonry-item'))
+            .filter(item => item.querySelector('img')?.dataset.loaded === "true");
 
     if (!items.length) return;
 
