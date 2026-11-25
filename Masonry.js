@@ -575,8 +575,7 @@ function buildAverageHeights(data, threshold = 15) {
 function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWidth = 140) {
 
     const items =
-        Array.from(container.querySelectorAll('.image-masonry-item'))
-            .filter(item => item.querySelector('img')?.dataset.loaded === "true");
+        Array.from(container.querySelectorAll('.image-masonry-item'));
 
     if (!items.length) return;
 
@@ -603,7 +602,7 @@ function optimizeSingleLayout(container, columnCount = 3, maxHeight = 600, minWi
 
     const applyHeightLimit = (width, height, ratio) => {
         if (height <= maxHeight) {
-            if (width < normalizedMinWidth) {
+            if (width > 0 && width < normalizedMinWidth) {
                 return {
                     width: normalizedMinWidth,
                     height: normalizedMinWidth / ratio
