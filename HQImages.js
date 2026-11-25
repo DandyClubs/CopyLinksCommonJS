@@ -1091,7 +1091,7 @@ function fetchImageResolution(url) {
                         resolve({ exists: false, retry: true, reason: 'cors_possible' });
                     }
                 }
-                else if (status >= 200 && status < 300) {
+                else if (status === 200 || status === 206) {
                     console.log(`[VideoCode] 이미지 존재 확인됨 (HTTP ${status}): ${finalUrl}`);
                     const bytes = new Uint8Array(res.response);
 
@@ -1138,7 +1138,7 @@ function fetchImageResolution(url) {
                     if (!result.width) result.errorReason = "해상도 정보 추출 불가";
                     resolve({ exists: true, result });
                 }
-                else if (status >= 300 && status < 400) {
+                else if (status === 301 || status === 302) {
                     console.warn(`[VideoCode] 리다이렉트 응답 (HTTP ${status}): ${finalUrl}`);
                     // GM_xmlhttpRequest는 리다이렉트를 따라가므로 이 경우는 거의 없음
                     resolve({ exists: false, reason: 'redirect' });
@@ -1147,7 +1147,7 @@ function fetchImageResolution(url) {
                     console.warn(`[VideoCode] 국가제한 (HTTP ${status}): ${finalUrl}`);
                     resolve({ exists: false, reason: 'Region restrictions' });
                 }
-                else if (status >= 400 && status < 500) {
+                else if (status === 400 || status === 404) {
                     console.warn(`[VideoCode] 클라이언트 오류 (HTTP ${status}) → 이미지 없음: ${finalUrl}`);
                     resolve({ exists: false, reason: 'client_error' });
                 }
