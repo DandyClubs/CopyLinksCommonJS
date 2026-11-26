@@ -22,7 +22,7 @@ const DB_PREFIX_RULES = {
     "FTN": ["DMM_MONO", "118"],
     "ABY": ["DMM_MONO", "118"],
     "DOM": ["DMM_MONO", "118"],
-    
+
     // [ Madonna 계열 ]
     "JUR": ["FANZA_DIGITAL", ""],
 
@@ -34,8 +34,8 @@ const DB_PREFIX_RULES = {
     "IPZZ": ["FANZA_DIGITAL", ""],
     "IPZ": ["FANZA_DIGITAL", ""],
 
-    
-        "3DSVR": ["FANZA_DIGITAL", "1"],
+
+    "3DSVR": ["FANZA_DIGITAL", "1"],
     "34ID": ["FANZA_DIGITAL", "55"],
     "AAA": ["FANZA_DIGITAL", "143"],
     "ABBA": ["FANZA_DIGITAL", "h_086"],
@@ -51,14 +51,14 @@ const DB_PREFIX_RULES = {
     "AGMX": ["FANZA_DIGITAL", ""],
     "AILB": ["FANZA_DIGITAL", ""],
     "AKB": ["FANZA_DIGITAL", "55"],
-    "AKBS": ["FANZA_DIGITAL",""],
+    "AKBS": ["FANZA_DIGITAL", ""],
     "AKDL": ["FANZA_DIGITAL", "1"],
     "AKDLD": ["FANZA_MONO", "1"],
-    "AKID": ["FANZA_DIGITAL",""],
+    "AKID": ["FANZA_DIGITAL", ""],
     "ALB": ["FANZA_DIGITAL", ""],
     "ALDN": ["FANZA_DIGITAL", ""],
     "ALOG": ["FANZA_DIGITAL", "h_491"],
-    "AMA": ["FANZA_DIGITAL","118"],
+    "AMA": ["FANZA_DIGITAL", "118"],
     "AMBI": ["FANZA_DIGITAL", "h_237"],
     "AMBS": ["FANZA_DIGITAL", "h_237"],
     "ANAV": ["FANZA_DIGITAL", ""],
@@ -95,13 +95,13 @@ const DB_PREFIX_RULES = {
     "BAHP": ["FANZA_DIGITAL", ""],
     "BANK": ["FANZA_DIGITAL", "h_1495"],
     "BASJ": ["FANZA_DIGITAL", ""],
-    "BAZE": ["FANZA_DIGITAL",""],
+    "BAZE": ["FANZA_DIGITAL", ""],
     "BAZX": ["FANZA_MONO", "84"],
     "BBI": ["FANZA_DIGITAL", ""],
     "BBSS": ["FANZA_DIGITAL", ""],
     "BBTU": ["FANZA_DIGITAL", ""],
     "BCV": ["FANZA_MONO", "118"],
-    "BDA": ["FANZA_DIGITAL",""],
+    "BDA": ["FANZA_DIGITAL", ""],
     "BDMDB": ["FANZA_MONO", "84"],
     "BDSR": ["FANZA_DIGITAL", "57"],
     "BDST": ["FANZA_DIGITAL", "h_1787"],
@@ -135,7 +135,7 @@ const DB_PREFIX_RULES = {
     "BTH": ["FANZA_DIGITAL", "h_1435"],
     "BUR": ["FANZA_DIGITAL", "12"],
     "BUZ": ["FANZA_DIGITAL", "h_1340"],
-    "BW": ["FANZA_DIGITAL", "504i"],    
+    "BW": ["FANZA_DIGITAL", "504i"],
     "CAD": ["FANZA_DIGITAL", "24"],
     "CADV": ["FANZA_DIGITAL", "49"],
     "CAT": ["FANZA_MONO", "436"],
@@ -183,7 +183,7 @@ const DB_PREFIX_RULES = {
     "DAVK": ["FANZA_DIGITAL", ""],
     "DAZD": ["FANZA_DIGITAL", ""],
     "DBNK": ["FANZA_DIGITAL", ""],
-    "DCXD": ["FANZA_DIGITAL","h_1711"],
+    "DCXD": ["FANZA_DIGITAL", "h_1711"],
     "DDB": ["FANZA_DIGITAL", ""],
     "DDFF": ["FANZA_DIGITAL", ""],
     "DDH": ["FANZA_DIGITAL", ""],
@@ -196,7 +196,7 @@ const DB_PREFIX_RULES = {
     "DETK": ["FANZA_DIGITAL", ""],
     "DFDM": ["FANZA_DIGITAL", "2"],
     "DFE": ["FANZA_DIGITAL", "2"],
-    "DG": ["FANZA_DIGITAL","h_1596"],
+    "DG": ["FANZA_DIGITAL", "h_1596"],
     "DHLD": ["FANZA_MONO", "h_139"],
     "DISM": ["FANZA_DIGITAL", "1"],
     "DIV": ["FANZA_DIGITAL", "h_275"],
@@ -205,13 +205,13 @@ const DB_PREFIX_RULES = {
     "DKDN": ["FANZA_MONO", "h_139"],
     "DLDSS": ["FANZA_DIGITAL", "1"],
     "DLV": ["FANZA_MONO", "118"],
-    "DMAT": ["FANZA_DIGITAL","h_254"],
+    "DMAT": ["FANZA_DIGITAL", "h_254"],
     "DMDG": ["FANZA_DIGITAL", ""],
     "DMOW": ["FANZA_DIGITAL", "36"],
     "DNJR": ["FANZA_DIGITAL", ""],
     "DNPS": ["FANZA_DIGITAL", "1"],
     "DNW": ["FANZA_MONO", "118"],
-    "DOA": ["FANZA_DIGITAL",""],
+    "DOA": ["FANZA_DIGITAL", ""],
     "DOCD": ["FANZA_DIGITAL", "h_1711"],
     "DOCM": ["FANZA_DIGITAL", "h_1711"],
     "DOCP": ["FANZA_DIGITAL", "118"],
@@ -247,7 +247,7 @@ const DB_PREFIX_RULES = {
     "EKW": ["FANZA_DIGITAL", "2"],
     "ENKI": ["FANZA_DIGITAL", ""],
     "EQ": ["FANZA_MONO", "h_100"],
-    "ERGR": ["FANZA_MONO","30"],
+    "ERGR": ["FANZA_MONO", "30"],
     "EROFV": ["FANZA_DIGITAL", "h_1472"],
     "EUUD": ["FANZA_DIGITAL", "h_086"],
     "EXVR": ["FANZA_MONO", "436"],
@@ -296,19 +296,19 @@ const DB_PREFIX_RULES = {
     "FWTR": ["FANZA_DIGITAL", ""],
     "GAGO": ["FANZA_DIGITAL", "h_1632"],
     "GAOR": ["FANZA_DIGITAL", ""],
-    "GAPL": ["FANZA_DIGITAL",""],
+    "GAPL": ["FANZA_DIGITAL", ""],
     "GAR": ["FANZA_DIGITAL", "1"],
     "GARA": ["FANZA_DIGITAL", ""],
-    "GARE": ["FANZA_DIGITAL",""],
+    "GARE": ["FANZA_DIGITAL", ""],
     "GAS": ["FANZA_DIGITAL", "71"],
     "GASO": ["FANZA_DIGITAL", "h_906"],
-    "GBG": ["FANZA_DIGITAL",""],
+    "GBG": ["FANZA_DIGITAL", ""],
     "GBSA": ["FANZA_DIGITAL", ""],
     "GBYKM": ["FANZA_DIGITAL", "h_1780"],
     "GDHH": ["FANZA_DIGITAL", ""],
     "GDJP": ["FANZA_DIGITAL", ""],
     "GDPDX": ["FANZA_DIGITAL", "h_1780"],
-    "GDQN": ["FANZA_DIGITAL",""],
+    "GDQN": ["FANZA_DIGITAL", ""],
     "GDRD": ["FANZA_DIGITAL", ""],
     "GDTM": ["FANZA_DIGITAL", ""],
     "GEBB": ["FANZA_DIGITAL", ""],
@@ -325,7 +325,7 @@ const DB_PREFIX_RULES = {
     "GMDMS": ["FANZA_DIGITAL", "h_1780"],
     "GMEM": ["FANZA_DIGITAL", ""],
     "GN": ["FANZA_DIGITAL", "188"],
-    "GNAX": ["FANZA_DIGITAL","h_1345"],
+    "GNAX": ["FANZA_DIGITAL", "h_1345"],
     "GNS": ["FANZA_DIGITAL", "h_1596"],
     "GODR": ["FANZA_MONO", "h_1059"],
     "GOHM": ["FANZA_DIGITAL", ""],
@@ -344,7 +344,7 @@ const DB_PREFIX_RULES = {
     "GTAXD": ["FANZA_DIGITAL", "h_1780"],
     "GTJ": ["FANZA_DIGITAL", ""],
     "GURHD": ["FANZA_DIGITAL", "h_1780"],
-    "GXAZ": ["FANZA_DIGITAL","29"],
+    "GXAZ": ["FANZA_DIGITAL", "29"],
     "HALE": ["FANZA_DIGITAL", ""],
     "HALT": ["FANZA_DIGITAL", ""],
     "HAVD": ["FANZA_DIGITAL", "1"],
@@ -380,7 +380,7 @@ const DB_PREFIX_RULES = {
     "HNDS": ["FANZA_DIGITAL", ""],
     "HNK": ["FANZA_MONO", "59"],
     "HNMG": ["FANZA_DIGITAL", ""],
-    "HNTD": ["FANZA_DIGITAL",""],
+    "HNTD": ["FANZA_DIGITAL", ""],
     "HNTDS": ["FANZA_DIGITAL", ""],
     "HNTV": ["FANZA_DIGITAL", ""],
     "HODV": ["FANZA_MONO", "41"],
@@ -411,7 +411,7 @@ const DB_PREFIX_RULES = {
     "IBMA": ["FANZA_DIGITAL", "504"],
     "IBW": ["FANZA_DIGITAL", "504"],
     "ID": ["FANZA_DIGITAL", "h_113"],
-    "IDPC": ["FANZA_DIGITAL",""],
+    "IDPC": ["FANZA_DIGITAL", ""],
     "IDVDES": ["FANZA_DIGITAL", "a"],
     "IDVDPS": ["FANZA_DIGITAL", "a"],
     "IENE": ["FANZA_DIGITAL", "1"],
@@ -420,13 +420,13 @@ const DB_PREFIX_RULES = {
     "IFDVE": ["FANZA_DIGITAL", "1"],
     "IGU": ["FANZA_DIGITAL", "33"],
     "IKUNA": ["FANZA_DIGITAL", "1"],
-    "ILLE": ["FANZA_DIGITAL",""],
+    "ILLE": ["FANZA_DIGITAL", ""],
     "IMO": ["FANZA_DIGITAL", "12"],
     "INCT": ["FANZA_MONO", ""],
     "INDI": ["FANZA_MONO", "h_917"],
     "INF": ["FANZA_DIGITAL", "118"],
     "INMR": ["FANZA_DIGITAL", "h_1836"],
-    "INSTNA": ["FANZA_DIGITAL","h_1472"],
+    "INSTNA": ["FANZA_DIGITAL", "h_1472"],
     "INSTV": ["FANZA_DIGITAL", "h_1472"],
     "INU": ["FANZA_DIGITAL", "118"],
     "IPBZ": ["FANZA_DIGITAL", ""],
@@ -443,7 +443,7 @@ const DB_PREFIX_RULES = {
     "JAC": ["FANZA_DIGITAL", "118"],
     "JAG": ["FANZA_DIGITAL", "28"],
     "JARB": ["FANZA_DIGITAL", "h_1336"],
-    "JBZ": ["FANZA_DIGITAL","h_1294"],
+    "JBZ": ["FANZA_DIGITAL", "h_1294"],
     "JCKL": ["FANZA_DIGITAL", "h_1664"],
     "JERA": ["FANZA_DIGITAL", "1"],
     "JFB": ["FANZA_DIGITAL", ""],
@@ -463,7 +463,7 @@ const DB_PREFIX_RULES = {
     "JNKE": ["FANZA_DIGITAL", "h_1711"],
     "JOB": ["FANZA_DIGITAL", "118"],
     "JOHS": ["FANZA_DIGITAL", ""],
-    "JQJ": ["FANZA_DIGITAL",""],
+    "JQJ": ["FANZA_DIGITAL", ""],
     "JRBA": ["FANZA_DIGITAL", ""],
     "JRZE": ["FANZA_DIGITAL", "h_086"],
     "JUC": ["FANZA_DIGITAL", ""],
@@ -549,7 +549,7 @@ const DB_PREFIX_RULES = {
     "MDHR": ["FANZA_DIGITAL", ""],
     "MDON": ["FANZA_DIGITAL", ""],
     "MDS": ["FANZA_MONO", "84"],
-    "MDSX": ["FANZA_DIGITAL","h_1472h"],
+    "MDSX": ["FANZA_DIGITAL", "h_1472h"],
     "MDTM": ["FANZA_MONO", "84"],
     "MDVHJ": ["FANZA_DIGITAL", "48"],
     "MDVIJ": ["FANZA_DIGITAL", "48"],
@@ -598,7 +598,7 @@ const DB_PREFIX_RULES = {
     "MKON": ["FANZA_DIGITAL", ""],
     "MKS": ["FANZA_DIGITAL", "h_618"],
     "MLW": ["FANZA_MONO", "h_606"],
-    "MMBF": ["FANZA_DIGITAL",""],
+    "MMBF": ["FANZA_DIGITAL", ""],
     "MMGH": ["FANZA_DIGITAL", ""],
     "MMKS": ["FANZA_DIGITAL", ""],
     "MMKZ": ["FANZA_DIGITAL", ""],
@@ -717,7 +717,7 @@ const DB_PREFIX_RULES = {
     "OKZU": ["FANZA_DIGITAL", ""],
     "OLM": ["FANZA_DIGITAL", "h_1757"],
     "OMEG": ["FANZA_DIGITAL", "118"],
-    "ONB": ["FANZA_DIGITAL","h_1133"],
+    "ONB": ["FANZA_DIGITAL", "h_1133"],
     "ONEX": ["FANZA_DIGITAL", "h_1674"],
     "ONEZ": ["FANZA_DIGITAL", "118"],
     "ONSG": ["FANZA_DIGITAL", ""],
@@ -777,7 +777,7 @@ const DB_PREFIX_RULES = {
     "REZD": ["FANZA_DIGITAL", ""],
     "RGAV": ["FANZA_DIGITAL", ""],
     "RGD": ["FANZA_DIGITAL", "46"],
-    "RHG": ["FANZA_DIGITAL",""],
+    "RHG": ["FANZA_DIGITAL", ""],
     "RIKURI": ["FANZA_DIGITAL", "1mu"],
     "RKI": ["FANZA_DIGITAL", ""],
     "RLMP": ["FANZA_DIGITAL", ""],
@@ -787,7 +787,7 @@ const DB_PREFIX_RULES = {
     "ROYD": ["FANZA_DIGITAL", ""],
     "RPIN": ["FANZA_DIGITAL", ""],
     "RROY": ["FANZA_DIGITAL", ""],
-    "RSM": ["FANZA_DIGITAL","h_1745"],
+    "RSM": ["FANZA_DIGITAL", "h_1745"],
     "RTP": ["FANZA_DIGITAL", "118"],
     "SABA": ["FANZA_DIGITAL", "h_244"],
     "SACE": ["FANZA_DIGITAL", "1"],
@@ -805,7 +805,7 @@ const DB_PREFIX_RULES = {
     "SDDE": ["FANZA_DIGITAL", "1"],
     "SDDS": ["FANZA_DIGITAL", "1"],
     "SDGY": ["FANZA_DIGITAL", ""],
-    "SDHS": ["FANZA_DIGITAL","1"],    
+    "SDHS": ["FANZA_DIGITAL", "1"],
     "SDJS": ["FANZA_DIGITAL", "1"],
     "SDMF": ["FANZA_DIGITAL", "1"],
     "SDMM": ["FANZA_DIGITAL", "1"],
@@ -823,7 +823,7 @@ const DB_PREFIX_RULES = {
     "SGKX": ["FANZA_MONO", "h_1571"],
     "SGSR": ["FANZA_DIGITAL", "57"],
     "SHE": ["FANZA_MONO", "59"],
-    "SHF": ["FANZA_MONO","118"],
+    "SHF": ["FANZA_MONO", "118"],
     "SHIND": ["FANZA_DIGITAL", "h_1560"],
     "SHKD": ["FANZA_DIGITAL", ""],
     "SIGL": ["FANZA_DIGITAL", ""],
@@ -888,7 +888,7 @@ const DB_PREFIX_RULES = {
     "SW": ["FANZA_DIGITAL", "1"],
     "SXMA": ["FANZA_DIGITAL", "h_1133"],
     "SY": ["FANZA_DIGITAL", "h_113"],
-    "SYKH": ["FANZA_DIGITAL", ""],        
+    "SYKH": ["FANZA_DIGITAL", ""],
     "T28": ["FANZA_MONO", "55"],
     "T38": ["FANZA_DIGITAL", "55"],
     "TAAK": ["FANZA_DIGITAL", ""],
@@ -923,8 +923,8 @@ const DB_PREFIX_RULES = {
     "TORG": ["FANZA_DIGITAL", "h_771"],
     "TOTK": ["FANZA_DIGITAL", "h_1133"],
     "TOTTE": ["FANZA_DIGITAL", "1"],
-    "TPIN": ["FANZA_DIGITAL",""],
-    "TPK": ["FANZA_DIGITAL","h_1133"],
+    "TPIN": ["FANZA_DIGITAL", ""],
+    "TPK": ["FANZA_DIGITAL", "h_1133"],
     "TPPN": ["FANZA_DIGITAL", ""],
     "TPRO": ["FANZA_DIGITAL", "55"],
     "TS": ["FANZA_DIGITAL", "118ge"],
@@ -1014,17 +1014,24 @@ const DB_PREFIX_RULES = {
     "YUM": ["FANZA_DIGITAL", "118"],
     "ZER": ["FANZA_DIGITAL", "118"],
     "ZEX": ["FANZA_DIGITAL", "h_720"],
-    "ZGD": ["FANZA_DIGITAL","h_1100"],
+    "ZGD": ["FANZA_DIGITAL", "h_1100"],
     "ZIZG": ["FANZA_DIGITAL", "h_826"],
     "ZMAR": ["FANZA_DIGITAL", "h_237"],
-    "ZODY": ["FANZA_DIGITAL",""],
+    "ZODY": ["FANZA_DIGITAL", ""],
     "ZOS": ["FANZA_DIGITAL", "33"],
     "ZSGD": ["FANZA_DIGITAL", "483"],
     "ZSMX": ["FANZA_MONO", "n_650"],
-    "ZUKO": ["FANZA_DIGITAL", ""],    	
-    "SPJQJ": ["FANZA_DIGITAL",""],
-    "MURIKURI": ["FANZA_DIGITAL","1mu"],
-    "HXAD": ["FANZA_DIGITAL","29"],
+    "ZUKO": ["FANZA_DIGITAL", ""],
+    "SPJQJ": ["FANZA_DIGITAL", ""],
+    "MURIKURI": ["FANZA_DIGITAL", "1mu"],
+    "HXAD": ["FANZA_DIGITAL", "29"],
+    "DDT": ["FANZA_DIGITAL", ""],
+    "GGDR": ["FANZA_DIGITAL", "h_1758"],
+    "KTKP": ["FANZA_DIGITAL", ""],
+    "GVH": ["FANZA_DIGITAL", ""],
+    "MTMD": ["FANZA_DIGITAL", "h_1711"],
+    "LOVE": ["FANZA_DIGITAL", "h_491"],
+    "KWP": ["FANZA_DIGITAL", "h_1339"],
 };
 
 
@@ -1084,105 +1091,105 @@ function fetchImageResolution(url) {
                 headers,
                 responseType: "arraybuffer",
                 onload: (res) => {
-                const status = res.status;
-                if (status === 403 && proxyIndex < tryProxy.length) {
-                    const proxyUrl =
-                        `${tryProxy[proxyIndex]}${encodeURIComponent(finalUrl)}`;
-                    console.warn(`[VideoCode] HTTP 403 → 프록시 재시도 ${proxyIndex + 1}/${tryProxy.length}: ${finalUrl}`);
-                    requestImage(proxyUrl, proxyIndex + 1);
-                    return;
-                }
-
-                const responseUrl =
-                    (res.finalUrl || requestUrl).split('?')[0].toLowerCase();
-                let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
-
-                if (responseUrl.endsWith('/mono/noimage/now_printing.jpg')) {
-                    console.warn(`[VideoCode] 대체 이미지로 리다이렉트됨 → 이미지 없음: ${responseUrl}`);
-                    resolve({ exists: false, reason: 'no_image' });
-                    return;
-                }
-
-                // 1. HTTP 오류 체크
-                if (status === 0) {
-                    const sameDomain = location.hostname === new URL(finalUrl).hostname;
-                    if (sameDomain) {
-                        console.warn(`[VideoCode] status=0 (같은 도메인) → 네트워크 문제, 재시도 가능: ${finalUrl}`);
-                        resolve({ exists: false, retry: true, reason: 'network_error' });
-                    } else {
-                        console.warn(`[VideoCode] status=0 (외부 도메인) → CORS 가능성, 재시도 허용: ${finalUrl}`);
-                        resolve({ exists: false, retry: true, reason: 'cors_possible' });
+                    const status = res.status;
+                    if (status === 403 && proxyIndex < tryProxy.length) {
+                        const proxyUrl =
+                            `${tryProxy[proxyIndex]}${encodeURIComponent(finalUrl)}`;
+                        console.warn(`[VideoCode] HTTP 403 → 프록시 재시도 ${proxyIndex + 1}/${tryProxy.length}: ${finalUrl}`);
+                        requestImage(proxyUrl, proxyIndex + 1);
+                        return;
                     }
-                }
-                else if (status === 200 || status === 206) {
-                    console.log(`[VideoCode] 이미지 존재 확인됨 (HTTP ${status}): ${finalUrl}`);
-                    const bytes = new Uint8Array(res.response);
 
-                    // 2. 포맷 판별 및 해상도 추출
-                    // PNG (89 50 4E 47 ...)
-                    if (bytes[0] === 0x89 && bytes[1] === 0x50) {
-                        result.type = "PNG";
-                        result.width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
-                        result.height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+                    const responseUrl =
+                        (res.finalUrl || requestUrl).split('?')[0].toLowerCase();
+                    let result = { width: 0, height: 0, status: res.status, errorReason: "", type: "Unknown" };
+
+                    if (responseUrl.endsWith('/mono/noimage/now_printing.jpg')) {
+                        console.warn(`[VideoCode] 대체 이미지로 리다이렉트됨 → 이미지 없음: ${responseUrl}`);
+                        resolve({ exists: false, reason: 'no_image' });
+                        return;
                     }
-                    // GIF (47 49 46 38 ...)
-                    else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
-                        result.type = "GIF";
-                        result.width = bytes[6] | (bytes[7] << 8); // Little-endian
-                        result.height = bytes[8] | (bytes[9] << 8);
+
+                    // 1. HTTP 오류 체크
+                    if (status === 0) {
+                        const sameDomain = location.hostname === new URL(finalUrl).hostname;
+                        if (sameDomain) {
+                            console.warn(`[VideoCode] status=0 (같은 도메인) → 네트워크 문제, 재시도 가능: ${finalUrl}`);
+                            resolve({ exists: false, retry: true, reason: 'network_error' });
+                        } else {
+                            console.warn(`[VideoCode] status=0 (외부 도메인) → CORS 가능성, 재시도 허용: ${finalUrl}`);
+                            resolve({ exists: false, retry: true, reason: 'cors_possible' });
+                        }
                     }
-                    // JPEG (FF D8 ...)
-                    else if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
-                        result.type = "JPEG";
-                        let i = 2;
-                        while (i < bytes.length - 8) {
-                            const marker = (bytes[i] << 8) | bytes[i + 1];
-                            const len = (bytes[i + 2] << 8) | bytes[i + 3];
-                            // SOF 마커 확인 (0xFFC0 ~ 0xFFCF 중 일부 제외)
-                            if (marker >= 0xFFC0 && marker <= 0xFFCF && ![0xFFC4, 0xFFC8, 0xFFCC].includes(marker)) {
-                                result.height = (bytes[i + 5] << 8) | bytes[i + 6];
-                                result.width = (bytes[i + 7] << 8) | bytes[i + 8];
-                                break;
+                    else if (status === 200 || status === 206) {
+                        console.log(`[VideoCode] 이미지 존재 확인됨 (HTTP ${status}): ${finalUrl}`);
+                        const bytes = new Uint8Array(res.response);
+
+                        // 2. 포맷 판별 및 해상도 추출
+                        // PNG (89 50 4E 47 ...)
+                        if (bytes[0] === 0x89 && bytes[1] === 0x50) {
+                            result.type = "PNG";
+                            result.width = (bytes[16] << 24) | (bytes[17] << 16) | (bytes[18] << 8) | bytes[19];
+                            result.height = (bytes[20] << 24) | (bytes[21] << 16) | (bytes[22] << 8) | bytes[23];
+                        }
+                        // GIF (47 49 46 38 ...)
+                        else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46) {
+                            result.type = "GIF";
+                            result.width = bytes[6] | (bytes[7] << 8); // Little-endian
+                            result.height = bytes[8] | (bytes[9] << 8);
+                        }
+                        // JPEG (FF D8 ...)
+                        else if (bytes[0] === 0xFF && bytes[1] === 0xD8) {
+                            result.type = "JPEG";
+                            let i = 2;
+                            while (i < bytes.length - 8) {
+                                const marker = (bytes[i] << 8) | bytes[i + 1];
+                                const len = (bytes[i + 2] << 8) | bytes[i + 3];
+                                // SOF 마커 확인 (0xFFC0 ~ 0xFFCF 중 일부 제외)
+                                if (marker >= 0xFFC0 && marker <= 0xFFCF && ![0xFFC4, 0xFFC8, 0xFFCC].includes(marker)) {
+                                    result.height = (bytes[i + 5] << 8) | bytes[i + 6];
+                                    result.width = (bytes[i + 7] << 8) | bytes[i + 8];
+                                    break;
+                                }
+                                i += len + 2;
                             }
-                            i += len + 2;
                         }
-                    }
-                    // WebP (52 49 46 46 ... 57 45 42 50)
-                    else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
-                        result.type = "WebP";
-                        // WebP는 내부 청크(VP8/VP8L/VP8X)에 따라 위치가 달라 더 복잡하지만,
-                        // 간단하게 24-30바이트 사이에서 기초 해상도를 읽을 수 있습니다.
-                        if (bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38) {
-                            result.width = (bytes[26] | (bytes[27] << 8)) & 0x3FFF;
-                            result.height = (bytes[28] | (bytes[29] << 8)) & 0x3FFF;
+                        // WebP (52 49 46 46 ... 57 45 42 50)
+                        else if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
+                            result.type = "WebP";
+                            // WebP는 내부 청크(VP8/VP8L/VP8X)에 따라 위치가 달라 더 복잡하지만,
+                            // 간단하게 24-30바이트 사이에서 기초 해상도를 읽을 수 있습니다.
+                            if (bytes[12] === 0x56 && bytes[13] === 0x50 && bytes[14] === 0x38) {
+                                result.width = (bytes[26] | (bytes[27] << 8)) & 0x3FFF;
+                                result.height = (bytes[28] | (bytes[29] << 8)) & 0x3FFF;
+                            }
                         }
-                    }
 
-                    if (!result.width) result.errorReason = "해상도 정보 추출 불가";
-                    resolve({ exists: true, result });
-                }
-                else if (status === 301 || status === 302) {
-                    console.warn(`[VideoCode] 리다이렉트 응답 (HTTP ${status}): ${finalUrl}`);
-                    // GM_xmlhttpRequest는 리다이렉트를 따라가므로 이 경우는 거의 없음
-                    resolve({ exists: false, reason: 'redirect' });
-                }
-                else if (status === 403) {
-                    console.warn(`[VideoCode] 프록시 재시도 후에도 국가제한 (HTTP ${status}): ${finalUrl}`);
-                    resolve({ exists: false, reason: 'Region restrictions' });
-                }
-                else if (status === 400 || status === 404) {
-                    console.warn(`[VideoCode] 클라이언트 오류 (HTTP ${status}) → 이미지 없음: ${finalUrl}`);
-                    resolve({ exists: false, reason: 'client_error' });
-                }
-                else if (status >= 500) {
-                    console.warn(`[VideoCode] 서버 오류 (HTTP ${status}) → 재시도 가능: ${finalUrl}`);
-                    resolve({ exists: false, reason: 'server_error' });
-                } else {
-                    resolve({ exists: false, reason: status });
-                }
-            },
-            onerror: () => resolve({ width: 0, height: 0, status: 0, errorReason: "네트워크 오류" }),
-            ontimeout: () => resolve({ width: 0, height: 0, status: 0, errorReason: "시간 초과" })
+                        if (!result.width) result.errorReason = "해상도 정보 추출 불가";
+                        resolve({ exists: true, result });
+                    }
+                    else if (status === 301 || status === 302) {
+                        console.warn(`[VideoCode] 리다이렉트 응답 (HTTP ${status}): ${finalUrl}`);
+                        // GM_xmlhttpRequest는 리다이렉트를 따라가므로 이 경우는 거의 없음
+                        resolve({ exists: false, reason: 'redirect' });
+                    }
+                    else if (status === 403) {
+                        console.warn(`[VideoCode] 프록시 재시도 후에도 국가제한 (HTTP ${status}): ${finalUrl}`);
+                        resolve({ exists: false, reason: 'Region restrictions' });
+                    }
+                    else if (status === 400 || status === 404) {
+                        console.warn(`[VideoCode] 클라이언트 오류 (HTTP ${status}) → 이미지 없음: ${finalUrl}`);
+                        resolve({ exists: false, reason: 'client_error' });
+                    }
+                    else if (status >= 500) {
+                        console.warn(`[VideoCode] 서버 오류 (HTTP ${status}) → 재시도 가능: ${finalUrl}`);
+                        resolve({ exists: false, reason: 'server_error' });
+                    } else {
+                        resolve({ exists: false, reason: status });
+                    }
+                },
+                onerror: () => resolve({ width: 0, height: 0, status: 0, errorReason: "네트워크 오류" }),
+                ontimeout: () => resolve({ width: 0, height: 0, status: 0, errorReason: "시간 초과" })
             });
         };
 
