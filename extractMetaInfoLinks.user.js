@@ -153,7 +153,9 @@ function extractMetaInfo(div, siteRule = {}) {
             let resolutionGroups = {};
             allLinks.forEach(link => {
                 const fileName = GetFileName(link.href) + ' ' +
-                    (/^https?:/.test(link.textContent) ? GetFileName(link.textContent) : link.textContent);
+                    (/^https?:/.test(link.textContent) && !/\.{3}|…/.test(link.textContent)
+                        ? GetFileName(link.textContent)
+                        : link.textContent);
                 const res = getStandardResolution(fileName) || 'other';
                 if (!resolutionGroups[res]) resolutionGroups[res] = [];
                 resolutionGroups[res].push(link.href);
